@@ -44,6 +44,16 @@ module KitScoped
 
     # Previews on a person's own face are paid with credits, so they need the account the kit is in. A kit in no
     # account joins the signed-in one here. Example kits stop before this (keep_example_kits_as_they_are).
+    # Paying for several previews at once: all of them or none. Short of credits, back to the page with the words
+    # for it, before any part is asked for. True when it went back.
+    def short_of_credits?(cost, back)
+      balance = Credits.balance(current_user)
+      return false if balance >= cost
+
+      redirect_to back, notice: helpers.credits_short_words(cost, balance)
+      true
+    end
+
     def require_kit_owner
       if !signed_in?
         redirect_to url_from(request.referer) || kit_path(@kit), notice: CreditsHelper::SIGN_IN

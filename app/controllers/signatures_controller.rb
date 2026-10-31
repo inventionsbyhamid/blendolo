@@ -37,12 +37,24 @@ class SignaturesController < ApplicationController
     signature = SignatureLook.build(@kit, reference, liner: params[:liner], lips: params[:lips])
     return redirect_to(kit_signature_path(@kit)) unless signature
 
+    back = kit_signature_path(@kit, liner: signature.liner, lips: signature.lips)
+    return if short_of_credits?(unpaid_cost(reference, signature), back)
+
     Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: reference)
     Previews.for(@kit, today_photo, "signature", :easy, signature.easy_effects(today_photo))
     redirect_to kit_signature_path(@kit, liner: signature.liner, lips: signature.lips)
   end
 
   private
+    # What the signature look would pay for now: the transfer and the easy version, unless made already.
+    def unpaid_cost(reference, signature)
+      transfer = Previews.find(@kit, today_photo, "signature", :transfer, [], reference_photo: reference)
+      easy = Previews.find(@kit, today_photo, "signature", :easy, signature.easy_effects(today_photo))
+      { transfer:, makeup: easy }.sum do |operation, render|
+        render.nil? || render.awaiting_payment? ? Credits.cost(operation) : 0
+      end
+    end
+
     # An example person's stored signature look: their transfer and its easy version, with the ease and swaps from the
     # answers and colours stored with the example (no provider call).
     def show_example

@@ -76,7 +76,8 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_select ".spend__words", "You are out of credits. Get more to see this on your face."
 
     post previews_kit_look_path(kit, "red_lip")
-    assert_equal %w[no_credits no_credits], kit.renders.order(:id).map(&:failure_reason)
+    assert_empty kit.renders, "nothing is asked for when the whole look can't be paid for"
+    assert_equal "You are out of credits. Get more to see this on your face.", flash[:notice]
     assert_equal 0, Credits.balance(@user)
     follow_redirect!
     assert_select ".spend__words", "You are out of credits. Get more to see this on your face."
@@ -87,6 +88,17 @@ class LooksTest < ActionDispatch::IntegrationTest
     post previews_kit_look_path(kit, "red_lip")
     assert_equal %w[pending pending], kit.renders.order(:id).map(&:status)
     assert_equal 14, Credits.balance(@user)
+  end
+
+  test "one credit short, no part of the look is made" do
+    kit = make_kit(tremor: 2)
+    Credits.debit!(@user, 51, reason: :admin, source: nil)
+
+    post previews_kit_look_path(kit, "red_lip")
+
+    assert_empty kit.renders
+    assert_equal 1, Credits.balance(@user)
+    assert_equal "Uses 2 credits. You have 1. Get more to see this on your face.", flash[:notice]
   end
 
   test "show it on my face spends 2 credits once, on a double tap too" do

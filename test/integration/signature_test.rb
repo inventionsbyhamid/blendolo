@@ -34,6 +34,27 @@ class SignatureFlowTest < ActionDispatch::IntegrationTest
     assert_equal 9, Credits.balance(@user)
   end
 
+  test "two credits short of the signature look, neither part is made" do
+    Credits.debit!(@user, 10, reason: :admin, source: nil)
+    assert_equal 2, Credits.balance(@user)
+
+    post kit_signature_path(@kit), params: { liner: "winged", lips: "matte" }
+
+    assert_redirected_to kit_signature_path(@kit, liner: "winged", lips: "matte")
+    assert_empty @kit.renders
+    assert_equal 2, Credits.balance(@user)
+  end
+
+  test "signed out, the signature look says what it costs and what the free credits cover" do
+    delete sign_out_path
+    kit = make_kit(tremor: 2)
+    add_photo(kit, kind: :reference, sampled: { "lips" => "#A84452" })
+
+    get kit_signature_path(kit, liner: "winged", lips: "matte")
+
+    assert_select ".spend__words", "Sign in to see your signature look on your face. It uses 3 credits. Your 2 free credits cover one look on your face."
+  end
+
   test "answers we don't offer go back to the start" do
     post kit_signature_path(@kit), params: { liner: "glitter", lips: "matte" }
     assert_redirected_to kit_signature_path(@kit)

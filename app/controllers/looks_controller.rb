@@ -31,6 +31,8 @@ class LooksController < ApplicationController
   # account's credits. Safe to repeat.
   def previews
     level = level_param
+    return if short_of_credits?(unpaid_count(level) * Credits.cost(:makeup), kit_look_path(@kit, @look.key, level: (level unless level.zero?)))
+
     Previews.for(@kit, today_photo, @look.key, :classic, @look.classic_effects(today_photo))
     Previews.for(@kit, today_photo, @look.key, :easy, @look.easy_effects(today_photo))
     Previews.for(@kit, today_photo, @look.key, :tweak, @look.easy_effects(today_photo, level:)) unless level.zero?
@@ -50,6 +52,14 @@ class LooksController < ApplicationController
       @look = LookForKit.find(@kit, params[:key])
     rescue KeyError
       raise ActiveRecord::RecordNotFound, "No such look"
+    end
+
+    # The renders "Show it on my face" would pay for at this level: those not made yet, or refused for want of
+    # credits or a sign in.
+    def unpaid_count(level)
+      wanted = [ [ :classic, @look.classic_effects(today_photo) ], [ :easy, @look.easy_effects(today_photo) ] ]
+      wanted << [ :tweak, @look.easy_effects(today_photo, level:) ] unless level.zero?
+      wanted.count { |kind, effects| unpaid_as_nil(Previews.find(@kit, today_photo, @look.key, kind, effects)).nil? }
     end
 
     def unpaid_as_nil(render)
