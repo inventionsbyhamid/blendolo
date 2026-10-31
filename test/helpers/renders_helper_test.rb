@@ -21,6 +21,19 @@ class RendersHelperTest < ActionView::TestCase
     assert_not_equal first, next_step
   end
 
+  test "a measured picture's tag carries its resized width and height, so the page doesn't jump when it loads" do
+    @image.blob.analyze # 96 x 120
+
+    assert_dom_equal %(<img width="48" height="60" alt="Face" src="#{proxied_image_path(@image, 60)}">),
+      proxied_image_tag(@image, 60, alt: "Face")
+    assert_dom_equal %(<img width="96" height="120" alt="Face" src="#{proxied_image_path(@image, 900)}">),
+      proxied_image_tag(@image, 900, alt: "Face")
+  end
+
+  test "a picture not measured yet gets a plain tag" do
+    assert_dom_equal %(<img alt="Face" src="#{proxied_image_path(@image, 900)}">), proxied_image_tag(@image, 900, alt: "Face")
+  end
+
   test "an image link works for an hour at most" do
     made_at = Time.utc(2026, 11, 1, 12, 9, 59)
     path = travel_to(made_at) { proxied_image_path(@image, 900) }

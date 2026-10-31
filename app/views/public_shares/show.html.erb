@@ -10,10 +10,10 @@
     <% photo = @shared_kit.photos.today.order(:created_at).last %>
     <div class="compare__stage">
       <% if photo&.image&.attached? %>
-        <figure class="compare__side m-0"><%= image_tag proxied_image_path(photo.image, 600), alt: "Their photo", class: "render__image" %><figcaption class="compare__caption">Their photo</figcaption></figure>
+        <figure class="compare__side m-0"><%= proxied_image_tag(photo.image, 600, alt: "Their photo", class: "render__image") %><figcaption class="compare__caption">Their photo</figcaption></figure>
       <% end %>
       <% if easy %>
-        <figure class="compare__side m-0"><%= image_tag proxied_image_path(easy.result, 600), alt: "Their photo with the easy version", class: "render__image" %><figcaption class="compare__caption">Easy version</figcaption></figure>
+        <figure class="compare__side m-0"><%= proxied_image_tag(easy.result, 600, alt: "Their photo with the easy version", class: "render__image") %><figcaption class="compare__caption">Easy version</figcaption></figure>
       <% end %>
     </div>
     <% if easy %><%= render "components/honest_label" %><% end %>

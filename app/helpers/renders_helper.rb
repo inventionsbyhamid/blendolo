@@ -35,7 +35,19 @@ module RendersHelper
 
   # A resized copy (makeup results arrive as large PNGs), served from our own origin.
   def render_image(render, alt:)
-    image_tag proxied_image_path(render.result, 900), alt:, class: "render__image"
+    proxied_image_tag(render.result, 900, alt:, class: "render__image")
+  end
+
+  # An <img> of proxied_image_path with the resized picture's width and height, once the original has been measured
+  # (Active Storage analyses it after upload), so the page keeps the picture's place while it loads instead of
+  # jumping down.
+  def proxied_image_tag(attachment, size, **options)
+    width, height = attachment.blob.metadata.values_at(:width, :height).map(&:to_i)
+    if width.positive? && height.positive?
+      scale = [ size.fdiv(width), size.fdiv(height), 1 ].min
+      options = { width: (width * scale).round, height: (height * scale).round, **options }
+    end
+    image_tag proxied_image_path(attachment, size), **options
   end
 
   # Image links stay the same for this long, so a picture seen again (the next step card, back to a look) comes from
