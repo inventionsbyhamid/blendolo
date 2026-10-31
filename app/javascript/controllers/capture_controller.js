@@ -214,6 +214,7 @@ export default class extends Controller {
     this.reviewTarget.hidden = false
     this.state = "review"
     this.show("Is this photo all right?")
+    this.messageTarget.scrollIntoView({ block: "start" })
   }
 
   // "Use this photo": the photo goes in the form's file field, so the normal form (and its repeat-tap guard) sends it.
