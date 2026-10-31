@@ -3,7 +3,11 @@
   88 px and up, full width, the repeat-tap guard. A plain form POST with the authenticity token (Turbo stays out:
   the answer is a redirect to Google).
   origin: the page to come back to after signing in
+  In local development without Google keys (config.x.local_sign_in) it is the test person's button instead.
 %>
+<% if Rails.configuration.x.local_sign_in %>
+  <%= render "sessions/local_button", origin: local_assigns[:origin] %>
+<% else %>
 <%= button_to "/auth/google_oauth2", params: { origin: local_assigns[:origin] }.compact, class: "btn btn--google",
       data: { controller: "tap-guard", action: "click->tap-guard#guard", tap_guard_commit_value: true },
       form: { data: { turbo: false } } do %>
@@ -14,4 +18,5 @@
     <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
   </svg>
   <span class="btn__label">Sign in with Google</span><span class="btn__working">Working on it</span>
+<% end %>
 <% end %>

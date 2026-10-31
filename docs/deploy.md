@@ -27,6 +27,8 @@ Every variable in [`.env.example`](../.env.example) that production uses is set 
 
 Production stops at boot and names the variable when a required one is blank (`lib/required_env.rb`). After changing a variable, redeploy or restart both apps.
 
+Development's stand-ins for missing keys, "Sign in as a test person (local only)" and the local test checkout, are switched on only in `config/environments/development.rb`. Production never draws their routes, whatever keys it has, and a test boots production to check that.
+
 ## How a request gets in
 
 TLS ends at the platform's proxy, which forwards plain HTTP to port 80. Rails runs with `assume_ssl` and `force_ssl` (secure cookies, HSTS), answers only for its own host name (`config.hosts` in `config/environments/production.rb`), and lets `/up` answer any host so container health checks work.

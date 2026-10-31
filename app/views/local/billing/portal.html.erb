@@ -1,0 +1,18 @@
+<% page_title "Test portal" %>
+<div class="page stack">
+  <%= render "pages/page_header", chip: "Local test", title: "Test portal",
+        lead: "On the live site, Manage opens the payment provider's page for receipts, the card and cancelling." %>
+
+  <% if @renewing %>
+    <section class="card stack" aria-labelledby="clinic-title">
+      <h2 id="clinic-title" class="m-0">Clinic plan</h2>
+      <p class="m-0"><%= clinic_status_words(current_user) %></p>
+      <%= render "components/button", label: "Stop the Clinic plan (test)", url: local_portal_path, variant: :danger,
+            form: { data: { turbo: false } } %>
+    </section>
+  <% else %>
+    <p class="m-0">There is nothing to stop. Test payments show on your account page.</p>
+  <% end %>
+
+  <%= render "components/button", label: "Back", href: @return_url, variant: :secondary %>
+</div>

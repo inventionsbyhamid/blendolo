@@ -1,0 +1,8 @@
+<%#
+  "Sign in as a test person (local only)": local development without Google keys (config.x.local_sign_in). One tap,
+  no typing, with the same size and repeat-tap guard as every button.
+  origin: the page to come back to after signing in
+%>
+<%= render "components/button", label: "Sign in as a test person (local only)", url: local_sign_in_path,
+      params: { origin: local_assigns[:origin] }.compact, variant: :primary, form: { data: { turbo: false } } %>
+<p class="m-0">This button shows only on your own computer, while no Google keys are set.</p>

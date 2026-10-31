@@ -7,7 +7,8 @@
 # server and kept as users.billing_customer_id; each checkout carries a Checkout's random token. A webhook pays an
 # account only when its token resolves to a Checkout of that account AND its customer is that account's own customer
 # (BillingEvent). "Manage" opens only the account's own customer's portal. Credits come only from a verified webhook,
-# never from the page the buyer comes back to.
+# never from the page the buyer comes back to. In local development without a Dodo key, Billing::LocalTest stands in
+# for Dodo and goes through the same checkout reference and customer match.
 module Billing
   class Error < StandardError; end
   # A webhook whose signature or signature headers don't check out.
@@ -26,7 +27,7 @@ module Billing
     attr_writer :provider
 
     def provider
-      @provider ||= Dodo.new
+      @provider ||= Rails.configuration.x.local_billing ? LocalTest.new : Dodo.new
     end
 
     # Whether payments take test cards (Dodo test mode). Pages say so.
