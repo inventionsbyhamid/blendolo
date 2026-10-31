@@ -5,11 +5,13 @@ class ExamplesTest < ActiveSupport::TestCase
 
   test "examples seed is idempotent" do
     load SEED
-    counts = [ Kit.example.count, Photo.count, Render.count, ActiveStorage::Blob.count ]
-    assert_equal [ 3, 6, 12, 18 ], counts
+    kits = Kit.example.where(example_key: Examples.keys)
+    assert_equal Examples.keys.sort, kits.map(&:example_key).sort
+    assert_equal [ 6, 12 ], [ Photo.where(kit: kits).count, Render.where(kit: kits).count ]
 
-    load SEED
-    assert_equal counts, [ Kit.example.count, Photo.count, Render.count, ActiveStorage::Blob.count ]
+    assert_no_difference [ "Kit.count", "Photo.count", "Render.count", "ActiveStorage::Blob.count" ] do
+      load SEED
+    end
   end
 
   test "every look has a thumbnail" do
