@@ -1,7 +1,8 @@
 # Content Security Policy: everything comes from our own origin, with one exception. Hands-free capture runs MediaPipe
 # Tasks Vision in the browser, so its script and WebAssembly come from one pinned package on jsDelivr, and its face
 # model from one file (config.x.mediapipe). Inline scripts and styles need the per-request nonce (importmap and
-# Turbo's progress bar use it). Images may be data: or blob: (camera frames and previews).
+# Turbo's progress bar use it). Images may be data: or blob: (camera frames and previews). Workers may start from a
+# blob: URL: the capture checks worker does (capture/checks.js), so it keeps this policy.
 # See https://guides.rubyonrails.org/security.html#content-security-policy-header
 
 mediapipe = Rails.application.config.x.mediapipe
