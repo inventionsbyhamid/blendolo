@@ -1,0 +1,22 @@
+{
+  "captured_at": "2026-10-31T06:38:55+00:00",
+  "request": {
+    "method": "GET",
+    "path": "/s2s/v2.1/task/hair-transfer/not_a_real_task_id_0000",
+    "body": null
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 06:38:54 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519402201966184213"
+    },
+    "body": {
+      "status": 400,
+      "error": "This task ID doesn't exist, or the task has expired.",
+      "error_code": "InvalidTaskId"
+    }
+  },
+  "elapsed_ms": 1062
+}

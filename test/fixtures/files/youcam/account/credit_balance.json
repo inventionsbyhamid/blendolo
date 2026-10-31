@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-10-31T06:24:46+00:00",
+  "request": {
+    "method": "GET",
+    "path": "/s2s/v1.0/client/credit",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 06:24:46 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519398641245358437"
+    },
+    "body": {
+      "status": 200,
+      "results": [
+        {
+          "id": 1,
+          "type": "ApiPaygToken",
+          "amount": 1000,
+          "amount_dec": 1000.0,
+          "expiry": 1801267199000
+        }
+      ]
+    }
+  },
+  "elapsed_ms": 1149
+}

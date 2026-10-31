@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-10-31T07:07:15+00:00",
+  "request": {
+    "method": "POST",
+    "path": "/s2s/v2.0/task/mu-transfer",
+    "body": {
+      "src_file_id": "YkQsxeZ9JW5hqqxNNE9b/du8RkMpyoaYzm9Zeh7O8ccLbKfeLEmuXUa9yH4wuc2K",
+      "ref_file_url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/ACCOUNT/123836725181/v2/CLIENT/3ee8a3de-e9d1-4c20-bad8-6ab36e727bc5.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20261031T070713Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=REDACTED&X-Amz-Signature=REDACTED"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 07:07:15 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519409333084107218"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "task_id": "YkQsxeZ9JW5hqqxNNE9b_du8RkMpyoaYzm9Zeh7O8cceO6HKX3hfC9TDwcHZ69L5L1tdL0WuaKpao2rhLgDDpA"
+      }
+    }
+  },
+  "elapsed_ms": 1117
+}

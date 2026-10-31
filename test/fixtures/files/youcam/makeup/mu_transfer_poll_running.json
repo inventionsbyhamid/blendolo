@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-10-31T07:07:18+00:00",
+  "request": {
+    "method": "GET",
+    "path": "/s2s/v2.0/task/mu-transfer/YkQsxeZ9JW5hqqxNNE9b_du8RkMpyoaYzm9Zeh7O8cceO6HKX3hfC9TDwcHZ69L5L1tdL0WuaKpao2rhLgDDpA",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 07:07:18 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519409346145159419"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "error": null,
+        "results": null,
+        "task_status": "running"
+      }
+    }
+  },
+  "elapsed_ms": 1055,
+  "t_since_create_s": 4.18
+}

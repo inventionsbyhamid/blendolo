@@ -1,0 +1,123 @@
+{
+  "captured_at": "2026-10-31T07:05:25+00:00",
+  "request": {
+    "method": "POST",
+    "path": "/s2s/v2.0/task/makeup-vto",
+    "body": {
+      "src_file_id": "x2UjL/3GhbynOEm1Z+QfmsRceMFYNU5r4D7TrcEnd6oLbKfeLEmuXUa9yH4wuc2K",
+      "version": "1.0",
+      "effects": [
+        {
+          "category": "foundation",
+          "palettes": [
+            {
+              "color": "#7E4A30",
+              "colorIntensity": 35,
+              "glowIntensity": 30,
+              "coverageIntensity": 35
+            }
+          ]
+        },
+        {
+          "category": "blush",
+          "pattern": {
+            "name": "Oblique1"
+          },
+          "palettes": [
+            {
+              "color": "#B5524A",
+              "texture": "matte",
+              "colorIntensity": 45
+            }
+          ]
+        },
+        {
+          "category": "eye_shadow",
+          "pattern": {
+            "name": "1color6"
+          },
+          "palettes": [
+            {
+              "color": "#7A4E3A",
+              "texture": "matte",
+              "colorIntensity": 55
+            }
+          ]
+        },
+        {
+          "category": "eye_liner",
+          "pattern": {
+            "name": "OpenWings2"
+          },
+          "palettes": [
+            {
+              "color": "#111111",
+              "texture": "matte",
+              "colorIntensity": 90
+            }
+          ]
+        },
+        {
+          "category": "eyelashes",
+          "pattern": {
+            "name": "Natural2"
+          },
+          "palettes": [
+            {
+              "color": "#000000",
+              "colorIntensity": 85
+            }
+          ]
+        },
+        {
+          "category": "eyebrows",
+          "pattern": {
+            "type": "shape",
+            "name": "SoftArch3",
+            "curvature": 0,
+            "thickness": 10,
+            "definition": 55
+          },
+          "palettes": [
+            {
+              "color": "#2B1B14",
+              "colorIntensity": 60,
+              "texture": "matte"
+            }
+          ]
+        },
+        {
+          "category": "lip_color",
+          "shape": {
+            "name": "original"
+          },
+          "style": {
+            "type": "full"
+          },
+          "palettes": [
+            {
+              "color": "#8E1F2F",
+              "texture": "matte",
+              "colorIntensity": 85
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 07:05:25 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519408871530312055"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "task_id": "x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6p2XRDxunAVjph_h-F8qwZNd-BTT-LvvMAmKHuvXEbI5Q"
+      }
+    }
+  },
+  "elapsed_ms": 1157
+}

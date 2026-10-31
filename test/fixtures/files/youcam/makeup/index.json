@@ -1,0 +1,64 @@
+{
+  "generated_from": "live makeup calls recorded on 2026-10-31 (4 units); presigned URL credentials and signatures redacted",
+  "fixtures": [
+    {
+      "file": "makeup_vto_7effects_create.json",
+      "note": "Makeup VTO, 7 effects in one call (foundation, blush, eye_shadow, eye_liner OpenWings2, eyelashes, eyebrows shape, lip_color matte). 1 unit",
+      "http_status": 200,
+      "method": "POST",
+      "path": "/s2s/v2.0/task/makeup-vto"
+    },
+    {
+      "file": "makeup_vto_poll_running.json",
+      "note": "Makeup VTO poll while running",
+      "http_status": 200,
+      "method": "GET",
+      "path": "/s2s/v2.0/task/makeup-vto/x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6p2XRDxunAVjph_h-F8qwZNd-BTT-LvvMAmKHuvXEbI5Q"
+    },
+    {
+      "file": "makeup_vto_7effects_poll_success.json",
+      "note": "Makeup VTO success; result is PNG RGBA 800x1000 under a .jpg URL",
+      "http_status": 200,
+      "method": "GET",
+      "path": "/s2s/v2.0/task/makeup-vto/x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6p2XRDxunAVjph_h-F8qwZNd-BTT-LvvMAmKHuvXEbI5Q",
+      "result_file": "m01_full_look.png"
+    },
+    {
+      "file": "makeup_vto_easy_create.json",
+      "note": "Same 7 effects, liner swapped to Smoke4 dark brown @70 and lip_color to texture sheer. 1 unit",
+      "http_status": 200,
+      "method": "POST",
+      "path": "/s2s/v2.0/task/makeup-vto"
+    },
+    {
+      "file": "makeup_vto_easy_poll_success.json",
+      "note": "Makeup VTO easy look success",
+      "http_status": 200,
+      "method": "GET",
+      "path": "/s2s/v2.0/task/makeup-vto/x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6o-2k-vkPdWpWLslfmvkPc8d-BTT-LvvMAmKHuvXEbI5Q",
+      "result_file": "m02_easy_look.png"
+    },
+    {
+      "file": "mu_transfer_create.json",
+      "note": "Makeup Transfer: src_file_id (target face) + ref_file_url (a previous result URL works as reference). 2 units",
+      "http_status": 200,
+      "method": "POST",
+      "path": "/s2s/v2.0/task/mu-transfer"
+    },
+    {
+      "file": "mu_transfer_poll_running.json",
+      "note": "Makeup Transfer poll while running",
+      "http_status": 200,
+      "method": "GET",
+      "path": "/s2s/v2.0/task/mu-transfer/YkQsxeZ9JW5hqqxNNE9b_du8RkMpyoaYzm9Zeh7O8cceO6HKX3hfC9TDwcHZ69L5L1tdL0WuaKpao2rhLgDDpA"
+    },
+    {
+      "file": "mu_transfer_poll_success.json",
+      "note": "Makeup Transfer success; result is a real JPEG 800x1000, same size as src",
+      "http_status": 200,
+      "method": "GET",
+      "path": "/s2s/v2.0/task/mu-transfer/YkQsxeZ9JW5hqqxNNE9b_du8RkMpyoaYzm9Zeh7O8cceO6HKX3hfC9TDwcHZ69L5L1tdL0WuaKpao2rhLgDDpA",
+      "result_file": "m03_mu_transfer.jpg"
+    }
+  ]
+}

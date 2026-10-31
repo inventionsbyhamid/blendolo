@@ -1,0 +1,47 @@
+{
+  "captured_at": "2026-10-31T06:36:07+00:00",
+  "request": {
+    "method": "POST",
+    "path": "/s2s/v2.0/file",
+    "body": {
+      "files": [
+        {
+          "content_type": "image/jpeg",
+          "file_name": "tr_e17ce36d86.jpg",
+          "file_size": 54021
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 06:36:07 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519401498208120844"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "files": [
+          {
+            "content_type": "image/jpeg",
+            "file_name": "tr_e17ce36d86.jpg",
+            "file_id": "8iixQrHFCaB260JUDJpP5fOB/yUtTDkkAjYqXSez+GkLbKfeLEmuXUa9yH4wuc2K",
+            "requests": [
+              {
+                "method": "PUT",
+                "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/ACCOUNT/123834967191/v2/CLIENT/20be8ca9-306a-4640-a911-260150a3d757.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20261031T063607Z&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost&X-Amz-Expires=7200&X-Amz-Credential=REDACTED&X-Amz-Signature=REDACTED",
+                "headers": {
+                  "Content-Length": "54021",
+                  "Content-Type": "image/jpeg"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "elapsed_ms": 1026
+}

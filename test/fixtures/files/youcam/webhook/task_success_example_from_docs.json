@@ -1,0 +1,17 @@
+{
+  "_source": "docs develop__webhook.md (not captured live)",
+  "headers": {
+    "content-type": "application/json",
+    "webhook-id": "msg_1eWPv9cWJCnEP99UJncmVJ6KjK_xVXRhZPe_eSGnRNbLlXEPjiG3gb3Usg9le3_4:1761112848",
+    "webhook-timestamp": "1761112900",
+    "webhook-signature": "v1,vyVNWrjoZcBK1JXrFGkdDKK2slo5+Q5yfzpkHmqO5R0="
+  },
+  "body": {
+    "created_at": 1761112848,
+    "data": {
+      "task_id": "1eWPv9cWJCnEP99UJncmVJ6KjK_xVXRhZPe_eSGnRNbLlXEPjiG3gb3Usg9le3_4",
+      "task_status": "success"
+    }
+  },
+  "signed_content": "msg_1eWPv9cWJCnEP99UJncmVJ6KjK_xVXRhZPe_eSGnRNbLlXEPjiG3gb3Usg9le3_4:1761112848.1761112900.{\"created_at\":1761112848,\"data\":{\"task_id\":\"1eWPv9cWJCnEP99UJncmVJ6KjK_xVXRhZPe_eSGnRNbLlXEPjiG3gb3Usg9le3_4\",\"task_status\":\"success\"}}"
+}

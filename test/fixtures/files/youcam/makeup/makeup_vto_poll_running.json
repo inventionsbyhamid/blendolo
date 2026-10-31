@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-10-31T07:05:28+00:00",
+  "request": {
+    "method": "GET",
+    "path": "/s2s/v2.0/task/makeup-vto/x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6p2XRDxunAVjph_h-F8qwZNd-BTT-LvvMAmKHuvXEbI5Q",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 07:05:28 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519408884796895610"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "error": null,
+        "results": null,
+        "task_status": "running"
+      }
+    }
+  },
+  "elapsed_ms": 1043,
+  "t_since_create_s": 4.2
+}

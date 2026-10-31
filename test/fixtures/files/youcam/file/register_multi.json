@@ -1,0 +1,67 @@
+{
+  "captured_at": "2026-10-31T06:41:25+00:00",
+  "request": {
+    "method": "POST",
+    "path": "/s2s/v2.0/file",
+    "body": {
+      "files": [
+        {
+          "content_type": "image/jpeg",
+          "file_name": "tr_e25d186f8e.jpg",
+          "file_size": 248065
+        },
+        {
+          "content_type": "image/jpeg",
+          "file_name": "tr_4697db3a51.jpg",
+          "file_size": 110685
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 06:41:25 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519402831380229440"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "files": [
+          {
+            "content_type": "image/jpeg",
+            "file_name": "tr_e25d186f8e.jpg",
+            "file_id": "71dBuTCworXM2OYmTBtNWBG907/GuQP51cnFNUAANtQLbKfeLEmuXUa9yH4wuc2K",
+            "requests": [
+              {
+                "method": "PUT",
+                "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/ACCOUNT/123835285045/v2/CLIENT/746220dd-d015-4463-b0a6-d8fd563aba70.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20261031T064125Z&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost&X-Amz-Expires=7200&X-Amz-Credential=REDACTED&X-Amz-Signature=REDACTED",
+                "headers": {
+                  "Content-Length": "248065",
+                  "Content-Type": "image/jpeg"
+                }
+              }
+            ]
+          },
+          {
+            "content_type": "image/jpeg",
+            "file_name": "tr_4697db3a51.jpg",
+            "file_id": "cy0JaEypoAsecFI9sKGmTD8+QSrvCOpA0IImv7KolTMLbKfeLEmuXUa9yH4wuc2K",
+            "requests": [
+              {
+                "method": "PUT",
+                "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/ACCOUNT/123835285045/v2/CLIENT/0c14bf82-1d41-4194-8a54-74af08f646c7.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20261031T064125Z&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost&X-Amz-Expires=7200&X-Amz-Credential=REDACTED&X-Amz-Signature=REDACTED",
+                "headers": {
+                  "Content-Length": "110685",
+                  "Content-Type": "image/jpeg"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "elapsed_ms": 1003
+}

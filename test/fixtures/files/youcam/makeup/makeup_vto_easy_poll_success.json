@@ -1,0 +1,28 @@
+{
+  "captured_at": "2026-10-31T07:06:22+00:00",
+  "request": {
+    "method": "GET",
+    "path": "/s2s/v2.0/task/makeup-vto/x2UjL_3GhbynOEm1Z-QfmsRceMFYNU5r4D7TrcEnd6o-2k-vkPdWpWLslfmvkPc8d-BTT-LvvMAmKHuvXEbI5Q",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Date": "Sat, 31 Oct 2026 07:06:22 GMT",
+      "Content-Type": "application/json",
+      "x-request-id": "519409113579401637"
+    },
+    "body": {
+      "status": 200,
+      "data": {
+        "error": null,
+        "results": {
+          "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/ACCOUNT/123836775597/v2/CLIENT/0b4703b2-8f53-4c27-9314-bcd33e5bd397.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20261031T070622Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=REDACTED&X-Amz-Signature=REDACTED"
+        },
+        "task_status": "success"
+      }
+    }
+  },
+  "elapsed_ms": 1037,
+  "t_since_create_s": 8.33
+}
