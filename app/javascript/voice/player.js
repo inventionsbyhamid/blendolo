@@ -10,10 +10,15 @@
 const RATE = 0.9
 // How long a recording may take to start before the phone's own voice reads the line instead.
 const START_WITHIN_MS = 3000
+// A recording that started ends at the latest this long after its own length (when the network stalls, say), so
+// nothing waits for it for ever. Its length, or LONGEST_S while the browser doesn't know it yet.
+const STALL_MS = 2000
+const LONGEST_S = 30
 
 let element = null
-let current = null // the line being read: { text, onend, audio, speech }
+let current = null // the line being read: { text, onend, audio, speech, utterance, late, watchdog }
 const keys = new Map() // text -> key, or null where the browser can't hash (crypto.subtle needs HTTPS)
+const fetched = new Map() // recording URL -> a blob: URL of it, fetched ahead (warm), or null while it's fetched
 
 export function normalize(text) {
   return String(text ?? "").replace(/\s+/g, " ").trim()
@@ -39,14 +44,35 @@ export async function key(text) {
   return hex
 }
 
+// Fetches these lines' recordings ahead, so they start at once when said: the photo countdown says a number every
+// second, too soon to wait for the network. Settles when they're all in (or failed: those play from the network).
+export async function warm(texts, voices = {}) {
+  const fetches = []
+  for (const text of texts) {
+    const hex = await key(text)
+    const src = hex && voices[hex] && recording(hex, voices[hex])
+    if (!src || fetched.has(src)) continue
+    fetched.set(src, null)
+    fetches.push(fetch(src)
+      .then((response) => response.ok ? response.blob() : Promise.reject(new Error(`HTTP ${response.status}`)))
+      .then((blob) => fetched.set(src, URL.createObjectURL(blob)), () => fetched.delete(src)))
+  }
+  await Promise.all(fetches)
+}
+
 export function speaking() {
   return current !== null
+}
+
+// The words being read now, or null.
+export function reading() {
+  return current?.text ?? null
 }
 
 // Reads text aloud: its recording when voices has its key, else the phone's own voice. A text hashed before (key)
 // starts playing at once, inside the tap that asked for it, which iOS needs before it plays any sound.
 export function speak(text, { voices = {}, onend = () => {} } = {}) {
-  stop()
+  stopAll()
   const line = { text: normalize(text), onend }
   current = line
   if (keys.has(line.text)) start(line, keys.get(line.text), voices)
@@ -54,12 +80,22 @@ export function speak(text, { voices = {}, onend = () => {} } = {}) {
   return line
 }
 
-// Stops the line being read (or only this line, when it's the one being read).
-export function stop(line = current) {
+// Stops this line, when it's the one being read (a line that ended or was stopped already is left alone).
+export function stop(line) {
   if (!line || line !== current) return
   current = null
+  settle(line)
   if (line.audio) element.pause()
   if (line.speech) window.speechSynthesis?.cancel()
+}
+
+// Stops whatever is being read.
+export function stopAll() {
+  stop(current)
+}
+
+function recording(hex, version) {
+  return `/voice/${hex}.mp3?v=${encodeURIComponent(version)}`
 }
 
 function start(line, hex, voices) {
@@ -67,18 +103,36 @@ function start(line, hex, voices) {
   if (!version) return speakAloud(line)
 
   const audio = player()
+  const src = recording(hex, version)
   line.audio = true
-  audio.src = `/voice/${hex}.mp3?v=${encodeURIComponent(version)}`
-  const late = setTimeout(() => giveUp(line), START_WITHIN_MS)
-  Promise.resolve(audio.play()).then(() => clearTimeout(late), () => {
-    clearTimeout(late)
-    giveUp(line) // Blocked (no tap yet on iOS, say), or the file didn't load.
-  })
+  audio.src = fetched.get(src) || src
+  line.late = setTimeout(() => giveUp(line), START_WITHIN_MS)
+  Promise.resolve(audio.play()).then(() => {
+    clearTimeout(line.late)
+    if (current === line && line.audio) watch(line, audio)
+  }, () => giveUp(line)) // Blocked (no tap yet on iOS, say), or the file didn't load.
+}
+
+// From the start of a recording: if it hasn't ended by its length plus STALL_MS, it ends there.
+function watch(line, audio) {
+  const arm = () => {
+    clearTimeout(line.watchdog)
+    const seconds = Number.isFinite(audio.duration) ? audio.duration : LONGEST_S
+    line.watchdog = setTimeout(() => {
+      if (current !== line || !line.audio) return
+      audio.pause()
+      finish(line, "stalled")
+    }, seconds * 1000 + STALL_MS)
+  }
+  arm()
+  if (Number.isFinite(audio.duration)) return
+  audio.addEventListener("loadedmetadata", () => { if (current === line) arm() }, { once: true })
 }
 
 // The recording can't be played: the phone's own voice reads the line instead.
 function giveUp(line) {
   if (current !== line || !line.audio) return
+  settle(line)
   line.audio = false
   element.pause()
   speakAloud(line)
@@ -87,20 +141,29 @@ function giveUp(line) {
 function speakAloud(line) {
   const speech = window.speechSynthesis
   // Nothing can read it. Said after speak() returns, as the other endings are.
-  if (!speech || typeof SpeechSynthesisUtterance === "undefined") return queueMicrotask(() => finish(line, "unavailable"))
+  if (!speech || typeof SpeechSynthesisUtterance === "undefined") {
+    return queueMicrotask(() => finish(line, "unavailable"))
+  }
 
   line.speech = true
-  const utterance = new SpeechSynthesisUtterance(line.text)
-  utterance.rate = RATE
-  utterance.onend = utterance.onerror = () => finish(line)
+  // Kept on the line until it ends: Chrome can drop an utterance nothing refers to, and then never says it ended.
+  line.utterance = new SpeechSynthesisUtterance(line.text)
+  line.utterance.rate = RATE
+  line.utterance.onend = line.utterance.onerror = () => finish(line)
   speech.cancel()
-  speech.speak(utterance)
+  speech.speak(line.utterance)
 }
 
 function finish(line, reason = "ended") {
   if (current !== line) return
   current = null
+  settle(line)
   line.onend(reason)
+}
+
+function settle(line) {
+  clearTimeout(line.late)
+  clearTimeout(line.watchdog)
 }
 
 function player() {

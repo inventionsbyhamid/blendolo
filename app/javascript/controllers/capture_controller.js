@@ -27,6 +27,8 @@ const MISSES_TO_GIVE_WAY = 10
 const NO_CHECKS = "Tap Take the photo when you're ready"
 const CHECKING = "Checking the photo"
 const NO_FACE = "We couldn't find a face in that photo. Please choose another."
+// What the timers count down from (3 and 10 seconds), said a number a second.
+const COUNTDOWN = Array.from({ length: 10 }, (_, index) => String(index + 1))
 const SAY_AGAIN_AFTER_MS = 4000
 // A new check message shows (and is spoken) only after it has held this long, so a head near a limit doesn't make
 // the words flicker between two messages.
@@ -47,8 +49,13 @@ export default class extends Controller {
     this.facing = "user"
     this.renderSpeech()
     // Hashed now, so the countdown's first number, said in the tap on a timer, plays inside that tap.
-    for (const line of [...Object.values(MESSAGES), NO_CHECKS, CHECKING, NO_FACE, this.choosePromptValue]) voice.key(line)
-    for (let second = 1; second <= 10; second++) voice.key(String(second))
+    const lines = [...Object.values(MESSAGES), ...COUNTDOWN, NO_CHECKS, CHECKING, NO_FACE, this.choosePromptValue]
+    for (const line of lines) voice.key(line)
+    // The countdown's recordings, and the commonest prompts', fetched now (about 150 KB): a number a second is too
+    // soon to wait for the network.
+    if (this.cameraValue && !navigator.connection?.saveData) {
+      this.warmed = voice.warm([...COUNTDOWN, MESSAGES.straight, MESSAGES.still, MESSAGES.done], this.voicesValue)
+    }
     this.loadGates()
     this.leave = () => this.stopCamera()
     // Back from another site restores this page from the browser's cache with the camera off: start it again.
