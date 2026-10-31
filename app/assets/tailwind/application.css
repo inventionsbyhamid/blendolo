@@ -225,6 +225,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .lvl { justify-self: end; border-radius: 999px; padding: 0 12px; font-size: 1.125rem; font-weight: 800; line-height: 1.6; white-space: nowrap; }
   .lvl--hard { background: var(--rose); color: var(--rose-ink); }
   .lvl--easy { background: var(--mint); color: var(--leaf); }
+  .lvl--care { background: var(--sun-soft); color: var(--ink); }
 
   @media (max-width: 960px) {
     .hero { padding-bottom: 64px; }

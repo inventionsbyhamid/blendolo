@@ -41,21 +41,20 @@
       <div class="hero__photo">
         <%= landing_picture "hero", full: 928, height: 993, sizes: "(max-width: 960px) 92vw, 500px", eager: true, css: "photo photo--hero",
               alt: "A smiling woman with short silver hair sits at her kitchen table, elbow resting on it, a red lip crayon in her hand and a small round mirror in front of her." %>
+        <% example = landing_example %>
         <div class="float float--hands">
           <span class="dot" aria-hidden="true"></span>
-          <p><strong>Easy for your hands</strong><br><span>Tremor, tires fast</span></p>
+          <p><strong>Graded for <%= example[:name] %>'s hands</strong><br><span>Tremor, arms tire at times</span></p>
         </div>
         <figure class="float float--swap">
-          <figcaption class="float__head"><span>Your easy version</span><span class="tag">Example</span></figcaption>
+          <figcaption class="float__head"><span><%= example[:name] %>'s easy version</span><span class="tag">Example</span></figcaption>
           <ul class="swaps">
-            <li>
-              <span class="swaps__was">Liquid red lipstick</span><span class="lvl lvl--hard">Hard</span>
-              <span class="swaps__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Red tinted balm</span><span class="lvl lvl--easy">Easy</span>
-            </li>
-            <li>
-              <span class="swaps__was">Winged liquid liner</span><span class="lvl lvl--hard">Hard</span>
-              <span class="swaps__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Smudged pencil line</span><span class="lvl lvl--easy">Easy</span>
-            </li>
+            <% example[:swaps].each do |swap| %>
+              <li>
+                <span class="swaps__was"><%= swap[:was] %></span><%= ease_level(swap[:from]) %>
+                <span class="swaps__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span><%= swap[:now] %></span><%= ease_level(swap[:to]) %>
+              </li>
+            <% end %>
           </ul>
           <p class="float__foot">Graded by the hardest step</p>
         </figure>
@@ -132,8 +131,9 @@
       <%= landing_picture "kit", full: 1200, height: 597, sizes: "(max-width: 900px) 92vw, 540px",
             alt: "Easy makeup on cream linen: three chunky crayon pencils, a pump bottle, a cushion compact, a brush with a fat wooden handle and a tin of red tinted balm." %>
       <div class="float float--grade">
-        <p class="grade__row"><span>Classic look</span><span class="lvl lvl--hard">Hard</span></p>
-        <p class="grade__row"><span>Your easy version</span><span class="lvl lvl--easy">Easy</span></p>
+        <% example = landing_example %>
+        <p class="grade__row"><span>Classic red lip</span><%= ease_level(example[:classic]) %></p>
+        <p class="grade__row"><span><%= example[:name] %>'s easy version</span><%= ease_level(example[:easy]) %></p>
       </div>
     </div>
   </div>

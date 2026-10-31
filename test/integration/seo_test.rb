@@ -32,6 +32,34 @@ class SeoTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "A smudged pencil line scores #{pencil}."
   end
 
+  test "the landing's example grades come from the ease engine" do
+    get "/"
+
+    rows = css_select(".float--swap .swaps li").map do |row|
+      [ row.at_css(".swaps__was").text, row.css(".lvl").map(&:text), row.at_css(".swaps__now").text.sub(/\A\S+ becomes /, "") ]
+    end
+    assert_equal [
+      [ "Liquid red lipstick", [ "Hard", "Easy" ], "Red tinted balm" ],
+      [ "Winged liquid liner", [ "Hard", "Some care" ], "Shadow liner" ]
+    ], rows
+    assert_equal [ "Hard", "Some care" ], css_select(".float--grade .lvl").map(&:text)
+    assert_select ".float--swap .lvl--care", "Some care"
+
+    # The same words straight from the engine, for the example person's hands and look, and the steps named are the
+    # ones the engine swaps to.
+    person = Examples.fetch(PagesHelper::LANDING_EXAMPLE[:person])
+    profile = Ease::HandProfile.new(**person.hands)
+    look = Looks::Catalogue.fetch(person.chosen_look)
+    assert_equal "Hard", Ease::Words.for(Ease::Scorer.look(look.ease_steps, profile)[:ease])
+    assert_equal "Some care", Ease::Words.for(Ease::Scorer.look(look.easy_steps(profile).map(&:step), profile)[:ease])
+    planned = look.plan(profile)[:swaps].to_h { |swap| [ swap[:from].id, swap[:to]&.id ] }
+    PagesHelper::LANDING_EXAMPLE[:swaps].zip(rows) do |shown, (_was, (from, to), _now)|
+      assert_equal shown[:to], planned.fetch(shown[:from])
+      assert_equal from, Ease::Words.for(Ease::Scorer.step(Ease::StepCatalogue.fetch(shown[:from]), profile))
+      assert_equal to, Ease::Words.for(Ease::Scorer.step(Ease::StepCatalogue.fetch(shown[:to]), profile))
+    end
+  end
+
   test "home title and description fit search results" do
     get "/"
 
