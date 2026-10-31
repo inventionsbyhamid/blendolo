@@ -11,7 +11,7 @@ class AccessibilityTest < ApplicationSystemTestCase
   test "home passes axe" do
     visit "/"
 
-    assert_selector "h1", text: "same red lip"
+    assert_selector "h1", text: "hands that shake"
     assert_axe_clean
   end
 
