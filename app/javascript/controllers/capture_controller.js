@@ -72,6 +72,7 @@ export default class extends Controller {
     this.gatesLoading = null
     this.gate?.close()
     this.gate = null
+    this.gaveWay = this.checksOff = this.workerFailed = false
   }
 
   // The camera running (or "Choose a photo" for an old photo), nothing chosen.
@@ -159,6 +160,7 @@ export default class extends Controller {
     this.misses = 0
     this.gaveWay = true
     if (gate.kind === "worker") {
+      this.workerFailed = true // For the rest of this visit: whatever broke it would most likely break it again.
       gate.close()
       this.gate = null
       return this.loadGates({ worker: false })
@@ -167,15 +169,14 @@ export default class extends Controller {
     if (this.state === "live") this.say(NO_CHECKS)
   }
 
-  // A new start of the camera ("Take it again", "A helper is taking it", coming back to the page) brings back checks
-  // that gave way, from scratch: whatever stopped them (a covered lens, a browser hiccup) may be gone.
+  // A new start of the camera ("Take it again", "A helper is taking it", coming back to the page) turns checks that
+  // gave way back on: the page's own checks, still loaded, look at the camera again. Only when none are loaded does
+  // it load them again, and the worker only if it never failed in this visit.
   restartChecks() {
     this.gaveWay = false
     this.checksOff = false
     this.misses = 0
-    this.gate?.close()
-    this.gate = null
-    this.loadGates()
+    if (!this.gate) this.loadGates({ worker: !this.workerFailed })
   }
 
   // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
