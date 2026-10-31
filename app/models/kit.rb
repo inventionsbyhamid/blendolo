@@ -40,6 +40,15 @@ class Kit < ApplicationRecord
     update!(last_active_at: Time.current)
   end
 
+  # "Delete everything", and retention: the files go now rather than in a later purge job, then every row.
+  # Provider calls stay, without the kit, for the daily unit count.
+  def destroy_everything!
+    files = photos.includes(image_attachment: :blob).map(&:image) +
+      renders.includes(result_attachment: :blob).map(&:result)
+    files.each(&:purge)
+    destroy!
+  end
+
   private
     def schedule_purge
       self.last_active_at ||= Time.current
