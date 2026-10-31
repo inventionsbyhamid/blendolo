@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
+import { blankFrame, evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
 import { startChecks } from "capture/checks"
 import { sampleRegions, sharpness, toJpeg, pixels } from "capture/sampler"
 
@@ -206,11 +206,20 @@ export default class extends Controller {
     if (gate.broken) return this.giveWay(gate)
     if (failed || summary?.blank) this.misses += 1
     else if (summary) this.misses = 0
+    // The worker's copies came out empty: before it gives way, see whether the camera's own picture is dark too (the
+    // phone lies face down, a finger covers the lens). Then it isn't the worker's doing.
+    if (summary?.blank && this.misses >= MISSES_TO_GIVE_WAY && this.cameraDark()) this.misses = 0
     if (this.misses >= MISSES_TO_GIVE_WAY) return this.giveWay(gate)
     if (summary) this.check(summary, started)
     const took = performance.now() - started
     const gap = CHECK_GAP_MS[gate.kind] + Math.random() * CHECK_JITTER_MS
     this.watch(Math.max(gap, CHECK_SHARE[gate.kind] * took) - took)
+  }
+
+  // Whether the camera's own picture is dark, drawn on a page canvas as the burst draws it.
+  cameraDark() {
+    this.darkCanvas ||= document.createElement("canvas")
+    return blankFrame(this.videoTarget, this.darkCanvas)
   }
 
   // One frame's checks: say what to change, or take the photo after a second of stillness.

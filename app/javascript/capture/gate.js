@@ -123,10 +123,10 @@ export async function loadLandmarker(packageUrl, modelUrl, { module = false } = 
 }
 
 // True when a frame has no picture in it, all one colour: the black or empty frames a camera or browser can hand over
-// when it fails. No face can be found there, and it isn't the person's doing. source: an image, bitmap or canvas.
-export function blankFrame(source) {
+// when it fails, or a camera lying face down. source: an image, bitmap, canvas or video. canvas: one to draw on (a
+// page canvas to reuse); by default a new one.
+export function blankFrame(source, canvas = newCanvas()) {
   const size = 16
-  const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(size, size) : document.createElement("canvas")
   canvas.width = canvas.height = size
   const context = canvas.getContext("2d", { willReadFrequently: true })
   context.drawImage(source, 0, 0, size, size)
@@ -139,6 +139,10 @@ export function blankFrame(source) {
     lightest = Math.max(lightest, value)
   }
   return lightest - darkest < BLANK_RANGE
+}
+
+function newCanvas() {
+  return typeof OffscreenCanvas === "function" ? new OffscreenCanvas(16, 16) : document.createElement("canvas")
 }
 
 // A frame whose 16 x 16 copy varies less than this (red + green + blue, 0 to 765) has no picture in it.

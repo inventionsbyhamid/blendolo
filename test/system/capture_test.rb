@@ -191,16 +191,6 @@ class CaptureTest < ApplicationSystemTestCase
           outcome.slowestAwake = slow.slowest
           delete document.hidden
 
-          // An empty copy of a frame counts while the camera shows a picture, not when the camera itself is dark.
-          outcome.pictureBlank = (await answering({ ...noFace, blank: true }).video(camera, 4)).blank
-          const dark = document.createElement("canvas")
-          dark.width = dark.height = 64
-          const paint = setInterval(() => dark.getContext("2d").fillRect(0, 0, 64, 64), 50)
-          const darkVideo = Object.assign(document.createElement("video"), { muted: true, srcObject: dark.captureStream(10) })
-          await darkVideo.play()
-          for (let i = 0; i < 40 && !(darkVideo.readyState >= 2 && darkVideo.videoWidth); i++) await sleep(50)
-          outcome.darkBlank = (await answering({ ...noFace, blank: true }).video(darkVideo, 5)).blank
-          clearInterval(paint)
           done(outcome)
         })
       JS
@@ -218,8 +208,38 @@ class CaptureTest < ApplicationSystemTestCase
     assert_in_delta 10_000, outcome["asleepWait"]["waited"], 1500, "the first wait saw the page hidden, so a second one ran"
     assert_equal 0, outcome["slowestAfterHidden"]
     assert_operator outcome["slowestAwake"], :>=, 250
-    assert outcome["pictureBlank"]
-    assert_not outcome["darkBlank"], "a dark camera isn't the worker's doing"
+  end
+
+  test "a dark camera never makes the worker give way" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    # The phone lies face down: the camera's picture is black, and so is every copy the worker gets.
+    execute_async_script <<~JS
+      const done = arguments[arguments.length - 1]
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const dark = document.createElement("canvas")
+      dark.width = dark.height = 64
+      setInterval(() => dark.getContext("2d").fillRect(0, 0, 64, 64), 50)
+      capture.videoTarget.srcObject = dark.captureStream(10)
+      capture.videoTarget.play().then(() => {
+        window.workerLooks = 0
+        capture.gate = fakeChecks("worker", async () => {
+          workerLooks += 1
+          return { ...noFace, blank: true }
+        })
+        capture.loadGates = async () => log.push("load page checks")
+        capture.watch()
+        done()
+      })
+    JS
+
+    page.document.synchronize(10) do
+      raise Capybara::ExpectationNotMet, "too few checks yet" unless evaluate_script("window.workerLooks") >= 25
+    end
+    assert_equal [], evaluate_script("window.log")
+    assert_equal "worker", evaluate_script("captureController().gate.kind")
   end
 
   test "an empty frame is one with no picture in it" do
