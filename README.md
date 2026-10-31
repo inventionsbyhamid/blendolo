@@ -1,6 +1,6 @@
 # Blendolo
 
-**The same red lip. Two mirrors. One of them takes eleven tries.**
+**Makeup made easy for hands that shake.**
 
 Blendolo is makeup try-on for people whose hands shake or are stiff: Parkinson's, essential tremor, arthritis, MS, a stroke. It scores each look for your hands, swaps the hard steps for easier ones, and shows the classic and the easy version side by side on your own face before you buy anything.
 
