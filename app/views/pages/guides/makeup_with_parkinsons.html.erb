@@ -1,0 +1,42 @@
+<% seo title: @guide[:title], description: @guide[:description] %>
+<article class="page prose">
+  <%= render "pages/page_header", chip: "Guide", title: @guide[:title],
+        lead: "Do the detailed steps first while your hands are fresh, rest your elbow on a table, and pick creams and sticks that blend away a wobble." %>
+
+  <p>You're far from alone. About 5.3 million women live with Parkinson's worldwide, 45% of everyone with it. Many of them still love wearing makeup, and plenty of people have worked out ways that make it easier.</p>
+
+  <h2>Set up before you start</h2>
+  <ul>
+    <li>Sit at a table and rest your elbow on it. Parkinson's UK and Parkinson's NSW both suggest this.</li>
+    <li>Put your mirror in one fixed place, on a wall or a stand, so you don't need to hold it.</li>
+    <li>Give yourself time. "Having enough time to do my makeup calmly and slowly is beneficial for my brain and my face," says Alle Connell, who has a tremor.</li>
+  </ul>
+
+  <h2>Detailed steps first</h2>
+  <p>Parkinson's UK suggests doing eye makeup first, when your hands are strongest. Liner and brows need the most control, so they go first, and the forgiving steps like blush and balm come later.</p>
+  <p>Do the detailed steps when your hands feel best. If you plan around your "on" times, that can be a good window. The Parkinson's Foundation suggests getting ready when your medicines are working well.</p>
+
+  <h2>Swap the steps that need a steady line</h2>
+  <ul>
+    <li><strong>Eyeliner:</strong> short strokes, then join them up. A soft pencil smudged along the lashes hides a wobble.</li>
+    <li><strong>Lips:</strong> dab lipstick on a finger first and press it on, or use a tinted balm.</li>
+    <li><strong>Eyes and cheeks:</strong> cream shadow and cream blush blend more easily than powder.</li>
+    <li><strong>Base:</strong> a pump bottle is easier than a tube you have to squeeze.</li>
+  </ul>
+  <p>Terri Bryant, a makeup artist who has Parkinson's, puts it simply: "The shakier the hand, the more challenging it is to achieve the level of precision required to draw an even line." So we pick steps that don't need an even line.</p>
+
+  <h2>Make tools easier to hold</h2>
+  <p>Thicker brushes help. So does a rubber band around a handle, or foam tubing slid over it, which the Parkinson's Foundation suggests for grooming tools.</p>
+
+  <h2>Tidy up at the end</h2>
+  <p>Keep a cotton bud and a little remover nearby. A smudge at the end takes a few seconds to fix, so you don't have to get every stroke right the first time.</p>
+
+  <%= render "pages/guide_end", sources: [
+        [ "Parkinson's UK: applying makeup when you have Parkinson's", "https://www.parkinsons.org.uk/magazine/tips/applying-makeup-when-you-have-parkinsons", nil ],
+        [ "Parkinson's NSW: applying makeup", "https://www.parkinsonsnsw.org.au/applying-makeup-when-you-have-parkinsons/", nil ],
+        [ "Parkinson's Foundation: dressing and grooming", "https://www.parkinson.org/living-with-parkinsons/management/activities-daily-living/dressing", nil ],
+        [ "Terri Bryant (The List, 2020)", "https://www.thelist.com/301301/heres-why-shaky-hands-dont-have-to-ruin-your-makeup", nil ],
+        [ "Alle Connell (Allure via Yahoo, 2020)", "https://www.yahoo.com/lifestyle/apply-eye-makeup-shaky-hands-130000994.html", nil ],
+        [ "Global Burden of Disease 2021 (Frontiers, 2025)", "https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2024.1498756/full", nil ]
+      ] %>
+</article>

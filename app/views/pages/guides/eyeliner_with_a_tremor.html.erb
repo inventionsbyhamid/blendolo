@@ -1,0 +1,31 @@
+<% seo title: @guide[:title], description: @guide[:description] %>
+<article class="page prose">
+  <%= render "pages/page_header", chip: "Guide", title: @guide[:title],
+        lead: "Skip the thin liquid line. Use short strokes with a chunky pencil and smudge them, or press dark shadow along your lashes with a small flat brush." %>
+
+  <p>Eyeliner is often the first step people give up. "I would love to add eyeliner to my 'less is more' makeup routine but I am rubbish at applying," a 68 year old with a shaky hand wrote on Mumsnet. In a survey of 2,864 people with essential tremor, more than 1 in 4 said their tremor affects putting on makeup. A liner that hides a wobble can bring it back.</p>
+
+  <h2>Why liquid liner is so hard</h2>
+  <p>A liquid line needs a steady hand right next to your eye, and it sets fast, so a slip has to be wiped off and started again. In our own ease guide, a winged liquid liner scores 28 out of 100 with no hand needs added. A smudged pencil line scores 72. Our scores are a guide, not a clinical measure.</p>
+
+  <h2>Three easier ways</h2>
+  <ul>
+    <li><strong>Chunky pencil, short strokes.</strong> Draw a few short strokes along the lashes, then join them. Smudge with a fingertip or a cotton bud. "Tiny pencils are out. Liquid liners with big caps or fat pencils are in," says Anita Williams, who has MS.</li>
+    <li><strong>Shadow as liner.</strong> Press a dark eyeshadow along the lash line with a small flat brush. People on Mumsnet with a shaky hand recommend it, with the elbow resting on a table.</li>
+    <li><strong>Move your head, not your hand.</strong> Hold the pencil still with both hands and move your head a little. One blogger with a tremor does her lipstick this way too.</li>
+  </ul>
+
+  <h2>Steady your arm</h2>
+  <p>Rest your elbow on a table and move from the elbow, not the wrist. Parkinson's UK suggests doing eye makeup first, while your hands are strongest.</p>
+
+  <h2>What about stamps and mascara?</h2>
+  <p>Liner stamps can help if your tremor is mild, but we found no testing with tremor, so try one on a quiet day. Mascara has no easy swap: it sits right at the lashes. Upper lashes only, a mascara shield, or a day without it are all fine choices.</p>
+
+  <%= render "pages/guide_end", sources: [
+        [ "Gupta et al. 2021, essential tremor survey", "https://pmc.ncbi.nlm.nih.gov/articles/PMC8710410", nil ],
+        [ "Parkinson's UK: applying makeup when you have Parkinson's", "https://www.parkinsons.org.uk/magazine/tips/applying-makeup-when-you-have-parkinsons", nil ],
+        [ "Anita Williams on makeup with MS (MultipleSclerosis.net)", "https://multiplesclerosis.net/living-with-ms/makeup-adaptations", nil ],
+        [ "Eyeliner for a shaky hand (Mumsnet, 2025)", "https://www.mumsnet.com/talk/style_and_beauty/5345373-eye-liner-for-a-68-year-old-shaky-hand", nil ],
+        [ "Makeup tips for people with tremor (easilybridget, 2022)", "https://easilybridget.blogspot.com/2022/08/beauty-able-makeup-tips-for-people-with.html", nil ]
+      ] %>
+</article>

@@ -1,0 +1,40 @@
+<% seo title: @guide[:title], description: @guide[:description] %>
+<article class="page prose">
+  <%= render "pages/page_header", chip: "Guide", title: @guide[:title],
+        lead: "Choose products that open without a pinch, go on with a fingertip or a sponge, and come in a pump. Save your hands for the steps you love." %>
+
+  <p>Hand osteoarthritis affects about 194 million people worldwide, and women have twice as many cases as men. Rheumatoid arthritis affects about 17.6 million more. For many of them, the hard part of makeup isn't the look. It's the cap, the clasp and the thin pencil.</p>
+
+  <h2>Why pinching hurts</h2>
+  <p>Arthritis at the base of the thumb is worse with pinching: opening jars, turning keys, and twisting off small caps. "Some days, washing my own face can cause me pain," says Eileen Davidson, who has rheumatoid arthritis. On those days, every extra twist counts.</p>
+
+  <h2>Pick packaging that opens easily</h2>
+  <ul>
+    <li><strong>Pumps, not tubes.</strong> A pump foundation or tinted moisturiser needs a press, not a squeeze.</li>
+    <li><strong>Flip caps and magnetic closures.</strong> "Having a magnetic closure on your cosmetic products is life-changing," says Stephanie Cartin, who has MS.</li>
+    <li><strong>Palettes that open without force.</strong> Parkinson's UK notes that slim palettes are more fiddly.</li>
+    <li><strong>Look for tested products.</strong> The Arthritis Foundation's Ease of Use certification tests products with people who have arthritis. In 2025 Tilt Beauty became the first beauty brand to earn it.</li>
+  </ul>
+
+  <h2>Use bigger joints and softer tools</h2>
+  <ul>
+    <li>Joint protection advice is to avoid forcing small joints and use larger ones where you can.</li>
+    <li>Cream blush and cream shadow go on with a fingertip, so there's no small brush to grip.</li>
+    <li>Thicker handles are easier to hold. A rubber band or foam tubing around a handle adds grip.</li>
+    <li>A tinted balm in a chunky crayon is easier than a slim lipstick with a twist base.</li>
+  </ul>
+
+  <h2>Keep it short on hard days</h2>
+  <p>Pick two or three steps that matter most to you. A tinted balm and a cream blush take a minute and still feel like you. "I struggled with beauty products that felt impossible to use," says Aerin Glazer, who has psoriatic arthritis. The right formats change that.</p>
+
+  <%= render "pages/guide_end", sources: [
+        [ "Wei et al., Frontiers in Medicine 2025", "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12350485/", nil ],
+        [ "Global Burden of Disease, Lancet Rheumatology 2023", "https://healthdata.org/research-analysis/library/global-regional-and-national-burden-rheumatoid-arthritis-1990-2020-and", nil ],
+        [ "Mass General: arthritis at the base of the thumb", "https://www.massgeneral.org/orthopaedics/hand/conditions-and-treatments/arthritis-at-the-base-of-the-thumb", nil ],
+        [ "Eileen Davidson (CreakyJoints, 2024)", "https://creakyjoints.org/about-arthritis/rheumatoid-arthritis/ra-patient-perspectives/navigating-beauty-routine", nil ],
+        [ "Stephanie Cartin (BrainHealth, 2023)", "https://www.brainhealth.com/disorder-care/living-with/how-cosmetic-brands-are-creating-more-accessible-makeup", nil ],
+        [ "Arthritis Foundation: Tilt Beauty earns Ease of Use certification", "https://www.arthritis.org/news/news-and-events/beauty-brand-earns-ease-of-use-certification", nil ],
+        [ "York NHS: joint protection", "https://www.yorkhospitals.nhs.uk/seecmsfile/?id=7887", nil ],
+        [ "Parkinson's UK: applying makeup", "https://www.parkinsons.org.uk/magazine/tips/applying-makeup-when-you-have-parkinsons", nil ]
+      ] %>
+</article>
