@@ -471,9 +471,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     display: grid; gap: var(--gap); padding: 20px; background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow);
   }
   .menu__panel h2 { font-size: 1.25rem; margin: 0; }
-}
 
-@layer components {
   /* A preview on a neutral canvas, while it's made and when it's done. */
   .render { display: grid; place-items: center; aspect-ratio: 3 / 4; border-radius: 16px; background: var(--color-canvas); overflow: hidden; }
   .render__image { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -484,9 +482,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
 
   /* Messages after an action: "Everything is deleted." */
   .flash { width: min(760px, 100% - 32px); margin: 8px auto 0; padding: 16px 20px; border-radius: 18px; background: var(--mint); color: var(--ink); font-weight: 800; }
-}
 
-@layer components {
   /* Small choices (My hands today): a full target, not a 160 px picture tile. */
   .tiles--compact .tile { min-height: var(--tap); min-width: 0; padding: 12px 20px; font-size: 1.25rem; flex-direction: row; justify-content: space-between; }
   .tiles--compact .tile__chosen { font-size: 1rem; }
@@ -498,9 +494,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .setup-list .todo::before { content: ""; width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--line); box-sizing: border-box; }
 
   .link-box { width: 100%; min-height: var(--tap); padding: 12px 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); font: inherit; font-size: 1.05rem; color: var(--ink); }
-}
 
-@layer components {
   /* A radio choice as a big target: the whole row is the label. */
   .choice {
     display: flex; align-items: center; gap: 16px; min-height: var(--tap); padding: 12px 20px;
@@ -509,9 +503,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .choice:has(input:checked) { border-color: var(--ink); background: var(--sun-soft); }
   .choice input { width: 32px; height: 32px; accent-color: var(--ink); flex: none; }
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-}
 
-@layer components {
   /* Hands-free capture: the camera on a neutral canvas with a face guide, and big words for each check. */
   .capture__stage { position: relative; overflow: hidden; aspect-ratio: 3 / 4; height: min(48vh, 133vw); max-width: 100%; margin-inline: auto; border-radius: var(--radius-card); background: var(--color-canvas); }
   .capture__video { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -526,27 +518,21 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     min-height: max(var(--tap-primary), var(--tap)); background: var(--primary); color: var(--on-primary); border-color: var(--primary); font-size: 1.375rem;
   }
   .btn[aria-pressed="true"] { border-color: var(--ink); }
-}
 
-@layer components {
   /* Look tiles: the look's colours as a swatch until its picture arrives, and ease in words above the name. */
   .tile__art { display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; border-radius: 16px; background: var(--color-canvas); }
   .swatch { width: 80%; height: auto; }
   .tile__badge { display: inline-block; padding: 2px 14px; border-radius: 999px; background: var(--ink); color: var(--surface); font-size: 1.05rem; font-weight: 800; }
   .ease-change { font-size: 1.75rem; font-weight: 900; }
   .swaplist__why { display: block; margin-top: 6px; color: var(--ink); font-size: 1.125rem; }
-}
 
-@layer components {
   /* Signature look: the old photo, today with the look, today easy. */
   .three-up { display: grid; gap: 16px; grid-template-columns: 1fr; padding: 12px; border-radius: var(--radius-card); background: var(--color-canvas); }
   @media (min-width: 700px) { .three-up { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .three-up__item { margin: 0; display: grid; gap: 8px; }
   .three-up__photo { aspect-ratio: 3 / 4; border-radius: 16px; }
   .signature__thumb { width: 140px; height: 175px; object-fit: cover; border-radius: 16px; background: var(--color-canvas); }
-}
 
-@layer components {
   /* Step cards: the easy preview zoomed to the step's part of the face. */
   .step-zoom { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-card); background: var(--color-canvas); }
   .step-zoom__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 45%; transform: scale(1.15); }
@@ -577,15 +563,11 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .product { display: grid; gap: 6px; padding: 16px 20px; border-radius: 18px; background: var(--soft); }
   .product__name { margin: 0; font-weight: 800; }
   .tags__heading { margin: 0; font-size: 1.125rem; font-weight: 800; }
-}
 
-@layer components {
   /* A picture's own label ("AI generated"), just under the picture so it never hides the face. */
   .tile__media { position: relative; display: block; width: 100%; }
   .tile__note { display: block; margin-top: 4px; color: var(--muted); font-size: 0.95rem; font-weight: 700; }
-}
 
-@layer components {
   /* App screens: the header, footer and skip link grow with "My hands today" like every other target, and tags on
      mint use ink so their text reaches 7:1. The landing page keeps its own 64 px and leaf green. */
   body:not(.landing) :is(.skip, .brand, .foot__links a) { min-height: var(--tap); }
