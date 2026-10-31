@@ -134,9 +134,65 @@ class BillingTest < ActionDispatch::IntegrationTest
       receive_dodo(dodo_body("subscription_active", checkout:, next_billing_date: 1.month.from_now.utc.iso8601), id: "msg_active")
       user.update!(clinic_until: 1.minute.ago)
       post checkout_path, params: { plan: "clinic" }
-      assert_redirected_to clinic_path
+      assert_redirected_to account_path, "one clear state: waiting for its payment, with Manage"
+      assert_equal CheckoutsController::CLINIC_WAITING, flash[:notice]
+      follow_redirect!
+      assert_select "#clinic-plan-title ~ p", /waiting for its payment/
+      assert_select "form[action='#{billing_portal_path}'] button", "ManageWorking on it"
     end
     assert_not_requested :post, "#{API}/checkouts"
+  end
+
+  test "a second tab while a Clinic checkout is still opening waits instead of starting another" do
+    user = make_user
+    sign_in_as(user)
+    Checkout.create!(user:, provider: "dodo", plan: "clinic")
+
+    post checkout_path, params: { plan: "clinic" }
+
+    assert_redirected_to pricing_path(anchor: "clinic")
+    assert_match "opening in another window", flash[:notice]
+    assert_not_requested :post, "#{API}/checkouts"
+  end
+
+  test "after a Clinic month is refunded the plan can be started again straight away" do
+    user = make_user
+    checkout = deliver_clinic(user)
+    receive_dodo(dodo_body("payment_succeeded_subscription", customer: { "customer_id" => user.billing_customer_id }), id: "msg_payment")
+    receive_dodo(dodo_body("refund_succeeded", payment_id: "pay_test_clinic_0001", amount: 1900,
+      customer: { "customer_id" => user.billing_customer_id }), id: "msg_refund")
+    checkout.update!(created_at: 1.hour.ago)
+    sign_in_as(user)
+    stub_request(:post, "#{API}/checkouts").to_return(status: 200, headers: JSON_HEADERS,
+      body: { session_id: "cks_2", checkout_url: CHECKOUT }.to_json)
+
+    post checkout_path, params: { plan: "clinic" }
+
+    assert_redirected_to CHECKOUT
+  end
+
+  test "two requests making the account's customer at once keep the first one saved" do
+    user = make_user(email: "rosa@example.com")
+    stub_request(:post, "#{API}/customers").to_return { |_|
+      User.where(id: user.id).update_all(billing_customer_id: "cus_first")
+      { status: 200, headers: JSON_HEADERS, body: customer_json("cus_second").to_json }
+    }
+
+    assert_equal "cus_first", Billing.customer_id!(user)
+    assert_equal "cus_first", user.reload.billing_customer_id
+  end
+
+  test "deleting the account expires its checkouts and forgets their pages; old pages are forgotten daily" do
+    user = make_user
+    open = checkout_for(user, :clinic)
+    old = Checkout.create!(user: make_user, provider: "dodo", plan: "look_pack", url: "https://test.checkout.dodopayments.com/session/old",
+      created_at: 2.hours.ago)
+
+    user.destroy_everything!
+    PurgeExpiredKitsJob.perform_now
+
+    assert_equal [ "expired", nil, nil ], [ open.reload.status, open.url, open.user_id ]
+    assert_nil old.reload.url
   end
 
   test "the page after paying waits for the webhook, then shows the credits" do

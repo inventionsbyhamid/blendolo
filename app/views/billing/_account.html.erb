@@ -11,6 +11,9 @@
     <%= render "components/button", label: "Your clients", href: clinic_path, variant: :primary %>
     <p class="m-0">Change your card, see receipts or cancel, at Dodo Payments.</p>
     <%= render "components/button", label: "Manage", url: billing_portal_path, variant: :secondary, form: { data: { turbo: false } } %>
+  <% elsif BillingSubscription.where(user:).standing.exists? %>
+    <p class="m-0">Your Clinic plan is waiting for its payment to go through. Check your card at Dodo Payments.</p>
+    <%= render "components/button", label: "Manage", url: billing_portal_path, variant: :primary, form: { data: { turbo: false } } %>
   <% else %>
     <p class="m-0">For occupational therapists and care teams: a kit for each client and <%= clinic.credits %> credits a month.</p>
     <%= render "components/button", label: "See the Clinic plan", href: pricing_path(anchor: "clinic"), variant: :secondary %>

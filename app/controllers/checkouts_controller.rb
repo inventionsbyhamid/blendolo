@@ -9,15 +9,22 @@ class CheckoutsController < ApplicationController
 
   # How far back the return page looks for this checkout's credits when the session doesn't say when it began.
   LOOK_BACK = 1.hour
+  CLINIC_WAITING = "Your Clinic plan is waiting for its payment to go through. Use Manage below to check your card.".freeze
 
   def create
     plan = Billing::Plan.find(params[:plan]) or return redirect_to(pricing_path)
-    return redirect_to(clinic_path, notice: "Your Clinic plan is already on.") if plan.subscription? && clinic_taken?
+    if plan.subscription?
+      return redirect_to(clinic_path, notice: "Your Clinic plan is already on.") if current_user.clinic?
+      # A subscription still stands without the plan on: its renewal payment is being retried. Manage is the way on.
+      return redirect_to(account_path, notice: CLINIC_WAITING) if BillingSubscription.where(user: current_user).standing.exists?
+    end
 
     url = Billing.start_checkout!(current_user, plan, success_url: billing_success_url(plan: plan.key),
       cancel_url: pricing_url(anchor: plan.key.dasherize))
     session[:checkout_started_at] = Time.current.to_i
     redirect_to url, allow_other_host: true
+  rescue Billing::CheckoutOpening
+    redirect_to pricing_path(anchor: "clinic"), notice: "Your Clinic checkout is opening in another window. Use that one, or try again in a minute."
   rescue Billing::Error => e
     Rails.logger.error("[billing] checkout failed: #{e.class.name.demodulize}: #{e.message}")
     redirect_to pricing_path, notice: "Payments aren't working right now, so nothing was charged. Please try again in a few minutes."
@@ -41,11 +48,6 @@ class CheckoutsController < ApplicationController
   end
 
   private
-    # One Clinic plan per account: not while one is on, or a subscription of the account still stands.
-    def clinic_taken?
-      current_user.clinic? || BillingSubscription.where(user: current_user).standing.exists?
-    end
-
     def sign_in_origin
       plan = Billing::Plan.find(params[:plan])
       plan ? pricing_path(anchor: plan.key.dasherize) : pricing_path
