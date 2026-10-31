@@ -1,0 +1,11 @@
+<%# Ease tags, the ones that matter for these hands first and named as such in words (not shown by colour alone). %>
+<% good = tags.select { |tag| matters.include?(tag) }.sort_by { |tag| matters.index(tag) }
+   other = tags - good %>
+<% if good.any? %>
+  <p class="tags__heading">Good for <%= you_or_they(kit, "your", "their") %> hands:</p>
+  <ul class="tags m-0"><% good.each do |tag| %><li><%= Ease::Words.tag(tag) %></li><% end %></ul>
+<% end %>
+<% if other.any? %>
+  <p class="tags__heading"><%= good.any? ? "Also:" : "Ease tags:" %></p>
+  <ul class="tags m-0"><% other.each do |tag| %><li><%= Ease::Words.tag(tag) %></li><% end %></ul>
+<% end %>
