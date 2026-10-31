@@ -14,9 +14,10 @@ require "yaml"
 module DodoSetup
   BUSINESS_NAME = "Blendolo".freeze
   DEFAULT_WEBHOOK_URL = "https://blendolo.dijmo.com/webhooks/dodo".freeze
-  # The events Billing::Dodo acts on.
-  EVENTS = %w[payment.succeeded subscription.active subscription.renewed subscription.cancelled subscription.expired
-    refund.succeeded].freeze
+  # The events Billing::Dodo acts on (Billing::Dodo::SUBSCRIBED; a test keeps the two the same).
+  EVENTS = %w[payment.succeeded subscription.active subscription.renewed subscription.updated subscription.past_due
+    subscription.on_hold subscription.cancelled subscription.expired refund.succeeded dispute.opened dispute.accepted
+    dispute.lost].freeze
   DESCRIPTIONS = {
     "look_pack" => "%{credits} credits for previews of makeup looks on your own face. One credit is one preview.",
     "clinic" => "%{credits} credits every month and a client list, for clinics and care teams. One credit is one preview."
@@ -72,6 +73,7 @@ module DodoSetup
     end
     if existing
       puts "Product #{plan.fetch('name')}: already there."
+      warn_price(existing, plan)
       return existing.product_id
     end
 
@@ -80,6 +82,15 @@ module DodoSetup
       price: price(plan), tax_category: :saas, metadata: { app: "blendolo", plan: key })
     puts "Product #{plan.fetch('name')}: created."
     product.product_id
+  end
+
+  # Our prices live in plans.yml; Dodo charges what its product says. Say so when they differ.
+  def warn_price(product, plan)
+    charged = product.price_detail.respond_to?(:price) ? product.price_detail.price : product.price
+    return if charged == plan.fetch("price_cents")
+
+    puts "Warning: Dodo charges #{charged.inspect} cents for #{plan.fetch('name')}, plans.yml says " \
+      "#{plan.fetch('price_cents')}. Change the price in the Dodo dashboard (or plans.yml) so they match."
   end
 
   def price(plan)
@@ -97,7 +108,8 @@ module DodoSetup
     client.webhooks.list.auto_paging_each { |webhook| webhooks << webhook }
     webhook = webhooks.find { |existing| existing.url == url }
     if webhook
-      puts "Webhook endpoint: already there."
+      client.webhooks.update(webhook.id, filter_types: EVENTS) unless Array(webhook.filter_types).sort == EVENTS.sort
+      puts "Webhook endpoint: already there, for #{EVENTS.size} event types."
     else
       webhook = client.webhooks.create(url:, description: "Blendolo: credits and the Clinic plan", filter_types: EVENTS)
       puts "Webhook endpoint: created for #{EVENTS.size} event types."

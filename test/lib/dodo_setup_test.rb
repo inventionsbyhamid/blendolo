@@ -52,6 +52,10 @@ class DodoSetupTest < ActiveSupport::TestCase
     %w[dodo_test_key_value pdt_new_pack pdt_new_clinic whsec_secret_value wh_1].each { |value| assert_not_includes output, value }
   end
 
+  test "asks Dodo for every event the app acts on" do
+    assert_equal Billing::Dodo::SUBSCRIBED.sort, DodoSetup::EVENTS.sort
+  end
+
   private
     def stub_brands(name)
       brand = { brand_id: "bnd_1", business_id: "bus_1", enabled: true, statement_descriptor: "X", verification_enabled: false,
