@@ -66,6 +66,20 @@ class RenderRacesTest < ActiveJob::TestCase
     assert_equal [ "failed", 5 ], [ render.reload.status, Credits.balance(@user) ]
   end
 
+  test "the daily cap is checked again under the claim lock: a request that passed the guard as the cap filled up waits" do
+    ProviderCall.create!(operation: "makeup", input_hash: "earlier", units: UnitGuard.daily_cap, day: Date.current)
+    render = makeup_render
+
+    # The guard ran before the cap filled up; the claim sees the units claimed meanwhile.
+    replacing(UnitGuard.singleton_class, :check, ->(**) { :ok }) do
+      assert_equal :daily_cap, render.request!
+    end
+
+    assert_equal "daily_cap", render.reload.failure_reason
+    assert_equal 5, Credits.balance(@user)
+    assert_not ProviderCall.exists?(input_hash: render.input_hash)
+  end
+
   test "a preview held by the old per-kit cap is asked again by the next tap" do
     render = makeup_render.tap { it.update!(status: :failed, failure_reason: "kit_cap") }
 

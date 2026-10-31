@@ -6,6 +6,8 @@
 module UnitGuard
   DEFAULT_DAILY_CAP = 60
   DEFAULT_FLOOR = 150
+  # One transaction-level advisory lock for every claim of a live call, app wide.
+  CLAIM_LOCK = 0x626c656e646f6c6f # "blendolo"
 
   module_function
 
@@ -20,6 +22,13 @@ module UnitGuard
   rescue Appearance::Error => error
     Rails.logger.warn("Provider balance unavailable, holding calls: #{error.message}")
     :floor
+  end
+
+  # Call inside the transaction that claims a live call: it waits for any other claim to commit, then checks the daily
+  # cap again with every unit claimed so far, so requests at the same moment can't go past it together.
+  def daily_cap_left?(cost, env: ENV)
+    ProviderCall.connection.execute("SELECT pg_advisory_xact_lock(#{CLAIM_LOCK})")
+    ProviderCall.units_spent_on(Date.current) + cost <= daily_cap(env)
   end
 
   def daily_cap(env = ENV) = env.fetch("YOUCAM_DAILY_UNIT_CAP", DEFAULT_DAILY_CAP).to_i

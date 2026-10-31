@@ -12,6 +12,8 @@
 #   :queued   a new call, paid for (Credits.charge_render!): ProviderStartJob, then ProviderPollJob until done,
 #             failed or out of time
 # Two requests for the same inputs never start two paid tasks: the call row and the render are claimed atomically.
+# The claim also checks the daily cap again under an app-wide lock (UnitGuard.daily_cap_left?), so requests at the
+# same moment can't go past it together.
 # The credits are taken in the same transaction as the claim, so a lost claim or a refusal takes nothing, and a
 # cached or waiting render costs nothing. A definite refusal from the provider gives them back (fail_call!).
 # Each change of state is broadcast to the kit's stream as a replace of renders/_render (dom_id(render)).
@@ -47,7 +49,10 @@ module ProviderTracked
     return verdict.tap { fail!(verdict) } unless verdict == :ok
 
     cost = Appearance.provider.feature_cost(operation)
+    capped = false
     claimed = ProviderCall.transaction do
+      raise ActiveRecord::Rollback if (capped = !UnitGuard.daily_cap_left?(cost))
+
       if call
         raise ActiveRecord::Rollback unless call.claim!(kit:, units: units_after(call, cost))
       else
@@ -56,6 +61,7 @@ module ProviderTracked
       Credits.charge_render!(self)
       true
     end
+    return :daily_cap.tap { fail!(:daily_cap) } if capped
     return :waiting unless claimed
 
     ProviderStartJob.perform_later(self)
