@@ -16,6 +16,7 @@
 # lips, finish. Lid, liner and lashes are one area, the eyes.
 #
 # swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version.
+# no_swap_why: what to say when a hard step has nothing easier (default: No easier swap for your hands.)
 # effect: what renders the step in a preview (docs/effects-vocabulary.md). Steps that don't show in a
 # photo (powder, setting spray, tidying up) have no effect. Look colours replace the default colour.
 # Pattern ids come from the provider's pattern catalogue. Checked in a live render: OpenWings2, Smoke4,
@@ -266,8 +267,7 @@ brow_stamp:
   layer: brows
   instruction: Press the stamp on the front of each brow, then lift.
   dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 } # O: stamp with a cap that pulls off
-  swap: tinted_brow_gel
-  swap_why: Nothing to line up. The gel follows the brows you already have.
+  swap: none # the stamp is itself the easier way to shape brows; the table names nothing easier
   why_easier: One press makes the shape. Lining it up is the only careful part.
   tips:
     - Line it up in the mirror before you press.
@@ -463,6 +463,7 @@ mascara_upper:
   instruction: Wiggle the wand at the lash roots, then pull it up.
   dims: { P: 2, E: 3, G: 2, H: 0, T: 1, F: 2, O: 2 } # O: twist cap tube
   swap: none
+  no_swap_why: There is no truly easy version of mascara.
   why_easier: There is no truly easy version of mascara. These tips make it calmer.
   tips:
     - Hold the wand in your fist with a ring or knob grip.

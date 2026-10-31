@@ -50,6 +50,12 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
     assert_equal %w[finish finish], %w[fixup setting_spray].map { Ease::StepCatalogue.fetch(it).layer }
   end
 
+  def test_only_swaps_the_table_names
+    assert_nil Ease::StepCatalogue.fetch("brow_stamp").swap, "row 10 names no easier swap"
+    assert_nil Ease::StepCatalogue.fetch("magnetic_liner_lashes").swap, "row 23 says it is still hard"
+    assert_nil Ease::StepCatalogue.fetch("mascara_upper").swap
+  end
+
   def test_steps_without_a_number_are_swap_targets_or_the_fixup
     targets = @steps.filter_map(&:swap_id)
 

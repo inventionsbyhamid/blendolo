@@ -64,16 +64,33 @@ class Ease::SwapPlannerTest < ActiveSupport::TestCase
     assert_equal %w[smudged_pencil_liner], plan(%w[pencil_liner_crisp])[:steps].map(&:id)
   end
 
+  def test_brow_stamp_has_no_invented_swap_and_is_reported_unswappable
+    [ @default, Ease::HandProfile.new(pinch: 2) ].each do |profile|
+      result = plan(%w[brow_stamp], profile)
+
+      assert_equal %w[brow_stamp], result[:steps].map(&:id)
+      assert_empty result[:swaps]
+      assert_equal %w[brow_stamp], result[:unswappable].map(&:id)
+      assert_equal "No easier swap for your hands.", result[:unswappable].sole.no_swap_why
+    end
+  end
+
+  def test_mascara_keeps_its_own_words_when_unswappable
+    assert_equal "There is no truly easy version of mascara.", plan(%w[mascara_upper])[:unswappable].sole.no_swap_why
+  end
+
   def test_no_swap_when_the_swap_is_not_easier_for_these_hands
-    pinch = Ease::HandProfile.new(pinch: 2)
-    stamp = Ease::StepCatalogue.fetch("brow_stamp")
     gel = Ease::StepCatalogue.fetch("tinted_brow_gel")
-    assert_operator Ease::Scorer.step(gel, pinch), :<=, Ease::Scorer.step(stamp, pinch), "the gel's twist cap counts"
+    # A made-up step whose swap is the gel. With pinch pain the gel's twist cap makes the gel no easier.
+    stamp_like = gel.with(id: "stamp_like", dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 }, swap: gel.id)
+    pinch = Ease::HandProfile.new(pinch: 2)
+    assert_operator Ease::Scorer.step(stamp_like, pinch), :<, Ease::Words::EASY
+    assert_operator Ease::Scorer.step(gel, pinch), :<=, Ease::Scorer.step(stamp_like, pinch), "the gel's twist cap counts"
 
-    result = plan(%w[brow_stamp], pinch)
+    result = Ease::SwapPlanner.new(pinch).plan([ stamp_like ])
 
-    assert_equal %w[brow_stamp], result[:steps].map(&:id)
-    assert_equal %w[brow_stamp], result[:unswappable].map(&:id)
+    assert_equal %w[stamp_like], result[:steps].map(&:id)
+    assert_equal %w[stamp_like], result[:unswappable].map(&:id)
   end
 
   def test_every_step_kept_by_some_plan_explains_why_it_is_easier

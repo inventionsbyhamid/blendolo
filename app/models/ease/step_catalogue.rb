@@ -46,6 +46,7 @@ module Ease
             dims: attributes.fetch("dims").transform_keys(&:to_sym).freeze,
             swap: (swap unless swap == NO_SWAP),
             swap_why: attributes["swap_why"],
+            no_swap_why: attributes["no_swap_why"],
             why_easier: attributes["why_easier"],
             tips: Array(attributes["tips"]).freeze,
             product_type: attributes.fetch("product_type"),

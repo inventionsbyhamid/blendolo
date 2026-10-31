@@ -3,7 +3,9 @@ module Ease
   #
   # A step below Easy (80) is swapped when its swap scores higher for this profile, or left out when its swap is
   # "skip". Swaps go one level deep: the easier step is never swapped again. A step below Easy with nothing easier
-  # stays and is reported as unswappable (mascara is the usual one), so the app can say so and offer tips.
+  # stays and is reported as unswappable (mascara is the usual one), so the app can say so and offer tips: each
+  # unswappable step's #no_swap_why is the line to show ("No easier swap for your hands." unless the step has
+  # its own, as mascara does).
   class SwapPlanner
     def initialize(profile)
       @profile = profile
