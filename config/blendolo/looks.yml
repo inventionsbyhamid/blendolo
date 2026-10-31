@@ -1,0 +1,100 @@
+# The looks people can pick from, read by Looks::Catalogue. Each step names a step in steps.yml, in the order
+# you'd do it, with this look's colour (a list for multi-colour eyeshadow, main shade first) and intensity.
+# Leave either out to use the step's default. Foundation and concealer never carry a colour here: they take the
+# person's own skin colour, or are left out of the preview.
+# thumbnail is the path of the picture of the look on a model.
+
+everyday_fresh:
+  name: Everyday fresh
+  blurb: Even skin, warm cheeks, soft brows and a rosy lip. Ready in minutes.
+  thumbnail: looks/everyday_fresh.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: powder_blush_brush, colour: "#E59A7A", intensity: 40 }
+    - { step: brow_pencil, colour: "#4A3328", intensity: 55 }
+    - { step: one_colour_lid_wash, colour: "#9C8577", intensity: 45 }
+    - { step: bullet_lipstick, colour: "#B5776B", intensity: 70 }
+
+red_lip:
+  name: The red lip
+  blurb: A classic red lip with a winged liner. Bold, and still yours.
+  thumbnail: looks/red_lip.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: brow_pencil, colour: "#3B2A20", intensity: 60 }
+    - { step: liquid_liner_wing, intensity: 90 }
+    - { step: mascara_upper, intensity: 85 }
+    - { step: liquid_matte_lipstick, colour: "#B0182A", intensity: 85 }
+    - { step: lip_liner, colour: "#8E1424", intensity: 70 }
+
+soft_smoky_evening:
+  name: Soft smoky evening
+  blurb: Smoky brown eyes, a warm glow and a soft nude lip for a night out.
+  thumbnail: looks/soft_smoky_evening.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: bronzer_big_brush, colour: "#A86B4A", intensity: 40 }
+    - { step: two_tone_crease, colour: ["#9C8577", "#4A3029"], intensity: 60 }
+    - { step: gel_liner_brush, intensity: 85 }
+    - { step: mascara_upper, intensity: 85 }
+    - { step: bullet_lipstick, colour: "#A0605A", intensity: 70 }
+
+rosy_glow:
+  name: Rosy glow
+  blurb: Rosy cheeks, a little shine on the cheekbones and a glossy pink lip.
+  thumbnail: looks/rosy_glow.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: powder_blush_brush, colour: "#C96B7A", intensity: 50 }
+    - { step: highlighter_fan_brush, colour: "#F3D9C0", intensity: 45 }
+    - { step: brow_powder_brush, colour: "#4A3328", intensity: 50 }
+    - { step: doe_foot_gloss, colour: "#D46A8A", intensity: 45 }
+
+bold_berry:
+  name: Bold berry
+  blurb: A deep berry lip with a clean line of liner. Made for being noticed.
+  thumbnail: looks/bold_berry.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: powder_blush_brush, colour: "#A8455A", intensity: 40 }
+    - { step: brow_pencil, colour: "#2B1B14", intensity: 60 }
+    - { step: liquid_liner_thin, intensity: 85 }
+    - { step: liquid_matte_lipstick, colour: "#8E1F2F", intensity: 85 }
+    - { step: lip_liner, colour: "#6E1A26", intensity: 70 }
+
+brows_and_mascara:
+  name: Brows and mascara
+  blurb: Just brows and lashes. The smallest routine that still frames your face.
+  thumbnail: looks/brows_and_mascara.jpg
+  steps:
+    - { step: eyelash_curler }
+    - { step: brow_pencil, colour: "#3B2A20", intensity: 55 }
+    - { step: mascara_upper, intensity: 85 }
+    - { step: mascara_lower }
+
+wedding_guest:
+  name: Wedding guest
+  blurb: The full works for a big day, from glowing skin to fluttery lashes.
+  thumbnail: looks/wedding_guest.jpg
+  steps:
+    - { step: liquid_foundation_brush }
+    - { step: concealer_wand }
+    - { step: pressed_powder_compact }
+    - { step: contour_line, colour: "#8A5B3E", intensity: 45 }
+    - { step: highlighter_fan_brush, colour: "#F3D9C0", intensity: 50 }
+    - { step: powder_blush_brush, colour: "#C96B7A", intensity: 40 }
+    - { step: brow_powder_brush, colour: "#3B2A20", intensity: 50 }
+    - { step: cut_crease, colour: ["#B8924A", "#D9B99B", "#4A3029"], intensity: 60 }
+    - { step: strip_lashes, intensity: 90 }
+    - { step: bullet_lipstick, colour: "#B85C6B", intensity: 75 }
+    - { step: setting_spray }
+
+barely_there:
+  name: Barely there
+  blurb: A little cover, a touch of warmth, tidy brows and tinted lips. Nothing more.
+  thumbnail: looks/barely_there.jpg
+  steps:
+    - { step: concealer_wand }
+    - { step: bronzer_big_brush, colour: "#A86B4A", intensity: 30 }
+    - { step: tinted_brow_gel, colour: "#4A3328", intensity: 40 }
+    - { step: tinted_balm, colour: "#B85C6B", intensity: 40 }
