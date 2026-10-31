@@ -125,6 +125,21 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal({ "ok" => true }, verdicts["good"])
   end
 
+  test "stillness is measured per 100 ms" do
+    visit privacy_path
+    moved = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      import("capture/gate").then((gate) => {
+        const at = (x) => [0, 1, 2, 3].map(() => ({ x, y: 0.5 }))
+        done([gate.movement(at(0.5), at(0.51), 100), gate.movement(at(0.5), at(0.52), 200), gate.movement(at(0.5), at(0.51), 50)])
+      })
+    JS
+
+    assert_in_delta 0.01, moved[0], 1e-9
+    assert_in_delta 0.01, moved[1], 1e-9, "twice as far in twice the time is the same speed"
+    assert_in_delta 0.01, moved[2], 1e-9, "checks closer together aren't scaled up"
+  end
+
   test "sampler returns lip colour" do
     visit privacy_path
     sampled = evaluate_async_script(<<~JS)
