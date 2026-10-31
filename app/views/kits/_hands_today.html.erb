@@ -6,7 +6,7 @@
       <li>
         <%= render "components/tile", label: label, chosen: hands_today == value,
               url: kit_hands_today_path(kit), method: :patch,
-              params: { hands_today: value, return_to: local_assigns[:return_to] || request.fullpath } %>
+              params: { hands_today: value, return_to: local_assigns[:return_to] || (request.fullpath if request.get?) }.compact %>
       </li>
     <% end %>
   </ul>
