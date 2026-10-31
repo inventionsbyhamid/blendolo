@@ -72,20 +72,38 @@ class Kit < ApplicationRecord
     update!(last_active_at: Time.current)
   end
 
-  # "Delete everything" (refused for a living example kit), and retention: the files and their resized variants go
-  # now rather than in a later purge job, then every row. Provider calls stay, without the kit and emptied of
-  # results, for the daily unit count (PurgeExpiredKitsJob deletes them after two days).
+  # "Delete everything" (refused for a living example kit), and retention: every row goes in one transaction, then the
+  # stored files and their resized variants go at once, after the commit, rather than in a later purge job. Provider
+  # calls stay, without the kit and emptied of results, for the daily unit count (PurgeExpiredKitsJob deletes them
+  # after two days).
   def destroy_everything!
     raise ReadOnlyExample, EXAMPLE_READ_ONLY if read_only_example? && purge_after.future?
 
-    files = photos.includes(image_attachment: :blob).map(&:image) +
-      renders.includes(result_attachment: :blob).map(&:result)
-    variants = files.select(&:attached?).flat_map do |file|
-      file.blob.variant_records.includes(image_attachment: :blob).map(&:image)
-    end
-    (variants + files).each(&:purge)
+    Kit.purge_files(transaction { destroy_rows! })
+  end
+
+  # Deletes the kit's rows (call it inside a transaction) and returns its stored files, the resized variants first,
+  # for Kit.purge_files once the transaction has committed. The files are detached first, so deleting the rows
+  # queues no purge jobs of its own.
+  def destroy_rows!
+    files = (photos.includes(image_attachment: :blob).map(&:image) +
+      renders.includes(result_attachment: :blob).map(&:result)).select(&:attached?)
+    blobs = files.map(&:blob)
+    variants = blobs.flat_map { |blob| blob.variant_records.includes(image_attachment: :blob).map(&:image) }.select(&:attached?)
+    files.each(&:detach)
     provider_calls.update_all(response: {}, updated_at: Time.current)
     destroy!
+    variants + blobs
+  end
+
+  # Deletes stored files now: the resized variants, then the originals. A file the storage can't delete just now is
+  # reported and left behind (an orphaned blob, no longer linked to anything).
+  def self.purge_files(files)
+    files.each do |file|
+      file.purge
+    rescue StandardError => error
+      Rails.error.report(error, handled: true, context: { file: file.class.name })
+    end
   end
 
   private

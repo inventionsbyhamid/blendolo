@@ -1,7 +1,7 @@
 # Someone who signed in (with Google; no passwords). Credits (Credits, CreditEntry) and kits belong to the account.
 # clinic_until: a clinic plan is active until then (billing sets it); clinic? reads it.
 class User < ApplicationRecord
-  # destroy_everything! deletes kits one by one, files first.
+  # destroy_everything! deletes the kits' rows with the account's, then their files.
   has_many :kits, dependent: nil
   has_many :credit_entries, dependent: :delete_all
 
@@ -51,8 +51,15 @@ class User < ApplicationRecord
 
   # "Delete my account": every kit with its photos and previews (Kit#destroy_everything!), the credits, then the
   # account. The signup grant's one-way code stays, so the free credits stay once per Google account.
+  # All rows go in one transaction with the account's row locked (a kit or a credit made meanwhile waits, then finds
+  # no account); the stored files go after the commit.
   def destroy_everything!
-    kits.find_each(&:destroy_everything!)
-    destroy!
+    files = transaction do
+      lock!
+      found = kits.reload.flat_map(&:destroy_rows!)
+      destroy!
+      found
+    end
+    Kit.purge_files(files)
   end
 end
