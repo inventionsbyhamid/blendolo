@@ -13,11 +13,13 @@ class AccountsController < ApplicationController
   def delete
   end
 
-  # Safe to send twice: the second finds no account and ends on the same page. A Clinic plan is stopped at the
+  # Safe to send twice: the second finds no one signed in and says so. A Clinic plan is stopped at the
   # payment provider first; if that fails, nothing is deleted, so a deleted account is never charged again.
   def destroy
-    Billing.cancel_subscriptions!(current_user) if current_user
-    current_user&.destroy_everything!
+    return redirect_to(root_path, notice: "You're signed out.") unless current_user
+
+    Billing.cancel_subscriptions!(current_user)
+    current_user.destroy_everything!
     sign_out
     redirect_to root_path,
       notice: "Your account is deleted, with its kits, photos and credits. Our photo partner deletes its copies within 30 days."
