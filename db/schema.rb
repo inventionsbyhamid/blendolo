@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_080100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,6 +64,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080000) do
     t.index ["token"], name: "index_kits_on_token", unique: true
   end
 
+  create_table "photos", force: :cascade do |t|
+    t.bigint "kit_id", null: false
+    t.integer "kind", default: 0, null: false
+    t.string "source", null: false
+    t.string "sha256"
+    t.integer "width"
+    t.integer "height"
+    t.jsonb "sampled", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kit_id"], name: "index_photos_on_kit_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "photos", "kits"
 end

@@ -9,6 +9,8 @@ class Kit < ApplicationRecord
 
   has_secure_token :token
 
+  has_many :photos, dependent: :destroy
+
   enum :path, { self_use: 0, helper: 1, example: 2 }, validate: true
 
   validates(*HAND_QUESTIONS, inclusion: { in: ANSWERS }, allow_nil: true)
