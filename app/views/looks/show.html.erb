@@ -1,18 +1,31 @@
 <%= turbo_stream_from @kit %>
 <div class="page stack">
   <%= render "components/button", label: "All looks", href: kit_looks_path(@kit), variant: :quiet, icon: :back %>
-  <h1 class="m-0"><%= @look.name %></h1>
+  <header class="stack">
+    <h1 class="m-0"><%= @look.name %></h1>
+    <p class="lead m-0"><%= @look.blurb %></p>
+  </header>
 
   <%= render "components/compare", classic: render(@classic), easy: render(@tweak || @easy) %>
 
-  <%= render "components/ease_meter", score: @look.easy_ease[:ease], words: @look.easy_words, before: (@look.classic_words unless @look.classic_words == @look.easy_words) %>
+  <section class="card stack" aria-labelledby="ease-title">
+    <h2 id="ease-title" class="m-0">How easy for <%= you_or_they(@kit, "your", "their") %> hands</h2>
+    <p class="ease-change m-0"><span><%= @look.classic_words %></span><span aria-hidden="true"> &#8594; </span><span class="sr-only"> before, now </span><span><%= @look.easy_words %></span></p>
+    <%= render "components/ease_meter", score: @look.classic_ease[:ease], words: @look.classic_words, label: "Classic look" %>
+    <%= render "components/ease_meter", score: @look.easy_ease[:ease], words: @look.easy_words, label: "Easy version" %>
+    <% if (hardest = hardest_step_words(@look.easy_ease)) %><p class="muted m-0"><%= hardest %> (easy version).</p><% end %>
+  </section>
 
   <% if @look.swaps.any? %>
-    <section class="stack">
-      <h2 class="m-0">What changes</h2>
+    <section class="stack" aria-labelledby="swaps-title">
+      <h2 id="swaps-title" class="m-0">What changes</h2>
       <ul class="swaplist">
         <% @look.swaps.each do |swap| %>
-          <li><span class="swaplist__was"><%= swap[:from].name %></span><span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span><%= swap[:to]&.name || "Left out" %></span><% if swap[:why] %> <span class="muted"><%= swap[:why] %></span><% end %></li>
+          <li>
+            <span class="swaplist__was"><%= swap[:from].name %></span>
+            <span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span><%= swap[:to]&.name || "Left out" %></span>
+            <% if swap[:why] %><span class="swaplist__why"><strong>Why it's easier:</strong> <%= swap[:why] %></span><% end %>
+          </li>
         <% end %>
       </ul>
     </section>
@@ -22,12 +35,12 @@
   <% end %>
 
   <section class="stack" aria-labelledby="strength-title">
-    <h2 id="strength-title" class="m-0">Strength: <%= LookForKit::LEVELS.fetch(@level) %></h2>
+    <h2 id="strength-title" class="m-0">Strength of the easy version: <%= LookForKit::LEVELS.fetch(@level) %></h2>
     <div class="button-row button-row--2">
       <%= render "components/button", label: "Softer", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "softer", level: @level } %>
       <%= render "components/button", label: "Bolder", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "bolder", level: @level } %>
     </div>
   </section>
 
-  <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: @look.key }, variant: :primary %>
+  <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: @look.key }, variant: :primary, icon: :check %>
 </div>
