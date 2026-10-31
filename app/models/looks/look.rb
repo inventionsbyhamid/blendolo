@@ -1,8 +1,8 @@
 module Looks
   # A look from config/blendolo/looks.yml: its classic steps, with colours, in the order you'd do them.
   class Look < Data.define(:key, :name, :blurb, :steps, :thumbnail)
-    # Swaps for these hands: { steps:, swaps:, unswappable: } (see Ease::SwapPlanner). Works for any look steps,
-    # such as a signature look's.
+    # Swaps for these hands: { steps:, swaps:, unswappable:, optional: [Step] } (see Ease::SwapPlanner). Works for any
+    # look steps, such as a signature look's.
     def self.plan(look_steps, profile)
       Ease::SwapPlanner.new(profile).plan(look_steps.map { |step| LookStep.wrap(step).step })
     end

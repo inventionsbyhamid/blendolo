@@ -54,7 +54,7 @@ class LookForKit
     @easy_steps ||= look.easy_steps(profile)
   end
 
-  # { ease: 0..100, hardest_step: Ease::Step }
+  # { ease: 0..100, hardest_step: Ease::Step, optional: [{ step:, ease:, words: }] } (see Ease::Scorer.look)
   def classic_ease
     @classic_ease ||= Ease::Scorer.look(look.ease_steps, profile)
   end
