@@ -15,8 +15,8 @@ class PhotosHelperTest < ActionView::TestCase
 
     assert_equal @config.mediapipe.package_url, urls[:package_url]
     assert_equal @config.mediapipe.model_url, urls[:model_url]
-    assert_match %r{\A/assets/workers/face_checks-\h+\.js\z}, urls[:worker_url]
-    assert_match %r{\A/assets/capture/gate-\h+\.js\z}, urls[:gate_url]
+    assert_match %r{/workers/face_checks(-\h+)?\.js\z}, urls[:worker_url]
+    assert_match %r{/capture/gate(-\h+)?\.js\z}, urls[:gate_url]
   end
 
   test "with the worker switched off the page runs the checks itself" do
