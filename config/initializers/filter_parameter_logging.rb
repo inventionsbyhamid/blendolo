@@ -31,3 +31,6 @@ module TokenPathFilter
 end
 
 ActionDispatch::Request.prepend(TokenPathFilter)
+
+# Payment webhooks name the buyer, their address and their card: none of it reaches the log.
+Rails.application.config.filter_parameters += [ :customer, :billing, :card ]

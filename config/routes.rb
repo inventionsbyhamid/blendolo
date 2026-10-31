@@ -9,6 +9,8 @@ Rails.application.routes.draw do
 
   # The appearance provider says a task finished.
   post "webhooks/youcam" => "webhooks/youcam#create", as: :youcam_webhook
+  # The payment provider says something was paid, renewed, cancelled or refunded.
+  post "webhooks/dodo" => "webhooks/dodo#create", as: :dodo_webhook
 
   # Background jobs, for the owner (basic auth, config/initializers/mission_control.rb).
   mount MissionControl::Jobs::Engine, at: "/jobs"
