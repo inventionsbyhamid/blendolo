@@ -33,13 +33,24 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
 
   def test_every_swap_points_at_a_real_easier_step
     @steps.select(&:swap).each do |step|
-      assert step.swap_why.present?, "#{step.id} says why its swap is easier"
+      step.swaps.each { |candidate| assert candidate.why.present?, "#{step.id} says why #{candidate.to} is easier" }
       next if step.skip?
 
-      swap = Ease::StepCatalogue.fetch(step.swap_id)
-      assert_nil swap.swap, "#{step.id} swaps to #{swap.id}, which must not swap again"
-      assert_operator Ease::Scorer.step(swap, @default), :>, Ease::Scorer.step(step, @default), step.id
+      step.swap_ids.each do |id|
+        swap = Ease::StepCatalogue.fetch(id)
+        assert_empty swap.swaps, "#{step.id} swaps to #{swap.id}, which must not swap again"
+        assert_operator Ease::Scorer.step(swap, @default), :>, Ease::Scorer.step(step, @default), "#{step.id} to #{id}"
+      end
     end
+  end
+
+  def test_liquid_and_gel_liners_offer_two_easier_lines
+    %w[liquid_liner_wing liquid_liner_thin gel_liner_brush].each do |id|
+      assert_equal %w[shadow_liner smudged_pencil_liner], Ease::StepCatalogue.fetch(id).swap_ids, id
+    end
+    assert_equal %w[tinted_brow_gel], Ease::StepCatalogue.fetch("brow_pencil").swap_ids
+    assert_equal %w[tinted_brow_gel], Ease::StepCatalogue.fetch("brow_powder_brush").swap_ids
+    assert_equal %w[tinted_balm], Ease::StepCatalogue.fetch("liquid_matte_lipstick").swap_ids
   end
 
   def test_every_step_has_a_layer_and_an_area
@@ -65,7 +76,7 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
   end
 
   def test_steps_without_a_number_are_swap_targets_or_the_fixup
-    targets = @steps.filter_map(&:swap_id)
+    targets = @steps.flat_map(&:swap_ids)
 
     @steps.reject(&:number).each do |step|
       assert step.fixup? || targets.include?(step.id), "#{step.id} is a swap target"

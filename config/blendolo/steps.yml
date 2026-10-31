@@ -16,7 +16,9 @@
 # lashes, lips, finish. Lid, liner and lashes are one area, the eyes. Loose powder sets the cream products, so it
 # goes on after the cheeks; pressed powder stays with the base, under powder blush and bronzer.
 #
-# swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version.
+# swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version, with
+# swap_why saying why it is easier. swaps: several easier steps, each { to:, why: }, when the research names more than
+# one; the planner picks the one easiest for the person's hands (the first listed wins a tie).
 # no_swap_why: what to say when a hard step has nothing easier (default: No easier swap for your hands.)
 # effect: what renders the step in a preview (docs/effects-vocabulary.md). Steps that don't show in a
 # photo (powder, setting spray, tidying up) have no effect. Look colours replace the default colour.
@@ -377,8 +379,11 @@ gel_liner_brush:
   layer: liner
   instruction: Paint a line along your upper lashes with the fine brush.
   dims: { P: 3, E: 2, G: 3, H: 1, T: 2, F: 2, O: 3 } # O: small screw lid pot
-  swap: shadow_liner
-  swap_why: Dark shadow pressed along the lashes. It doesn't set, so you can tidy it.
+  swaps:
+    - to: shadow_liner
+      why: Dark shadow pressed along the lashes. It doesn't set, so you can tidy it.
+    - to: smudged_pencil_liner
+      why: A chunky pencil instead of a fine brush, in short dabs, smudged soft.
   tips:
     - Rest your elbow on the table.
   product_type: Gel eyeliner and a fine brush
@@ -391,8 +396,11 @@ liquid_liner_thin:
   layer: liner
   instruction: Draw one thin line along your upper lashes.
   dims: { P: 3, E: 2, G: 2, H: 1, T: 1, F: 3, O: 2 } # O: twist cap
-  swap: shadow_liner
-  swap_why: Dark shadow pressed along the lashes. No steady line, and slips wipe away.
+  swaps:
+    - to: shadow_liner
+      why: Dark shadow pressed along the lashes. No steady line, and slips wipe away.
+    - to: smudged_pencil_liner
+      why: A chunky pencil in short dabs, smudged soft. No steady line needed.
   tips:
     - Rest your elbow on the table.
   product_type: Liquid eyeliner
@@ -405,8 +413,11 @@ liquid_liner_wing:
   layer: liner
   instruction: Draw a line along your lashes and flick a wing out.
   dims: { P: 3, E: 2, G: 2, H: 1, T: 2, F: 3, O: 2 } # O: twist cap
-  swap: smudged_pencil_liner
-  swap_why: No steady line and no sharp wing. Short dabs blend into one soft line.
+  swaps:
+    - to: shadow_liner
+      why: Dark shadow pressed along the lashes. No steady line, no sharp wing, and slips wipe away.
+    - to: smudged_pencil_liner
+      why: No steady line and no sharp wing. Short dabs blend into one soft line.
   tips:
     - Rest your elbow on the table.
   product_type: Liquid eyeliner
@@ -441,7 +452,8 @@ shadow_liner:
     - Rest your elbow on the table.
   product_type: Dark eyeshadow and a small flat brush
   ease_tags: [forgiving]
-  effect: { category: eye_liner, colour: "#2B1D16", intensity: 85, texture: matte, pattern: Smoke19 }
+  # Like the smudged pencil, a soft line needs a strong colour to show.
+  effect: { category: eye_liner, colour: "#2B1D16", intensity: 88, texture: matte, pattern: Smoke19 }
 
 tightline:
   number: 18

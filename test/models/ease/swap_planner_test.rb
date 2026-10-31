@@ -6,20 +6,41 @@ class Ease::SwapPlannerTest < ActiveSupport::TestCase
   end
 
   def test_planner_swaps_wing_for_smudged_pencil
-    result = plan(%w[liquid_liner_wing tinted_balm])
+    # Sore pinch: the pencil's cap pulls straight off, while a shadow pan needs a small brush and a lid to open.
+    result = plan(%w[liquid_liner_wing tinted_balm], Ease::HandProfile.new(pinch: 2))
 
     assert_equal %w[smudged_pencil_liner tinted_balm], result[:steps].map(&:id)
     swap = result[:swaps].sole
     assert_equal "liquid_liner_wing", swap[:from].id
     assert_equal "smudged_pencil_liner", swap[:to].id
-    assert_match(/no sharp wing/i, swap[:why])
+    assert_match(/short dabs/i, swap[:why], "the why belongs to the chosen candidate")
     assert_empty result[:unswappable]
   end
 
-  def test_planner_swaps_wing_for_smudged_pencil_with_a_tremor_too
-    result = plan(%w[liquid_liner_wing], Ease::HandProfile.new(tremor: 2))
+  def test_planner_picks_easiest_candidate_for_profile
+    tremor = Ease::HandProfile.new(tremor: 2)
+    wing = Ease::StepCatalogue.fetch("liquid_liner_wing")
+    shadow, pencil = %w[shadow_liner smudged_pencil_liner].map { Ease::StepCatalogue.fetch(it) }
+    assert_equal %w[shadow_liner smudged_pencil_liner], wing.swap_ids
+    assert_operator Ease::Scorer.step(shadow, tremor), :>, Ease::Scorer.step(pencil, tremor)
 
-    assert_equal %w[smudged_pencil_liner], result[:steps].map(&:id)
+    swap = plan(%w[liquid_liner_wing], tremor)[:swaps].sole
+
+    assert_equal "shadow_liner", swap[:to].id, "a tremor a lot: pressing shadow needs less precision than a pencil"
+    assert_match(/dark shadow pressed/i, swap[:why])
+    assert_equal "smudged_pencil_liner", plan(%w[liquid_liner_wing], Ease::HandProfile.new(one_hand: 1))[:swaps].sole[:to].id
+  end
+
+  def test_a_tie_between_candidates_goes_to_the_first_listed
+    concealer, gel = %w[stick_concealer_finger tinted_brow_gel].map { Ease::StepCatalogue.fetch(it) }
+    assert_equal Ease::Scorer.step(concealer, @default), Ease::Scorer.step(gel, @default)
+    hard = gel.with(id: "hard_step", dims: { P: 3, E: 3, G: 3, H: 3, T: 3, F: 3, O: 3 })
+
+    [ %w[stick_concealer_finger tinted_brow_gel], %w[tinted_brow_gel stick_concealer_finger] ].each do |ids|
+      step = hard.with(swaps: ids.map { Ease::Step::Candidate.new(to: it, why: it) })
+
+      assert_equal ids.first, Ease::SwapPlanner.new(@default).plan([ step ])[:swaps].sole[:to].id
+    end
   end
 
   def test_mascara_is_unswappable_and_reported
@@ -82,7 +103,8 @@ class Ease::SwapPlannerTest < ActiveSupport::TestCase
   def test_no_swap_when_the_swap_is_not_easier_for_these_hands
     gel = Ease::StepCatalogue.fetch("tinted_brow_gel")
     # A made-up step whose swap is the gel. With pinch pain the gel's twist cap makes the gel no easier.
-    stamp_like = gel.with(id: "stamp_like", dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 }, swap: gel.id)
+    stamp_like = gel.with(id: "stamp_like", dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 },
+                          swaps: [ Ease::Step::Candidate.new(to: gel.id, why: "gel") ])
     pinch = Ease::HandProfile.new(pinch: 2)
     assert_operator Ease::Scorer.step(stamp_like, pinch), :<, Ease::Words::EASY
     assert_operator Ease::Scorer.step(gel, pinch), :<=, Ease::Scorer.step(stamp_like, pinch), "the gel's twist cap counts"
