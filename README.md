@@ -25,7 +25,7 @@ Today's help is tip sheets and single tools for single steps. Virtual try-on sho
 5. **Your signature look** ("Bring back your signature look" on the kit home or the looks list): an old photo of you wearing a look you loved is put on today's face, then rebuilt from easy steps in the same colours.
 6. **Step cards, read aloud**: one step per screen, detailed steps first while hands are fresh, tidying up last; a large print view.
 7. **A shopping list with ease tags**: what to look for and what to avoid for your hands ("Opens with one hand", "No pinch grip", "Pump", "Chunky, easy to hold").
-8. **Ease tags for shops**: `GET /api/ease_tags?product_product_format=stick&closure=pull_cap&grip=chunky&step=tinted_balm` answers a product's tags and its ease for six kinds of hands. Free, no key, up to 60 requests a minute.
+8. **Ease tags for shops**: `GET /api/ease_tags?product_format=stick&closure=pull_cap&grip=chunky&step=tinted_balm` answers a product's tags and its ease for six kinds of hands. Free, no key, up to 60 requests a minute.
 9. **Share with a helper or an occupational therapist**: a private link with a QR code that expires after 30 days and can be switched off. Example people have a read only demo share, "See what a helper sees".
 10. **Three example people** (Rosa, June, Amara) with stored results.
 

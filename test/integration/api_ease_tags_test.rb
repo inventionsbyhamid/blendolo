@@ -16,6 +16,18 @@ class ApiEaseTagsTest < ActionDispatch::IntegrationTest
     assert body["ease"].values.all? { |ease| ease["score"].between?(0, 100) && ease["words"].present? }
   end
 
+  test "every ease tags call in the docs answers" do
+    calls = Dir[Rails.root.join("{README.md,docs/*.md,app/controllers/api/*.rb}")].flat_map do |file|
+      File.read(file).scan(%r{/api/ease_tags\?[^\s`)]+})
+    end
+    assert_not_empty calls
+
+    calls.each do |call|
+      get call
+      assert_response :success, call
+    end
+  end
+
   test "a twist cap and a slim grip are harder for sore hands than a pump" do
     get "/api/ease_tags", params: { product_format: "cream", closure: "twist_cap", grip: "slim" }
     twist = response.parsed_body["ease"]["pinch_grip"]["score"]
