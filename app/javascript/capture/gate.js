@@ -15,7 +15,8 @@ export const MESSAGES = {
   eyes: "Open your eyes wide",
   still: "Hold still",
   done: "Got it",
-  doneEyes: "Got it. Your eyes looked a little closed, so the preview may show softer liner."
+  doneEyes: "Got it. Your eyes looked a little closed, so the preview may show softer liner.",
+  eyesNote: "Your eyes looked a little closed, so the preview may show softer liner."
 }
 
 // maxMove: a share of the frame per 100 ms (movement). eyesWaitFor: how long a still face whose only problem is the

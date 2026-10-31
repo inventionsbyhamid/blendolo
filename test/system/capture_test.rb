@@ -237,6 +237,10 @@ class CaptureTest < ApplicationSystemTestCase
       const [closed, closedMoved, closedMouthOpen, shut, done] = arguments
       import("capture/gate").then((gate) => {
         const capture = window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
+        const message = document.querySelector("[data-capture-target=message]")
+        window.shown = []
+        new MutationObserver(() => window.shown.push(message.textContent))
+          .observe(message, { childList: true, characterData: true, subtree: true })
         const states = {}
         let t = 1000000
         const look = (result, ms) => { for (const end = t + ms; t <= end; t += 200) capture.check(gate.summarize(result), t) }
@@ -262,8 +266,11 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal "Open your eyes wide", states["message"]
     assert_equal "taking", states["after"]
     assert_selector "[data-capture-state=review]", wait: 10
-    assert_selector "[data-capture-target=message]",
-      text: "Got it. Your eyes looked a little closed, so the preview may show softer liner. Is this photo all right?"
+    note = "Your eyes looked a little closed, so the preview may show softer liner. Is this photo all right?"
+    assert_selector "[data-capture-target=message]", exact_text: note
+    shown = evaluate_script("window.shown")
+    assert_equal [ "Got it", note ], shown.last(2), "the note reaches the live region once, whole"
+    assert_equal 1, shown.count { it.include?("Your eyes") }
   end
 
   test "stillness is measured per 100 ms" do

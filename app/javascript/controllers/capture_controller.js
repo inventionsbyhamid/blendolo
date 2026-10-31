@@ -210,7 +210,7 @@ export default class extends Controller {
     if (!verdict.ok) {
       this.stillSince = null
       // Smiling and older eyes can read as closed: after holding still a while, the photo is taken anyway, saying so.
-      if (steady && now - this.steadySince >= LIMITS.eyesWaitFor) return this.burst(MESSAGES.doneEyes)
+      if (steady && now - this.steadySince >= LIMITS.eyesWaitFor) return this.burst({ eyes: true })
       return this.propose(verdict.message, now)
     }
     if (moved > LIMITS.maxMove || !this.stillSince) {
@@ -220,9 +220,10 @@ export default class extends Controller {
     if (now - this.stillSince >= LIMITS.stillFor) this.burst()
   }
 
-  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo. message: what to
-  // say once taken, kept on the review screen when it's more than "Got it".
-  async burst(message = MESSAGES.done) {
+  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo. eyes: taken although
+  // the eyes looked closed (the 4 second fallback): spoken help says so at once, and the review screen's message
+  // carries the note, so the message changes once with it and a screen reader reads it whole.
+  async burst({ eyes = false } = {}) {
     if (this.state !== "live") return
     this.state = "taking"
     let best = null
@@ -235,10 +236,9 @@ export default class extends Controller {
       if (!best || score > best.score) best = { canvas, score }
       await new Promise((resolve) => setTimeout(resolve, BURST_GAP_MS))
     }
-    this.say(message)
+    this.say(MESSAGES.done, eyes ? { spoken: MESSAGES.doneEyes, force: true } : {})
     this.stopCamera()
-    await this.review(best.canvas, "camera")
-    if (message !== MESSAGES.done) this.show(`${message} Is this photo all right?`)
+    await this.review(best.canvas, "camera", null, eyes ? MESSAGES.eyesNote : null)
   }
 
   // Buttons ------------------------------------------------------------------------------------------------------
@@ -310,7 +310,8 @@ export default class extends Controller {
 
   // Review and send ----------------------------------------------------------------------------------------------
 
-  async review(source, origin, landmarks) {
+  // note: said before the question, such as why the photo was taken anyway.
+  async review(source, origin, landmarks, note = null) {
     landmarks ||= (await this.detectStill(source))?.[0]
     const sampled = landmarks ? sampleRegions(pixels(source), landmarks, this.regionsValue) : {}
     const blob = await toJpeg(source)
@@ -319,7 +320,7 @@ export default class extends Controller {
     this.liveControlsTarget.hidden = true
     this.reviewTarget.hidden = false
     this.state = "review"
-    this.show("Is this photo all right?")
+    this.show(note ? `${note} Is this photo all right?` : "Is this photo all right?")
     this.messageTarget.scrollIntoView({ block: "start" })
   }
 
@@ -387,28 +388,29 @@ export default class extends Controller {
     }
   }
 
-  // Shows a message and speaks it. A message being spoken is never cut off: the newest one waits and is spoken
-  // when it ends. force (the countdown, a rejected photo) speaks at once.
-  say(message, { force = false } = {}) {
+  // Shows a message and speaks it (or spoken, when that says more). A message being spoken is never cut off: the
+  // newest one waits and is spoken when it ends. force (the countdown, a rejected photo) speaks at once.
+  say(message, { force = false, spoken = message } = {}) {
     this.show(message)
     const speech = window.speechSynthesis
     if (!this.spoken || !speech) return
     const now = Date.now()
-    if (!force && message === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
+    if (!force && spoken === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
     if (!force && speech.speaking) {
-      this.queued = message
+      this.queued = { message, spoken }
       return
     }
     this.queued = null
-    this.lastSpoken = message
+    this.lastSpoken = spoken
     this.lastSpokenAt = now
     if (force) speech.cancel()
-    const utterance = new SpeechSynthesisUtterance(message)
+    const utterance = new SpeechSynthesisUtterance(spoken)
     utterance.rate = 0.9
     utterance.onend = () => {
       const next = this.queued
       this.queued = null
-      if (next && next !== this.lastSpoken && next === this.messageTarget.textContent) this.say(next)
+      const current = next?.message === this.messageTarget.textContent
+      if (next && current && next.spoken !== this.lastSpoken) this.say(next.message, next)
     }
     speech.speak(utterance)
   }
