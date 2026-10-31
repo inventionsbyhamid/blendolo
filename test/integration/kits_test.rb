@@ -151,4 +151,14 @@ class KitsTest < ActionDispatch::IntegrationTest
     get kit_path(kit)
     assert_select "body[data-hands='2']"
   end
+
+  test "kit home and the looks list lead to the signature look" do
+    kit = make_kit
+
+    [ kit_path(kit), kit_looks_path(kit) ].each do |page|
+      get page
+      assert_select "a[href=?]", kit_signature_path(kit), text: /Bring back your signature look/
+      assert_select "p", text: /Use an old photo of your favourite look\. We rebuild it from easy steps\./
+    end
+  end
 end

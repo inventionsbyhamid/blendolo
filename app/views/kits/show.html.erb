@@ -37,6 +37,7 @@
       <%= render "components/button", label: "Share with a helper", href: kit_shares_path(@kit), variant: :secondary, icon: :share %>
     <% end %>
   </div>
+  <%= render "kits/signature_entry", kit: @kit %>
 
   <%= render "kits/hands_today", kit: @kit %>
 

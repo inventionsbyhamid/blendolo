@@ -1,0 +1,5 @@
+<%# The way into the signature look, from the kit home and the looks list. %>
+<section class="stack" aria-labelledby="signature-entry-<%= local_assigns[:id] || "main" %>">
+  <p class="m-0" id="signature-entry-<%= local_assigns[:id] || "main" %>">Use an old photo of <%= you_or_they(kit, "your", "their") %> favourite look. We rebuild it from easy steps.</p>
+  <%= render "components/button", label: "Bring back your signature look", href: kit_signature_path(kit), variant: :secondary %>
+</section>

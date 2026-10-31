@@ -32,7 +32,9 @@ class ExampleFlowTest < ApplicationSystemTestCase
     assert_selector ".compare img.render__image", count: 2
     shot "integration-look"
 
-    visit kit_signature_path(kit)
+    click_on "All looks"
+    click_on "Bring back your signature look"
+    assert_current_path kit_signature_path(kit)
     assert_selector ".three-up img", count: 3
     shot "integration-signature"
 
