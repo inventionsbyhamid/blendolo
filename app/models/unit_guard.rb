@@ -25,7 +25,7 @@ module UnitGuard
   end
 
   def live_calls(kit, operation)
-    kit.provider_calls.where(operation: operation.to_s).where.not(status: :failed).count
+    kit.provider_calls.counted.where(operation: operation.to_s).count
   end
 
   def per_kit

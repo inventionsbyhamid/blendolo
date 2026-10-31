@@ -13,8 +13,29 @@ class ProviderCall < ApplicationRecord
 
   attribute :day, default: -> { Date.current }
 
+  # An in-flight call older than this is taken as lost, and the next request calls again.
+  STALE_AFTER = 5.minutes
+
   def self.units_spent_on(date)
     where(day: date).sum(:units)
+  end
+
+  # A call that may have cost units: everything but a refunded failure.
+  scope :counted, -> { where.not(status: :failed).or(where("provider_calls.units > 0")) }
+
+  def in_flight?
+    (pending? || running?) && updated_at > STALE_AFTER.ago
+  end
+
+  # Takes this row for a new call, but only if nobody changed it since it was read. True when this caller won;
+  # a concurrent request that loses must not start a second paid task.
+  def claim!(kit:, units:)
+    claimed = self.class.where(id:, status: self.class.statuses.fetch(status), updated_at:).update_all(
+      kit_id: kit.id, status: self.class.statuses[:pending], units:, day: Date.current, response: {},
+      updated_at: Time.current
+    ) == 1
+    reload if claimed
+    claimed
   end
 
   private

@@ -19,12 +19,18 @@ class UnitGuardTest < ActiveSupport::TestCase
     assert_equal :ok, UnitGuard.check(kit: Kit.create!, operation: :makeup)
   end
 
-  test "kit cap allows two transfers and ignores failed calls" do
+  test "kit cap allows two transfers and ignores refunded failures" do
     calls(1, operation: "transfer")
-    calls(2, operation: "transfer", status: :failed)
+    calls(2, operation: "transfer", status: :failed, units: 0)
     assert_equal :ok, UnitGuard.check(kit: @kit, operation: :transfer)
 
     calls(3, operation: "transfer")
+    assert_equal :kit_cap, UnitGuard.check(kit: @kit, operation: :transfer)
+  end
+
+  test "a failure that may have been charged counts towards the kit cap" do
+    calls(1, operation: "transfer")
+    calls(2, operation: "transfer", status: :failed, units: 2)
     assert_equal :kit_cap, UnitGuard.check(kit: @kit, operation: :transfer)
   end
 
@@ -55,7 +61,7 @@ class UnitGuardTest < ActiveSupport::TestCase
   end
 
   private
-    def calls(n, operation:, status: :done)
-      ProviderCall.create!(kit: @kit, operation:, input_hash: "kit-#{n}", units: 1, status:)
+    def calls(n, operation:, status: :done, units: 1)
+      ProviderCall.create!(kit: @kit, operation:, input_hash: "kit-#{n}", units:, status:)
     end
 end
