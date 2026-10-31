@@ -41,7 +41,13 @@ export default class extends Controller {
     this.restore = (event) => {
       if (event.persisted && this.cameraValue && this.state !== "review") this.startCamera()
     }
+    // The checks rest while the page is hidden (another tab, the phone locked) and start afresh when it shows again.
+    this.visibility = () => {
+      this.lastPoints = null
+      this.watch()
+    }
     document.addEventListener("turbo:before-visit", this.leave)
+    document.addEventListener("visibilitychange", this.visibility)
     window.addEventListener("pagehide", this.leave)
     window.addEventListener("pageshow", this.restore)
     this.fresh()
@@ -51,6 +57,7 @@ export default class extends Controller {
     this.attempt += 1
     this.stopCamera()
     document.removeEventListener("turbo:before-visit", this.leave)
+    document.removeEventListener("visibilitychange", this.visibility)
     window.removeEventListener("pagehide", this.leave)
     window.removeEventListener("pageshow", this.restore)
     clearTimeout(this.countdownTimer)
@@ -134,15 +141,19 @@ export default class extends Controller {
   }
 
   // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
-  // the countdown, the burst or the review.
+  // the countdown, the burst or the review, or while the page is hidden.
   watch(delay = 0) {
     clearTimeout(this.watchTimer)
-    if (this.state === "live" && this.gate && !this.counting) this.watchTimer = setTimeout(() => this.look(), delay)
+    if (this.watching) this.watchTimer = setTimeout(() => this.look(), delay)
+  }
+
+  get watching() {
+    return this.state === "live" && this.gate && !this.counting && !document.hidden
   }
 
   async look() {
     const gate = this.gate
-    if (this.state !== "live" || !gate || this.counting) return
+    if (!this.watching) return
     if (this.videoTarget.readyState < 2) return this.watch(CHECK_GAP_MS[gate.kind])
     const attempt = this.attempt
     const started = performance.now()
@@ -152,7 +163,7 @@ export default class extends Controller {
     } catch {
       // This frame couldn't be checked; the next one may be.
     }
-    if (attempt !== this.attempt || gate !== this.gate || this.state !== "live" || this.counting) return
+    if (attempt !== this.attempt || gate !== this.gate || !this.watching) return
     if (summary) this.check(summary, started)
     const took = performance.now() - started
     this.watch(Math.max(CHECK_GAP_MS[gate.kind], CHECK_SHARE[gate.kind] * took) - took)
