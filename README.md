@@ -137,7 +137,7 @@ bin/rails test:system   # browser tests, headless Chrome
 bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 ```
 
-- 427 unit and integration tests and 47 system tests in headless Chrome, all green at the last CI run.
+- 466 unit and integration tests and 53 system tests in headless Chrome, all green at the last CI run.
 - `BLENDOLO_CI_HOST=<ssh host> bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine, so the full suite doesn't load your laptop. It needs Docker, rsync and flock there. Steps live in `config/ci.rb`.
 
 ## Code map
