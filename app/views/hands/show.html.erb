@@ -1,3 +1,4 @@
+<% page_title hand_question(@kit, @question) %>
 <% back = @number == 1 ? kit_consent_path(@kit) : kit_hand_path(@kit, @number - 1) %>
 <div class="page stack">
   <%= render "components/step_header", step: @number + 1, of: KitsHelper::SETUP_STEPS, back: back, finish_later: kit_path(@kit) %>

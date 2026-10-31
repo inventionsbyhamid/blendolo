@@ -1,3 +1,11 @@
+<% page_title(
+     if @kit.example? then "#{Examples.fetch(@kit.example_key).name}'s signature look"
+     elsif @signature then "Your signature look, today"
+     elsif @reference.nil? then "Bring back a signature look"
+     elsif @liner.nil? then "Signature look: eyeliner"
+     else "Signature look: lips"
+     end
+   ) %>
 <%# The fallback reload (refresh_controller.js) keeps the reader's place on the page. %>
 <% content_for :head, tag.meta(name: "turbo-refresh-scroll", content: "preserve") %>
 <% if @kit.example? || @signature %>

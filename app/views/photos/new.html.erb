@@ -1,3 +1,4 @@
+<% page_title(@kind == "reference" ? "An old photo with the look" : "A photo of #{you_or_they(@kit, "your", "their")} face") %>
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% reference = @kind == "reference"
    urls = mediapipe_urls

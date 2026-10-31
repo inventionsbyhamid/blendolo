@@ -16,8 +16,13 @@ module SeoHelper
     @seo = { title:, description:, image:, canonical:, noindex:, social_description:, x_description: }
   end
 
+  # A private page's own title (WCAG 2.4.2), without making it a search page: it stays noindex.
+  def page_title(title)
+    @page_title = title
+  end
+
   def seo_title
-    title = @seo&.dig(:title) || content_for(:title)
+    title = @seo&.dig(:title) || @page_title || content_for(:title)
     return DEFAULT_TITLE if title.blank?
 
     title.include?(SITE_NAME) ? title : "#{title} | #{SITE_NAME}"

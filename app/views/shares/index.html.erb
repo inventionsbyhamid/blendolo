@@ -1,6 +1,7 @@
 <div class="page stack">
   <% made = @made %>
   <% audience = params[:audience].presence_in(SharesHelper::AUDIENCES.keys) %>
+  <% page_title(made ? "Your link is ready" : audience ? "Share: what can they see?" : "Share with a helper") %>
 
   <% if made %>
     <h1 class="m-0">Your link is ready</h1>

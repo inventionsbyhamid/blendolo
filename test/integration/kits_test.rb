@@ -166,6 +166,29 @@ class KitsTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", kit_signature_path(helper), text: /Bring back their signature look/
   end
 
+  test "every kit page has its own title and stays out of search" do
+    kit = make_kit(tremor: 2, pinch: 1, one_hand: 0, fatigue: 1, near_vision: 1)
+    post kit_routine_path(kit), params: { look_key: "red_lip" }
+    pages = [
+      kit_path(kit), kit_consent_path(kit), *(1..5).map { |number| kit_hand_path(kit, number) }, new_kit_photo_path(kit),
+      new_kit_photo_path(kit, kind: "reference"), kit_looks_path(kit), kit_look_path(kit, "red_lip"),
+      kit_look_path(kit, "everyday_fresh"), kit_routine_path(kit), step_kit_routine_path(kit, 1),
+      step_kit_routine_path(kit, 2), print_kit_routine_path(kit), kit_shopping_path(kit), kit_shares_path(kit),
+      kit_signature_path(kit), delete_kit_path(kit)
+    ]
+
+    titles = pages.map do |page|
+      get page
+      assert_response :success, page
+      assert_select "meta[name=robots][content='noindex, nofollow']"
+      css_select("title").first.text
+    end
+    assert_equal titles.uniq, titles, titles.tally.select { |_title, count| count > 1 }.inspect
+    assert titles.all? { |title| title.end_with?(" | Blendolo") }, titles.inspect
+    assert_includes titles, "The red lip, your easy version | Blendolo"
+    assert_includes titles, "Do your hands shake? | Blendolo"
+  end
+
   test "the capture page has no picture without a source" do
     get new_kit_photo_path(make_kit)
 

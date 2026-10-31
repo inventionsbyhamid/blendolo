@@ -1,3 +1,4 @@
+<% page_title(@kit.example? ? "#{Examples.fetch(@kit.example_key).name}'s kit" : "Your kit") %>
 <% label, path = next_step_for(@kit) %>
 <div class="page stack">
   <header class="stack">

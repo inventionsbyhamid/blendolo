@@ -1,3 +1,4 @@
+<% page_title "Step #{@number} of #{@steps.size}: #{@step.name}" %>
 <% last = @number == @steps.size
    picture = @with&.result || @photo&.image %>
 <div class="page stack" data-controller="speak">
