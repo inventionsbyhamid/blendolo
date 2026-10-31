@@ -64,6 +64,14 @@ class RequiredEnvTest < ActiveSupport::TestCase
     end
   end
 
+  test "the jobs worker boots without the Google client" do
+    names = RequiredEnv.production("BLENDOLO_PROCESS" => " jobs ").flatten
+
+    assert_not_includes names, "GOOGLE_CLIENT_ID"
+    assert_not_includes names, "GOOGLE_CLIENT_SECRET"
+    assert_includes names, "R2_BUCKET"
+  end
+
   test "production needs the Google client with Google sign in, the default" do
     default = RequiredEnv.production("APPEARANCE_PROVIDER" => "fake").flatten
     google = RequiredEnv.production("AUTH_PROVIDER" => " google ").flatten
@@ -72,6 +80,9 @@ class RequiredEnvTest < ActiveSupport::TestCase
       assert_includes names, "GOOGLE_CLIENT_ID"
       assert_includes names, "GOOGLE_CLIENT_SECRET"
     end
+
+    web = RequiredEnv.production("BLENDOLO_PROCESS" => "web").flatten
+    assert_includes web, "GOOGLE_CLIENT_ID"
 
     error = assert_raises(RequiredEnv::Invalid) { RequiredEnv.check_values!(env: { "AUTH_PROVIDER" => "gogle" }) }
     assert_includes error.message, "AUTH_PROVIDER must be google"

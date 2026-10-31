@@ -27,7 +27,8 @@ module RequiredEnv
   # Needed only with the live provider (APPEARANCE_PROVIDER=youcam). YOUCAM_WEBHOOK_SECRET stays optional.
   YOUCAM = %w[YOUCAM_API_KEYS YOUCAM_DAILY_UNIT_CAP YOUCAM_UNIT_FLOOR].freeze
 
-  # Needed only with Google sign in (AUTH_PROVIDER=google, which is also what a blank AUTH_PROVIDER means).
+  # Needed only with Google sign in (AUTH_PROVIDER=google, which is also what a blank AUTH_PROVIDER means), and only
+  # by the web process (BLENDOLO_PROCESS=web, the default): the jobs worker never signs anyone in, so it boots without.
   GOOGLE = %w[GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET].freeze
 
   module_function
@@ -36,8 +37,16 @@ module RequiredEnv
   def production(env = ENV)
     names = PRODUCTION
     names += YOUCAM if env["APPEARANCE_PROVIDER"].to_s.strip == "youcam"
-    names += GOOGLE if env["AUTH_PROVIDER"].to_s.strip.then { |provider| provider.empty? || provider == "google" }
+    names += GOOGLE if google?(env) && web?(env)
     names
+  end
+
+  def google?(env)
+    env["AUTH_PROVIDER"].to_s.strip.then { |provider| provider.empty? || provider == "google" }
+  end
+
+  def web?(env)
+    env["BLENDOLO_PROCESS"].to_s.strip.then { |process| process.empty? || process == "web" }
   end
 
   # Raises Missing naming the first entry none of whose names has a value. It names variables, never values: the
