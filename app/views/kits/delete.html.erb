@@ -3,6 +3,10 @@
   <h1 class="m-0">Delete everything?</h1>
   <p class="lead m-0">This deletes <%= you_or_they(@kit, "your", "their") %> photos, answers, looks and share links now. It can't be undone.</p>
   <p class="m-0">Our photo partner deletes its copies within 30 days.</p>
-  <%= render "components/button", label: "Yes, delete everything", url: kit_path(@kit), method: :delete, variant: :danger, css: "btn--big", icon: :trash %>
+  <% if @kit.user_id && !@kit.owned_by?(current_user) %>
+    <p class="card m-0">This kit is in an account. Sign in with that account to delete it.</p>
+  <% else %>
+    <%= render "components/button", label: "Yes, delete everything", url: kit_path(@kit), method: :delete, variant: :danger, css: "btn--big", icon: :trash %>
+  <% end %>
   <%= render "components/button", label: "No, keep my kit", href: kit_path(@kit), variant: :secondary %>
 </div>

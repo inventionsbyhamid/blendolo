@@ -17,6 +17,11 @@ class KitsController < ApplicationController
       return keep_example_kits_as_they_are
     end
 
+    # A kit in an account is the account's: only its owner, signed in, deletes it (a kit link alone isn't enough).
+    if kit&.user_id && !kit.owned_by?(current_user)
+      return redirect_to(kit_path(kit), notice: "This kit is in an account. Sign in with that account to delete it.")
+    end
+
     kit&.destroy_everything!
     forget_kit
     redirect_to root_path, notice: "Everything is deleted. Our photo partner deletes its copies within 30 days."
