@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { evaluate, movement, loadLandmarker, LIMITS, MESSAGES } from "capture/gate"
+import { evaluate, movement, summarize, loadLandmarker, LIMITS, MESSAGES } from "capture/gate"
 import { sampleRegions, sharpness, toJpeg, pixels } from "capture/sampler"
 
 // Hands-free photo. The phone stands on its own; the camera checks each frame (one face, close enough, looking
@@ -135,10 +135,10 @@ export default class extends Controller {
     } catch {
       return
     }
-    const verdict = evaluate(result)
-    const landmarks = result.faceLandmarks?.[0]
-    const moved = movement(this.lastLandmarks, landmarks)
-    this.lastLandmarks = landmarks
+    const summary = summarize(result)
+    const verdict = evaluate(summary)
+    const moved = movement(this.lastPoints, summary.points)
+    this.lastPoints = summary.points
 
     if (!verdict.ok) {
       this.stillSince = null

@@ -1,5 +1,6 @@
-// The capture gates: is this frame a good photo for a makeup preview? Works on Face Landmarker results, so it can be
-// checked with recorded results as well as the live camera.
+// The capture gates: is this frame a good photo for a makeup preview? Works on a summary of a Face Landmarker result
+// (summarize), so it can be checked with recorded results as well as the live camera, and only a few numbers per
+// frame have to be kept.
 //
 // One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink and
 // squint under 0.4), mouth relaxed (jawOpen under 0.3), then still for a second.
@@ -16,28 +17,42 @@ export const MESSAGES = {
 
 export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxEyes: 0.4, maxJaw: 0.3, stillFor: 1000, maxMove: 0.012 }
 
+const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
+
+// Points that show the head moving: nose tip, eye corners, chin.
+const STILL_POINTS = [1, 33, 263, 152]
+
 // result: { faceLandmarks: [[{x, y}]], faceBlendshapes: [{ categories: [{ categoryName, score }] }],
 //           facialTransformationMatrixes: [{ data: [16 numbers, column-major] }] }
-// -> { ok: true } or { ok: false, message }
-export function evaluate(result) {
+// -> { faces: how many, width: of the first face, angles: { yaw, pitch } or null, scores: { eyeBlinkLeft, ..., jawOpen },
+//      points: the first face's STILL_POINTS as [{x, y}] or null }
+export function summarize(result) {
   const faces = result?.faceLandmarks || []
-  if (faces.length > 1) return fail(MESSAGES.manyFaces)
-  if (faces.length === 0) return fail(MESSAGES.straight)
-
-  const width = faceWidth(faces[0])
-  if (width < LIMITS.minWidth) return fail(MESSAGES.closer)
-  if (width > LIMITS.maxWidth) return fail(MESSAGES.back)
-
-  const matrix = result.facialTransformationMatrixes?.[0]?.data
-  if (matrix) {
-    const { yaw, pitch } = headAngles(matrix)
-    if (Math.abs(yaw) > LIMITS.maxAngle || Math.abs(pitch) > LIMITS.maxAngle) return fail(MESSAGES.straight)
-  }
-
+  const face = faces[0]
+  const matrix = result?.facialTransformationMatrixes?.[0]?.data
   const scores = blendshapes(result)
-  const eyes = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"].map((name) => scores[name] || 0)
-  if (Math.max(...eyes) >= LIMITS.maxEyes) return fail(MESSAGES.eyes)
-  if ((scores.jawOpen || 0) >= LIMITS.maxJaw) return fail(MESSAGES.still)
+  return {
+    faces: faces.length,
+    width: face ? faceWidth(face) : 0,
+    angles: matrix ? headAngles(matrix) : null,
+    scores: Object.fromEntries([...EYES, "jawOpen"].map((name) => [name, scores[name] || 0])),
+    points: face ? STILL_POINTS.map((index) => ({ x: face[index].x, y: face[index].y })) : null
+  }
+}
+
+// summary (from summarize) -> { ok: true } or { ok: false, message }
+export function evaluate(summary) {
+  if (summary.faces > 1) return fail(MESSAGES.manyFaces)
+  if (summary.faces === 0) return fail(MESSAGES.straight)
+
+  if (summary.width < LIMITS.minWidth) return fail(MESSAGES.closer)
+  if (summary.width > LIMITS.maxWidth) return fail(MESSAGES.back)
+
+  const { angles } = summary
+  if (angles && (Math.abs(angles.yaw) > LIMITS.maxAngle || Math.abs(angles.pitch) > LIMITS.maxAngle)) return fail(MESSAGES.straight)
+
+  if (Math.max(...EYES.map((name) => summary.scores[name])) >= LIMITS.maxEyes) return fail(MESSAGES.eyes)
+  if (summary.scores.jawOpen >= LIMITS.maxJaw) return fail(MESSAGES.still)
 
   return { ok: true }
 }
@@ -60,13 +75,10 @@ export function blendshapes(result) {
   return Object.fromEntries(categories.map((category) => [category.categoryName, category.score]))
 }
 
-// Points that show the head moving: nose tip, eye corners, chin.
-const STILL_POINTS = [1, 33, 263, 152]
-
-// How far the face moved between two frames, as a share of the frame.
+// How far the face moved between two frames (their summaries' points), as a share of the frame.
 export function movement(previous, current) {
   if (!previous || !current) return Infinity
-  const distances = STILL_POINTS.map((index) => Math.hypot(previous[index].x - current[index].x, previous[index].y - current[index].y))
+  const distances = previous.map((point, index) => Math.hypot(point.x - current[index].x, point.y - current[index].y))
   return distances.reduce((sum, distance) => sum + distance, 0) / distances.length
 }
 

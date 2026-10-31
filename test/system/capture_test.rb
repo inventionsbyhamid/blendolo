@@ -115,7 +115,10 @@ class CaptureTest < ApplicationSystemTestCase
 
     verdicts = evaluate_async_script(<<~JS, cases.values, FaceResults.result(FaceResults.face))
       const [results, good, done] = arguments
-      import("capture/gate").then((gate) => done({ messages: results.map((result) => gate.evaluate(result).message), good: gate.evaluate(good) }))
+      import("capture/gate").then((gate) => {
+        const evaluate = (result) => gate.evaluate(gate.summarize(result))
+        done({ messages: results.map((result) => evaluate(result).message), good: evaluate(good) })
+      })
     JS
 
     assert_equal cases.keys.map { |key| key.sub(/ \(.*\)\z/, "") }, verdicts["messages"]
