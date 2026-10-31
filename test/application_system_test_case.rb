@@ -18,5 +18,16 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       options.add_argument("--no-sandbox")
       options.add_argument("--disable-dev-shm-usage")
     end
+    # A fake camera (a moving test pattern) that needs no permission prompt, for the hands-free capture tests.
+    options.add_argument("--use-fake-device-for-media-stream")
+    options.add_argument("--use-fake-ui-for-media-stream")
+  end
+
+  SCREENS = Rails.root.join("tmp/screenshots/screens")
+
+  # Saves a picture of the page for a person to look at (kept in tmp/screenshots/screens on the CI host).
+  def shot(name)
+    SCREENS.mkpath
+    page.save_screenshot(SCREENS.join("#{name}.png").to_s) # rubocop:disable Lint/Debugger
   end
 end
