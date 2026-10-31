@@ -37,6 +37,12 @@ Rails.application.routes.draw do
   get "clinic" => "clinics#show", as: :clinic
   post "clinic/kits" => "clinics#create_kit", as: :clinic_kits
 
+  # Local development without keys only (config/environments/development.rb): sign in as a test person. Never drawn
+  # in production or tests.
+  namespace :local do
+    post "sign_in" => "sessions#create" if Rails.configuration.x.local_sign_in
+  end
+
   get "privacy" => "pages#privacy"
   get "accessibility" => "pages#accessibility"
   get "sources" => "pages#sources"

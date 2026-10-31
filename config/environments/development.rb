@@ -40,6 +40,10 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3107 }
 
+  # No keys needed to run Blendolo locally. Without a Google client, the sign in page offers "Sign in as a test person
+  # (local only)" (Local::SessionsController). Only this file turns it on.
+  config.x.local_sign_in = ENV["GOOGLE_CLIENT_ID"].blank?
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 

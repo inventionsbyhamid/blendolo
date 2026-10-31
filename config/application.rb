@@ -26,6 +26,10 @@ module Blendolo
     # The one host production answers (config/environments/production.rb), also read by the health test.
     config.x.canonical_host = "blendolo.dijmo.com"
 
+    # Local stand-ins for keys a fresh clone doesn't have: "Sign in as a test person" for Google sign in. Off here, so
+    # off in production and tests; config/environments/development.rb turns it on while its key is blank.
+    config.x.local_sign_in = false
+
     # MediaPipe Tasks Vision for hands-free capture: the pinned package (script and wasm) and the face model file.
     # The content security policy allows exactly these; the capture code should load from the same values.
     config.x.mediapipe = ActiveSupport::OrderedOptions.new.merge!(
