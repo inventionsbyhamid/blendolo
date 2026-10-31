@@ -16,6 +16,15 @@ class Photo < ApplicationRecord
   validates :source, inclusion: { in: SOURCES }
   validate :sampled_colours_are_hex
 
+  # SHA-256 of the image bytes: the provider cache key. Computed once if the upload didn't set it.
+  def content_sha256!
+    sha256.presence || Digest::SHA256.hexdigest(image.download).tap { |digest| update_column(:sha256, digest) }
+  end
+
+  def to_appearance_image
+    Appearance::Image.new(io: StringIO.new(image.download), filename: image.filename.to_s, content_type: image.content_type)
+  end
+
   private
     def sampled_colours_are_hex
       return if sampled.is_a?(Hash) &&
