@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>You're offline | Blendolo</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#FFF8F0">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+    body { margin: 0; background: #FFF8F0; color: #2A211C; font-family: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 1.25rem; line-height: 1.5; }
+    .wrap { width: min(760px, 100% - 32px); margin-inline: auto; }
+    .top { padding: 12px 0; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; color: #2A211C; text-decoration: none; font-size: 1.7rem; font-weight: 900; letter-spacing: -0.03em; }
+    main { padding: 64px 0 96px; text-align: center; }
+    h1 { font-size: clamp(2.2rem, 7vw, 3.4rem); font-weight: 900; line-height: 1.06; letter-spacing: -0.02em; margin: 0 0 0.5em; text-wrap: balance; }
+    p { margin: 0 0 1em; }
+    .sub { color: #5E5149; font-size: 1.375rem; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 88px; padding: 0 44px; margin-top: 16px; background: #B02A45; color: #FFFFFF; border-radius: 999px; font-weight: 800; font-size: 1.375rem; text-decoration: none; box-shadow: 0 10px 22px rgb(176 42 69 / 26%); }
+    .button:hover { background: #8E1F37; }
+    :focus-visible { outline: 3px solid #1F5F8B; outline-offset: 3px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true" width="40" height="40"><defs><linearGradient id="blendolo-swipe" x1="14" y1="0" x2="50" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#B02A45"/><stop offset="1" stop-color="#EC6A5C"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="#FFD369"/><path d="M15 33c4 10 10 15 17 15s13-6 17-17" stroke="url(#blendolo-swipe)" stroke-width="10" stroke-linecap="round"/></svg><span>Blendolo</span></a>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <h1>You're offline.</h1>
+      <p class="sub">Blendolo needs a connection. Your kit is saved. Open it again when you are back online.</p>
+      <a class="button" href="/">Try again</a>
+    </div>
+  </main>
+</body>
+</html>

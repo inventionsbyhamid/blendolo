@@ -42,6 +42,9 @@ gem "image_processing", "~> 1.2"
 # Active Storage's S3 service, used for Cloudflare R2 in production
 gem "aws-sdk-s3", require: false
 
+# QR codes for share links, drawn as SVG on the server so they print and need no script.
+gem "rqrcode", "~> 3.1"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -67,4 +70,6 @@ group :test do
   gem "selenium-webdriver"
   # Stub provider HTTP in tests and fail any test that tries to reach the network.
   gem "webmock"
+  # Runs axe-core accessibility checks in the system test browser.
+  gem "axe-core-capybara", require: false
 end

@@ -18,5 +18,30 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       options.add_argument("--no-sandbox")
       options.add_argument("--disable-dev-shm-usage")
     end
+    # A fake camera (a moving test pattern) that needs no permission prompt, for the hands-free capture tests.
+    options.add_argument("--use-fake-device-for-media-stream")
+    options.add_argument("--use-fake-ui-for-media-stream")
+  end
+
+  SCREENS = Rails.root.join("tmp/screenshots/screens")
+
+  # The test environment shows detailed errors; production shows public/404.html.
+  def showing_public_error_pages
+    env_config = Rails.application.env_config
+    detailed = env_config["action_dispatch.show_detailed_exceptions"]
+    env_config["action_dispatch.show_detailed_exceptions"] = false
+    yield
+  ensure
+    env_config["action_dispatch.show_detailed_exceptions"] = detailed
+  end
+
+  # Saves a picture of the whole page for a person to look at (kept in tmp/screenshots/screens on the CI host).
+  def shot(name)
+    SCREENS.mkpath
+    browser = page.driver.browser
+    size = browser.execute_cdp("Page.getLayoutMetrics")["cssContentSize"]
+    clip = { x: 0, y: 0, width: size["width"], height: [ size["height"], 6000 ].min, scale: 1 }
+    png = browser.execute_cdp("Page.captureScreenshot", format: "png", captureBeyondViewport: true, clip:)["data"]
+    SCREENS.join("#{name}.png").binwrite(png.unpack1("m"))
   end
 end

@@ -41,6 +41,11 @@ module Blendolo
     config.active_storage.urls_expire_in = 5.minutes
     config.active_storage.service_urls_expire_in = 5.minutes
 
+    # Photos and previews are served through our own origin (Active Storage proxy mode), never as redirects to the
+    # storage bucket: the content security policy allows images from 'self' only, and bucket links never reach the
+    # browser.
+    config.active_storage.resolve_model_to_route = :rails_storage_proxy
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

@@ -1,0 +1,256 @@
+<% seo title: SeoHelper::DEFAULT_TITLE, description: SeoHelper::DEFAULT_DESCRIPTION %>
+<% content_for :body_class, "landing" %>
+<% content_for :head do %>
+  <%= tag.link rel: "preload", as: "image", type: "image/webp", fetchpriority: "high",
+        imagesrcset: "#{image_path("landing/hero-800.webp")} 800w, #{image_path("landing/hero-full.webp")} 928w",
+        imagesizes: "(max-width: 960px) 92vw, 500px" %>
+<% end %>
+<% content_for :header_nav do %>
+  <nav aria-label="Main">
+    <ul class="nav">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#ease">Easy swaps</a></li>
+      <li><a href="#signature">Signature look</a></li>
+      <li><a href="#shops">For shops</a></li>
+      <li><a href="#faq">Questions</a></li>
+    </ul>
+  </nav>
+<% end %>
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap hero__grid">
+    <div class="hero__copy">
+      <p class="chip chip--rose">Makeup for hands that shake, tire or hurt</p>
+      <h1 id="hero-title">The <mark>same red lip.</mark> Two mirrors. One of them takes eleven tries.</h1>
+      <p class="lede">A tinted balm and a fingertip get you there in one. Blendolo keeps your look, swaps the hard steps for easy ones, and shows you the easy version on your own face first.</p>
+      <div class="cta">
+        <%= link_to "Start", start_path, class: "button button--primary" %>
+        <a class="button button--ghost" href="#how">See how it works</a>
+        <p class="cta__note">Free. Private. No account.</p>
+      </div>
+      <ul class="pills" aria-label="Made for tremor">
+        <li>Big buttons</li>
+        <li>No dragging</li>
+        <li>Works with Voice Control</li>
+      </ul>
+    </div>
+
+    <div class="hero__art">
+      <div class="hero__photo">
+        <%= landing_picture "hero", full: 928, height: 993, sizes: "(max-width: 960px) 92vw, 500px", eager: true, css: "photo photo--hero",
+              alt: "A smiling woman with short silver hair sits at her kitchen table, elbow resting on it, a red lip crayon in her hand and a small round mirror in front of her." %>
+        <div class="float float--hands">
+          <span class="dot" aria-hidden="true"></span>
+          <p><strong>Easy for your hands</strong><br><span>Tremor, tires fast</span></p>
+        </div>
+        <figure class="float float--swap">
+          <figcaption class="float__head"><span>Your easy version</span><span class="tag">Example</span></figcaption>
+          <ul class="swaps">
+            <li>
+              <span class="swaps__was">Liquid red lipstick</span><span class="lvl lvl--hard">Hard</span>
+              <span class="swaps__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Red tinted balm</span><span class="lvl lvl--easy">Easy</span>
+            </li>
+            <li>
+              <span class="swaps__was">Winged liquid liner</span><span class="lvl lvl--hard">Hard</span>
+              <span class="swaps__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Smudged pencil line</span><span class="lvl lvl--easy">Easy</span>
+            </li>
+          </ul>
+          <p class="float__foot">Graded by the hardest step</p>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="facts" aria-labelledby="facts-title">
+  <div class="wrap">
+    <h2 id="facts-title" class="sr-only">Why this matters</h2>
+    <ul class="facts__grid">
+      <li class="tint-rose">
+        <p class="fact__num">More than 1 in 4</p>
+        <p>people with essential tremor say their tremor affects putting on makeup. 2,864 people were asked.</p>
+      </li>
+      <li class="tint-sun">
+        <p class="fact__num">5.3 million</p>
+        <p>women live with Parkinson's worldwide. That's 45% of everyone with it.</p>
+      </li>
+      <li class="tint-mint">
+        <p class="fact__num">194 million</p>
+        <p>people have osteoarthritis in their hands, women twice as often as men. Pinching a cap or a thin pencil can hurt.</p>
+      </li>
+    </ul>
+    <p class="fineprint">Sources: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8710410">Gupta et al. 2021, IETF survey</a>, <a href="https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2024.1498756/full">Global Burden of Disease 2021, Frontiers 2025</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12350485/">Wei et al., Frontiers in Medicine 2025</a>.</p>
+  </div>
+</section>
+
+<section id="how" class="section" aria-labelledby="how-title">
+  <div class="wrap">
+    <h2 id="how-title" class="center">How it works</h2>
+    <p class="center sub">Four steps. No steady hand needed for any of them.</p>
+    <ol class="steps">
+      <li>
+        <span class="steps__n" aria-hidden="true">1</span>
+        <h3>Prop up your phone</h3>
+        <p>It takes your photo by itself when your face is still. No aiming, no quick taps.</p>
+      </li>
+      <li>
+        <span class="steps__n" aria-hidden="true">2</span>
+        <h3>Tell us about your hands</h3>
+        <p>Five big choices: tremor, pinch or grip pain, one hand, tire fast, close vision.</p>
+      </li>
+      <li>
+        <span class="steps__n" aria-hidden="true">3</span>
+        <h3>See the easy version</h3>
+        <p>Pick a look. Hard steps are swapped, and you see both versions on your own face.</p>
+      </li>
+      <li>
+        <span class="steps__n" aria-hidden="true">4</span>
+        <h3>Follow big step cards</h3>
+        <p>Detailed steps first, while your hands are fresh. Tidy smudges last. Read aloud.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="ease" class="section section--sun" aria-labelledby="ease-title">
+  <div class="wrap split">
+    <div>
+      <p class="chip chip--white">The ease score</p>
+      <h2 id="ease-title">One hard step makes a look hard. So we swap it.</h2>
+      <p>Every look gets an ease score for your hands, not for anyone else's. A look is only as easy as its hardest step, so we grade it by that step. Then we swap it for one that keeps the colour and the feel.</p>
+      <ul class="swaplist" aria-label="Example swaps">
+        <li><span class="swaplist__was">Winged liquid liner</span><span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Smudged pencil line, short strokes</span></li>
+        <li><span class="swaplist__was">Liquid lipstick</span><span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Tinted balm, tapped on with a finger</span></li>
+        <li><span class="swaplist__was">Brow pencil strokes</span><span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Tinted brow gel with a big wand</span></li>
+        <li><span class="swaplist__was">Powder blush and a small brush</span><span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span>Cream blush and fingertips</span></li>
+      </ul>
+      <p class="note">Mascara has no easy swap. We say so, and offer upper lashes only, or a day without it. Ease scores are our own guide, not a clinical measure. Swaps come from published tips by Parkinson's UK and the Parkinson's Foundation, and from people living with tremor, MS or arthritis.</p>
+    </div>
+    <div class="split__media">
+      <%= landing_picture "kit", full: 1200, height: 597, sizes: "(max-width: 900px) 92vw, 540px",
+            alt: "Easy makeup on cream linen: three chunky crayon pencils, a pump bottle, a cushion compact, a brush with a fat wooden handle and a tin of red tinted balm." %>
+      <div class="float float--grade">
+        <p class="grade__row"><span>Classic look</span><span class="lvl lvl--hard">Hard</span></p>
+        <p class="grade__row"><span>Your easy version</span><span class="lvl lvl--easy">Easy</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="signature" class="section" aria-labelledby="signature-title">
+  <div class="wrap split split--flip">
+    <div>
+      <p class="chip chip--rose">Bring back your signature look</p>
+      <h2 id="signature-title">Miss the look in your favourite photo? Wear it again.</h2>
+      <p>Upload an old photo of you wearing a look you loved. Blendolo puts that look on today's face, then rebuilds it from steps your hands can do.</p>
+      <ul class="ticks">
+        <li>Same colours, easier steps</li>
+        <li>The classic and the easy version side by side</li>
+        <li>A short list of what you'll need</li>
+      </ul>
+      <p class="note">Works best when your eyes are open and your face is clear in both photos.</p>
+    </div>
+    <div class="split__media">
+      <%= landing_picture "couple", full: 1264, height: 537, sizes: "(max-width: 900px) 92vw, 540px",
+            alt: "A woman in her sixties with a bold red lip and a green dress laughs in the hallway mirror while her husband buttons his blazer, ready for an evening out." %>
+    </div>
+  </div>
+</section>
+
+<section id="hands" class="section section--mint" aria-labelledby="hands-title">
+  <div class="wrap split">
+    <div class="split__media split__media--tall">
+      <%= landing_picture "phone", full: 928, height: 993, sizes: "(max-width: 900px) 92vw, 460px",
+            alt: "A smiling woman in a coral blouse sits at a wooden table, hands resting, while her phone on a small stand takes her photo." %>
+    </div>
+    <div>
+      <p class="chip chip--white">Easy to use</p>
+      <h2 id="hands-title">Built for hands that shake.</h2>
+      <p>Made with the same rules as this page: big targets, and nothing that needs a steady hand.</p>
+      <ul class="ticks">
+        <li>Big buttons, with room between them</li>
+        <li>A tap counts when you lift your finger, so a slip doesn't press the wrong thing</li>
+        <li>No dragging, swiping, pinching or double taps</li>
+        <li>Works with Voice Control and Voice Access. Say the words on the button</li>
+        <li>Every step card can be read aloud</li>
+        <li>No time limits. Stop any time and finish later</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="helpers" class="section section--rose" aria-labelledby="helpers-title">
+  <div class="wrap split split--flip">
+    <div>
+      <p class="chip chip--white">For helpers and occupational therapists</p>
+      <h2 id="helpers-title">Doing it together? Share the routine.</h2>
+      <p>Send your step cards to a daughter, a friend or a carer with one private link. They see the same steps in the same order, so help fits the way you like to do it.</p>
+      <p>Occupational therapists can use the cards as a ready handout, next to their own advice on grips and tools.</p>
+    </div>
+    <div class="split__media">
+      <%= landing_picture "helper", full: 1264, height: 537, sizes: "(max-width: 900px) 92vw, 540px",
+            alt: "An older woman with short silver hair laughs on the sofa while her daughter sweeps a little blush onto her cheek with a big soft brush." %>
+    </div>
+  </div>
+</section>
+
+<section id="shops" class="section" aria-labelledby="shops-title">
+  <div class="wrap split">
+    <div class="split__media">
+      <%= landing_picture "packs", full: 1200, height: 597, sizes: "(max-width: 900px) 92vw, 540px",
+            alt: "Easy to open makeup on mint linen: a pump bottle, a flip top balm, a compact with a big grip tab, a blush stick, a brow gel with a chunky cap and a short fat brush." %>
+    </div>
+    <div>
+      <p class="chip chip--rose">For beauty brands and shops</p>
+      <h2 id="shops-title">Show shoppers what is easy to open and easy to use.</h2>
+      <p>Every easy swap is a product: a chunky pencil, a tinted balm, a cream stick, a pump foundation. Blendolo tags products by how they open and how they go on, so the easy version is ready to shop.</p>
+      <ul class="tags" aria-label="Ease tags">
+        <li>Opens one-handed</li>
+        <li>No pinch grip</li>
+        <li>Pump</li>
+        <li>Goes on with a fingertip</li>
+        <li>Forgiving formula</li>
+        <li>No step near the eye</li>
+      </ul>
+      <p class="note">Try before you buy, now with the easy version too.</p>
+    </div>
+  </div>
+</section>
+
+<section id="privacy" class="section section--soft" aria-labelledby="privacy-title">
+  <div class="wrap narrow">
+    <h2 id="privacy-title" class="center">Private by design</h2>
+    <ul class="trust">
+      <li><b>No account, no ads.</b> Your looks live behind a private link.</li>
+      <li><b>Your photos, your call.</b> Keep them for 30 days, or delete them when you're done.</li>
+      <li><b>Partner processing.</b> YouCam, our try-on partner, uses your photos to make the previews and removes its copies within 30 days.</li>
+      <li><b>Shares you control.</b> Choose what a helper sees. Switch the link off any time.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="faq" class="section faq" aria-labelledby="faq-title">
+  <div class="wrap narrow">
+    <h2 id="faq-title" class="center">Questions</h2>
+    <details>
+      <summary>Do I need steady hands to use this?</summary>
+      <p>No. Every button is big, nothing needs a drag or a double tap, and the camera takes the photo by itself when your face is still. Prop your phone up and you won't need to hold it.</p>
+    </details>
+    <details>
+      <summary>Will the easier version still look like my look?</summary>
+      <p>That's the idea. We keep your colours and the feel of the look, and swap only the steps that need a steady hand. You see both side by side before you try anything.</p>
+    </details>
+    <details>
+      <summary>Can it bring back a look from an old photo?</summary>
+      <p>Yes. Upload a photo of you wearing a look you loved. We show it on today's photo, then rebuild it from easy steps. It works best when your eyes are open and your face is clear in both photos.</p>
+    </details>
+    <details>
+      <summary>What happens to my photos?</summary>
+      <p>Our try-on partner, YouCam, uses them to make the previews. You choose to keep them for 30 days or delete them when you're done. Partner copies are removed within 30 days.</p>
+    </details>
+    <details>
+      <summary>Is this medical advice?</summary>
+      <p>No. It's makeup help. For anything about your condition or medicines, ask your care team. An occupational therapist can also suggest grips and tools.</p>
+    </details>
+  </div>
+</section>

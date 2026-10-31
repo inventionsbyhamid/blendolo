@@ -1,0 +1,10 @@
+<% seo title: "Guides", description: "Short, practical makeup guides for hands that shake, tire or hurt, with the sources behind every tip." %>
+<div class="page prose">
+  <%= render "pages/page_header", chip: "Guides", title: "Makeup guides for hands that shake",
+        lead: "Short and practical. Every tip comes from a published source or from people who live with it." %>
+  <ul class="linklist">
+    <% PagesController::GUIDES.each do |slug, guide| %>
+      <li><%= link_to guide_path(slug) do %><%= guide[:title] %><small><%= guide[:description] %></small><% end %></li>
+    <% end %>
+  </ul>
+</div>

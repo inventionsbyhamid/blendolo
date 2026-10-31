@@ -1,0 +1,21 @@
+<footer class="foot">
+  <div class="wrap foot__row">
+    <%= link_to root_path, class: "brand brand--small", "aria-label": "Blendolo home" do %>
+      <%= image_tag "mark.svg", alt: "", width: 32, height: 32 %>
+      <span>Blendolo</span>
+    <% end %>
+    <nav aria-label="More">
+      <ul class="foot__links">
+        <li><%= link_to "Guides", guides_path %></li>
+        <li><%= link_to "For brands", brands_path %></li>
+        <li><%= link_to "Privacy", privacy_path %></li>
+        <li><%= link_to "Accessibility", accessibility_path %></li>
+        <li><%= link_to "Sources", sources_path %></li>
+      </ul>
+    </nav>
+    <p>Blendolo gives no medical advice. For anything about your condition or medicines, ask your care team.</p>
+    <p>Previews are a guide, not a promise. Ease scores are our own guide, not a clinical measure.</p>
+    <p>Makeup try-on by the YouCam API from Perfect Corp. People in the photos on this page are AI generated.</p>
+    <p>&copy; 2026 Blendolo</p>
+  </div>
+</footer>

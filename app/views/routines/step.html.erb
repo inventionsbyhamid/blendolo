@@ -1,0 +1,26 @@
+<% last = @number == @steps.size
+   picture = @with&.result || @photo&.image %>
+<div class="page stack" data-controller="speak">
+  <%= render "components/step_header", step: @number, of: @steps.size, back: (@number > 1 ? step_kit_routine_path(@kit, @number - 1) : kit_routine_path(@kit)), finish_later: kit_path(@kit) %>
+  <h1 class="sr-only"><%= @step.name %></h1>
+
+  <% if picture&.attached? && @step.area != "finish" %>
+    <figure class="step-zoom step-zoom--<%= @step.area %> m-0" data-controller="glow"
+            data-glow-with-value="<%= (proxied_image_path(@with.result, 900) if @without) %>"
+            data-glow-without-value="<%= (proxied_image_path(@without.result, 900) if @without) %>">
+      <%= image_tag proxied_image_path(picture, 900), alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image" %>
+      <canvas class="step-zoom__glow" data-glow-target="canvas" hidden aria-hidden="true"></canvas>
+    </figure>
+  <% end %>
+
+  <%= render "routines/card_text", step: @step, speak: true %>
+
+  <%= render "components/button", label: (last ? "Done, all finished" : "Done, next step"), href: (last ? kit_path(@kit) : step_kit_routine_path(@kit, @number + 1)), variant: :primary, icon: :check %>
+  <button type="button" class="btn btn--secondary" aria-pressed="false" data-speak-target="button" data-action="speak#toggle">
+    <%= render "components/icon", name: :speaker %><span data-speak-target="label">Read it to me</span>
+  </button>
+  <p class="muted m-0" data-speak-target="status" role="status"></p>
+  <% unless last %>
+    <%= render "components/button", label: "Skip this step", href: step_kit_routine_path(@kit, @number + 1), variant: :quiet %>
+  <% end %>
+</div>

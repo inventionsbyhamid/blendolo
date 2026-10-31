@@ -1,0 +1,33 @@
+<% seo title: "Accessibility", description: "How Blendolo is built for hands that shake, tire or hurt: big targets, no dragging, no time limits, Voice Control and read aloud." %>
+<div class="page prose">
+  <%= render "pages/page_header", chip: "Accessibility", title: "Built for hands that shake",
+        lead: "Blendolo aims to meet WCAG 2.2 level AA, and goes further where tremor needs it." %>
+
+  <h2>Our rules, on every screen</h2>
+  <ul>
+    <li>Main buttons are at least 88 pixels tall. Every other button is at least 64 pixels, with room between them.</li>
+    <li>"My hands today" makes everything bigger when you need it: steady, a bit shaky, or very shaky or stiff.</li>
+    <li>A tap counts when you lift your finger. A second tap straight after is ignored, so a tremor can't press twice.</li>
+    <li>No dragging, swiping, pinching, double taps or long presses.</li>
+    <li>No time limits. Every answer is saved as you go, and "Finish later" is always there.</li>
+    <li>Every button has words on it, so Voice Control and Voice Access can find it. Say the words you see.</li>
+    <li>Step cards can be read aloud.</li>
+    <li>Large text, strong contrast, and one decision per screen. We say "Step 2 of 5" in words.</li>
+    <li>If your phone asks for less motion, we don't animate.</li>
+    <li>"Delete everything" asks on its own page. Everywhere else you can undo instead.</li>
+  </ul>
+
+  <h2>How we test</h2>
+  <ul>
+    <li>Automatic accessibility checks with axe on every change.</li>
+    <li>Button and link sizes measured in a real browser at phone width.</li>
+    <li>Voice Control on iPhone, going through the whole flow by voice.</li>
+  </ul>
+
+  <h2>Known limits</h2>
+  <p>Hands-free photos need a recent browser with camera access. If the camera doesn't work, "Choose a photo" always does. Read aloud uses the voices your phone has.</p>
+
+  <h2>Tell us what gets in your way</h2>
+  <p>If anything is hard to use, we want to know.</p>
+  <%= render "pages/contact" %>
+</div>

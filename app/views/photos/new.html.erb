@@ -1,0 +1,63 @@
+<% reference = @kind == "reference"
+   urls = mediapipe_urls
+   regions = reference ? %w[lips lids cheeks skin] : %w[skin lips lids cheeks] %>
+<div class="page stack capture" data-controller="capture" data-capture-state="starting"
+     data-capture-package-url-value="<%= urls[:package_url] %>" data-capture-model-url-value="<%= urls[:model_url] %>"
+     data-capture-regions-value="<%= regions.to_json %>" data-capture-camera-value="<%= !reference %>">
+  <% if reference %>
+    <%= render "components/step_header", step: 1, of: 3, back: kit_path(@kit), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0">Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look</h1>
+    <p class="lead m-0">One face, eyes open, looking at the camera works best.</p>
+  <% else %>
+    <%= render "components/step_header", step: KitsHelper::SETUP_STEPS, of: KitsHelper::SETUP_STEPS, back: kit_hand_path(@kit, 5), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0"><%= @kit.helper? ? "A photo of their face" : "A photo of your face" %></h1>
+    <p class="lead m-0">Prop the phone up and face the light. It takes the photo by itself.</p>
+  <% end %>
+
+  <% if @upload&.errors&.any? %>
+    <p class="flash" role="alert">That photo <%= @upload.errors.full_messages_for(:file).first&.delete_prefix("File ") || "didn't work" %>. Please choose another.</p>
+  <% end %>
+
+  <p class="capture__message" data-capture-target="message" role="status" aria-live="polite"><%= reference ? "Choose an old photo of you wearing the look." : "Starting the camera" %></p>
+  <div class="capture__stage capture__live">
+    <video class="capture__video" data-capture-target="video" playsinline muted autoplay></video>
+    <div class="capture__guide" aria-hidden="true"></div>
+    <p class="capture__count" data-capture-target="count" aria-hidden="true"></p>
+  </div>
+
+  <div class="stack" data-capture-target="liveControls">
+    <div class="capture__live stack">
+      <button type="button" class="btn btn--primary" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#shoot">
+        <%= render "components/icon", name: :camera %><span class="btn__label">Take the photo</span>
+      </button>
+      <div class="button-row button-row--2">
+        <button type="button" class="btn btn--secondary" data-action="capture#timer" data-capture-seconds-param="3"><span class="btn__label">3 second timer</span></button>
+        <button type="button" class="btn btn--secondary" data-action="capture#timer" data-capture-seconds-param="10"><span class="btn__label">10 second timer</span></button>
+      </div>
+      <div class="button-row button-row--2">
+        <button type="button" class="btn btn--quiet" aria-pressed="true" data-capture-target="speech" data-action="capture#toggleSpeech">
+          <%= render "components/icon", name: :speaker %><span class="btn__label">Spoken help: on</span>
+        </button>
+        <button type="button" class="btn btn--quiet" aria-pressed="false" data-capture-target="helper" data-action="capture#helper"><span class="btn__label">A helper is taking it</span></button>
+      </div>
+    </div>
+    <label class="btn btn--secondary capture__choose">
+      <span>Choose a photo</span>
+      <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" data-capture-target="choose" data-action="change->capture#choose">
+    </label>
+  </div>
+
+  <%= form_with url: kit_photos_path(@kit), multipart: true, data: { capture_target: "form" } do |form| %>
+    <%= form.hidden_field :kind, value: @kind %>
+    <%= form.hidden_field :sampled, value: "{}", data: { capture_target: "sampled" } %>
+    <%= form.hidden_field :source, value: "upload", data: { capture_target: "source" } %>
+    <%= form.file_field :image, class: "sr-only", tabindex: -1, "aria-hidden": "true", data: { capture_target: "file" } %>
+    <div class="stack" data-capture-target="review" hidden>
+      <img class="capture__review" data-capture-target="reviewImage" alt="The photo you just took">
+      <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard click->capture#usePhoto" } do %>
+        <span class="btn__label">Use this photo</span><span class="btn__working">Working on it</span>
+      <% end %>
+      <button type="button" class="btn btn--secondary" data-action="capture#again"><span class="btn__label">Take it again</span></button>
+    </div>
+  <% end %>
+</div>

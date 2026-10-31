@@ -1,0 +1,7 @@
+<div class="page stack">
+  <h1 class="m-0">Delete everything?</h1>
+  <p class="lead m-0">This deletes <%= you_or_they(@kit, "your", "their") %> photos, answers, looks and share links now. It can't be undone.</p>
+  <p class="m-0">Our photo partner deletes its copies within 30 days.</p>
+  <%= render "components/button", label: "Yes, delete everything", url: kit_path(@kit), method: :delete, variant: :danger, css: "btn--big", icon: :trash %>
+  <%= render "components/button", label: "No, keep my kit", href: kit_path(@kit), variant: :secondary %>
+</div>

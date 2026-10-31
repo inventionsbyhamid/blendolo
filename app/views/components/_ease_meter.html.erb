@@ -1,0 +1,19 @@
+<%#
+  How easy a look is for your hands, in words first; the bar only repeats it (never colour alone).
+  score: 0..100, words: "Easy" | "Some care" | "Tricky" | "Hard", label: (default "Ease for your hands"),
+  before: words for the classic look, to show "Tricky, now Easy" (optional)
+%>
+<div class="meter">
+  <div class="meter__row">
+    <span class="meter__label"><%= local_assigns.fetch(:label, "Ease for your hands") %></span>
+    <span class="meter__words">
+      <% if local_assigns[:before] %><%= before %><span aria-hidden="true"> &#8594; </span><span class="sr-only">, now </span><% end %><%= words %>
+    </span>
+  </div>
+  <%# An SVG bar, so the width needs no inline style (kept out by the content security policy). %>
+  <svg class="meter__track" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <rect class="meter__fill" width="<%= score.to_i.clamp(0, 100) %>" height="10" rx="5" ry="5"/>
+  </svg>
+  <div class="meter__scale" aria-hidden="true"><span>Hard</span><span>Easy</span></div>
+  <p class="sr-only"><%= score.to_i %> out of 100</p>
+</div>

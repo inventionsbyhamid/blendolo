@@ -1,0 +1,27 @@
+<div class="page stack">
+  <%= render "components/step_header", step: 1, of: KitsHelper::SETUP_STEPS, back: start_path, finish_later: kit_path(@kit) %>
+  <h1 class="m-0">Before we start</h1>
+  <% if @kit.helper? %>
+    <p class="lead m-0">You're setting this up for someone you help. Please ask them before you take their photo.</p>
+  <% end %>
+
+  <div class="card prose">
+    <h2 class="mt-0">What we keep</h2>
+    <ul>
+      <li>Your answers about <%= you_or_they(@kit, "your", "their") %> hands.</li>
+      <li>A photo of <%= you_or_they(@kit, "your", "their") %> face, and an old photo if you bring back a signature look.</li>
+      <li>The looks you pick and your routine.</li>
+    </ul>
+    <h2>Who sees the photos</h2>
+    <p>YouCam, the try-on service from Perfect Corp, uses them to make the previews and deletes its copies within 30 days.</p>
+    <h2>Deleting</h2>
+    <p class="m-0">"Delete everything" is in your kit's menu. It deletes it all at once.</p>
+  </div>
+
+  <h2 class="m-0">How long should we keep it?</h2>
+  <div class="button-row">
+    <%= render "components/button", label: "Agree, keep it for 30 days", url: kit_consent_path(@kit), params: { retention_days: 30 }, variant: :primary %>
+    <%= render "components/button", label: "Agree, keep it for 7 days", url: kit_consent_path(@kit), params: { retention_days: 7 }, variant: :secondary %>
+  </div>
+  <p class="muted m-0">Days count from your last visit. <%= link_to "Read our privacy page", privacy_path %>.</p>
+</div>

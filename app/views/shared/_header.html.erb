@@ -1,0 +1,13 @@
+<header class="top">
+  <div class="wrap top__row">
+    <%= link_to root_path, class: "brand", "aria-label": "Blendolo home" do %>
+      <%= image_tag "mark.svg", alt: "", width: 40, height: 40 %>
+      <span>Blendolo</span>
+    <% end %>
+    <% if content_for?(:header_nav) %>
+      <%= yield :header_nav %>
+    <% elsif @kit&.persisted? %>
+      <%= render "kits/menu", kit: @kit %>
+    <% end %>
+  </div>
+</header>

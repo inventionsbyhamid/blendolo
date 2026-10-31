@@ -1,0 +1,152 @@
+require "test_helper"
+require "support/kit_helpers"
+
+class KitsTest < ActionDispatch::IntegrationTest
+  include KitHelpers
+
+  test "unknown token 404" do
+    get "/k/not-a-real-token"
+    assert_response :not_found
+
+    get "/k/not-a-real-token/looks"
+    assert_response :not_found
+  end
+
+  test "deleted kit 404" do
+    kit = make_kit
+    get kit_path(kit)
+    assert_response :success
+
+    delete kit_path(kit)
+    assert_redirected_to root_path
+    assert_not Kit.exists?(kit.id)
+
+    get kit_path(kit)
+    assert_response :not_found
+    get kit_looks_path(kit)
+    assert_response :not_found
+  end
+
+  test "deleting twice ends on the same page" do
+    kit = make_kit
+    delete kit_path(kit)
+    delete kit_path(kit)
+
+    assert_redirected_to root_path
+    follow_redirect!
+    assert_select ".flash", /Everything is deleted/
+  end
+
+  test "an expired kit is 404 even before the purge job runs" do
+    kit = make_kit
+    kit.update_columns(purge_after: 1.minute.ago)
+
+    get kit_path(kit)
+    assert_response :not_found
+  end
+
+  test "kit pages noindex" do
+    kit = make_kit
+    [ kit_path(kit), kit_looks_path(kit), kit_consent_path(kit), kit_hand_path(kit, 1), delete_kit_path(kit) ].each do |path|
+      get path
+
+      assert_response :success, path
+      assert_select "meta[name=robots][content='noindex, nofollow']"
+      assert_select "link[rel=canonical]", count: 0
+      assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
+    end
+  end
+
+  test "a visit counts as activity" do
+    kit = travel_to(3.days.ago) { make_kit }
+
+    get kit_path(kit)
+    assert_in_delta Time.current, kit.reload.last_active_at, 5
+  end
+
+  test "start makes a kit, remembers it and asks for consent" do
+    assert_difference -> { Kit.count }, 1 do
+      post start_path, params: { path: "helper" }
+    end
+    kit = Kit.last
+    assert kit.helper?
+    assert_redirected_to kit_consent_path(kit)
+    assert_equal kit.token, signed_cookie(:blendolo_kit)
+  end
+
+  test "start twice in a row makes one kit" do
+    assert_difference -> { Kit.count }, 1 do
+      post start_path, params: { path: "self_use" }
+      post start_path, params: { path: "self_use" }
+    end
+  end
+
+  test "photos require consent" do
+    kit = make_kit(consented: false, photo: false)
+
+    assert_no_difference -> { Photo.count } do
+      post kit_photos_path(kit), params: { image: photo_upload, kind: "today" }
+    end
+    assert_redirected_to kit_consent_path(kit)
+
+    get new_kit_photo_path(kit)
+    assert_redirected_to kit_consent_path(kit)
+    get kit_looks_path(kit)
+    assert_redirected_to kit_consent_path(kit)
+  end
+
+  test "consent then a photo: stored as a jpeg no larger than 1600 px, sampled colours kept" do
+    kit = make_kit(consented: false, photo: false)
+    post kit_consent_path(kit), params: { retention_days: 7 }
+    assert kit.reload.consented_at?
+    assert_equal 7, kit.retention_days
+
+    post kit_photos_path(kit), params: { image: photo_upload("face.png", "image/png"), kind: "today",
+      sampled: { lips: "#a84452", skin: "#C99A7A", nose: "#000000" }.to_json }
+    photo = kit.photos.today.last
+    assert_redirected_to kit_looks_path(kit)
+    assert_equal "image/jpeg", photo.image.content_type
+    assert_equal({ "lips" => "#A84452", "skin" => "#C99A7A" }, photo.sampled)
+    assert_equal [ 96, 120 ], [ photo.width, photo.height ]
+  end
+
+  test "the same photo sent twice is stored once" do
+    kit = make_kit(photo: false)
+
+    assert_difference -> { kit.photos.count }, 1 do
+      2.times { post kit_photos_path(kit), params: { image: photo_upload, kind: "today" } }
+    end
+  end
+
+  test "a file that isn't a photo is refused" do
+    kit = make_kit(photo: false)
+
+    post kit_photos_path(kit), params: { image: photo_upload("not_a_photo.jpg"), kind: "today" }
+    assert_response :unprocessable_content
+    assert_equal 0, kit.photos.count
+  end
+
+  test "hand answers are saved one screen at a time" do
+    kit = make_kit(photo: false)
+
+    patch kit_hand_path(kit, 1), params: { answer: 2 }
+    assert_redirected_to kit_hand_path(kit, 2)
+    patch kit_hand_path(kit, 5), params: { answer: 1 }
+    assert_redirected_to new_kit_photo_path(kit)
+    assert_equal [ 2, 1 ], [ kit.reload.tremor, kit.near_vision ]
+
+    patch kit_hand_path(kit, 3), params: { answer: 9 }
+    assert_nil kit.reload.one_hand
+  end
+
+  test "my hands today sets the size and goes back" do
+    kit = make_kit
+
+    patch kit_hands_today_path(kit), params: { hands_today: 2, return_to: kit_looks_path(kit) }
+    assert_redirected_to kit_looks_path(kit)
+    assert_equal 2, kit.reload.hands_today
+
+    get kit_path(kit)
+    assert_select "body[data-hands='2']"
+  end
+end

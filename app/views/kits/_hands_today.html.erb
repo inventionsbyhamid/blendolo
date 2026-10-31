@@ -1,0 +1,13 @@
+<%# "My hands today": three big choices. Changes target sizes and the repeat-tap window at once. %>
+<section class="stack" aria-labelledby="hands-today-<%= local_assigns[:id] || "main" %>">
+  <h2 id="hands-today-<%= local_assigns[:id] || "main" %>" class="m-0">My hands today</h2>
+  <ul class="tiles tiles--compact">
+    <% KitsHelper::HANDS_TODAY.each_with_index do |label, value| %>
+      <li>
+        <%= render "components/tile", label: label, chosen: hands_today == value,
+              url: kit_hands_today_path(kit), method: :patch,
+              params: { hands_today: value, return_to: local_assigns[:return_to] || request.fullpath } %>
+      </li>
+    <% end %>
+  </ul>
+</section>

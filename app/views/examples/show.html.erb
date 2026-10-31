@@ -1,0 +1,12 @@
+<% seo title: "Try with #{@person.name}", description: "See Blendolo with #{@person.name}, an example person: their hands, their looks and the easy version." %>
+<div class="page stack">
+  <h1 class="m-0"><%= @person.name %></h1>
+  <%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %>
+  <% if params[:soon] %>
+    <%= render "components/empty_state", title: "Example coming soon", body: "#{@person.name}'s kit isn't ready yet. You can start your own now.", action_label: "Start", action_href: start_path %>
+  <% else %>
+    <p class="lead m-0"><%= @person.blurb %></p>
+    <p class="m-0">See <%= @person.name %>'s looks, the easy versions and the step cards. It's shared, so nothing you tap changes it.</p>
+    <%= render "components/button", label: "Open #{@person.name}'s kit", url: start_example_path(@person.key), variant: :primary, icon: :next %>
+  <% end %>
+</div>

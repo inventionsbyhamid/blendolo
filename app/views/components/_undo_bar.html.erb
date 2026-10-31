@@ -1,0 +1,11 @@
+<%#
+  Undo instead of "Are you sure?". Stays at the bottom until the next action; it never fades by itself.
+  message:, url: where Undo goes, method: (default :post), params: (optional)
+%>
+<div class="undo-bar" role="status">
+  <div class="undo-bar__row">
+    <p class="undo-bar__text"><%= message %></p>
+    <%= render "components/button", label: "Undo", url: url, method: local_assigns.fetch(:method, :post),
+          params: local_assigns.fetch(:params, {}), icon: :undo, inline: true %>
+  </div>
+</div>

@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
+// "Print the cards": the phone's or computer's own print dialog.
 export default class extends Controller {
-  connect() {
-    this.element.textContent = "Hello World!"
+  print() {
+    window.print()
   }
 }

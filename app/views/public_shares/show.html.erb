@@ -1,0 +1,32 @@
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">A makeup routine, shared with you</h1>
+    <p class="lead m-0">The steps in the order they like to do them: detailed steps first, tidy up last. This link works until <%= l @share.expires_at.to_date, format: :long %>.</p>
+  </header>
+  <% if @photos %>
+    <% easy = StepPreview.with(@shared_kit) %>
+    <% photo = @shared_kit.photos.today.order(:created_at).last %>
+    <div class="compare__stage">
+      <% if photo&.image&.attached? %>
+        <figure class="compare__side m-0"><%= image_tag proxied_image_path(photo.image, 600), alt: "Their photo", class: "render__image" %><figcaption class="compare__caption">Their photo</figcaption></figure>
+      <% end %>
+      <% if easy %>
+        <figure class="compare__side m-0"><%= image_tag proxied_image_path(easy.result, 600), alt: "Their photo with the easy version", class: "render__image" %><figcaption class="compare__caption">Easy version</figcaption></figure>
+      <% end %>
+    </div>
+    <% if easy %><%= render "components/honest_label" %><% end %>
+  <% end %>
+  <% if @steps.empty? %>
+    <%= render "components/empty_state", title: "No routine yet", body: "They haven't picked a routine yet. Check back later." %>
+  <% else %>
+    <ol class="stack p-0 m-0 list-none">
+      <% @steps.each.with_index(1) do |step, number| %>
+        <li class="card stack">
+          <p class="m-0 muted">Step <%= number %> of <%= @steps.size %></p>
+          <%= render "routines/card_text", step: step %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+  <p class="muted m-0">Blendolo gives no medical advice. An occupational therapist can suggest grips and tools.</p>
+</div>

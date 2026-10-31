@@ -1,0 +1,14 @@
+<%# Small line icons, always next to words. name: back, next, check, camera, speaker, share, trash, undo %>
+<%
+  paths = {
+    back: "M15 6l-6 6 6 6",
+    next: "M9 6l6 6-6 6",
+    check: "M5 12.5l4.5 4.5L19 7.5",
+    camera: "M4 8h3l2-3h6l2 3h3v11H4z M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7",
+    speaker: "M4 9h4l5-4v14l-5-4H4z M16.5 8.5a5 5 0 0 1 0 7 M19 6a8.5 8.5 0 0 1 0 12",
+    share: "M12 4v11 M7.5 8.5L12 4l4.5 4.5 M5 13v6h14v-6",
+    trash: "M5 7h14 M10 7V4.5h4V7 M7 7l1 13h8l1-13",
+    undo: "M9 7L4.5 11.5 9 16 M5 11.5h9a5 5 0 0 1 0 10h-2"
+  }
+%>
+<svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="<%= paths.fetch(name.to_sym) %>"/></svg>

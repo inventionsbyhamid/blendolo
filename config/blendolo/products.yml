@@ -1,0 +1,132 @@
+# Demo catalogue: made-up products that show how ease tags work. Not real products, not for sale.
+# step: the step in steps.yml this product is for. format: what it is. closure: how it opens
+# (pump, flip_cap, magnetic, pull_cap, twist_cap, clasp_compact, none). grip: how it holds (chunky, big_handle,
+# standard, slim). Tags come from these (see ProductEase#tags).
+
+dewdrop_tint:
+  name: Dewdrop skin tint
+  maker: Fernhill
+  step: tinted_moisturiser_fingers
+  format: pump
+  closure: pump
+  grip: standard
+
+daylight_bb_tube:
+  name: Daylight BB cream, squeeze tube
+  maker: Pellow
+  step: tinted_moisturiser_fingers
+  format: cream
+  closure: twist_cap
+  grip: slim
+
+softcover_stick:
+  name: Softcover concealer stick
+  maker: Fernhill
+  step: stick_concealer_finger
+  format: stick
+  closure: pull_cap
+  grip: chunky
+
+cloud_kabuki:
+  name: Cloud loose powder with kabuki
+  maker: Marrow & Bell
+  step: kabuki_powder
+  format: powder
+  closure: flip_cap
+  grip: big_handle
+
+apple_cheek_stick:
+  name: Apple cheek cream blush
+  maker: Pellow
+  step: cream_blush_fingers
+  format: stick
+  closure: pull_cap
+  grip: chunky
+
+petal_powder_blush:
+  name: Petal powder blush compact
+  maker: Marrow & Bell
+  step: powder_blush_brush
+  format: powder
+  closure: clasp_compact
+  grip: slim
+
+sunset_bronze_stick:
+  name: Sunset cream bronzer stick
+  maker: Fernhill
+  step: bronzer_stick_sponge
+  format: stick
+  closure: pull_cap
+  grip: chunky
+
+glow_tap_stick:
+  name: Glow tap highlighter
+  maker: Pellow
+  step: cream_highlighter_finger
+  format: stick
+  closure: magnetic
+  grip: chunky
+
+brow_sweep_gel:
+  name: Brow sweep tinted gel
+  maker: Marrow & Bell
+  step: tinted_brow_gel
+  format: gel
+  closure: twist_cap
+  grip: chunky
+
+lidwash_stick:
+  name: Lid wash cream shadow stick
+  maker: Fernhill
+  step: one_colour_lid_wash
+  format: stick
+  closure: pull_cap
+  grip: chunky
+
+smudge_pencil:
+  name: Smudge-it chunky eye pencil
+  maker: Pellow
+  step: smudged_pencil_liner
+  format: pencil
+  closure: pull_cap
+  grip: chunky
+
+fine_wing_liquid:
+  name: Fine wing liquid liner
+  maker: Marrow & Bell
+  step: liquid_liner_wing
+  format: liquid
+  closure: twist_cap
+  grip: slim
+
+ringgrip_mascara:
+  name: Ring grip mascara
+  maker: Fernhill
+  step: mascara_upper
+  format: wand
+  closure: twist_cap
+  grip: big_handle
+
+tinted_balm_crayon:
+  name: Berry tinted balm crayon
+  maker: Pellow
+  step: tinted_balm
+  format: crayon
+  closure: pull_cap
+  grip: chunky
+
+bullet_red:
+  name: Classic red bullet lipstick
+  maker: Marrow & Bell
+  step: bullet_lipstick
+  format: stick
+  closure: twist_cap
+  grip: slim
+
+clean_finish_water:
+  name: Clean finish micellar water
+  maker: Fernhill
+  step: fixup
+  format: liquid
+  closure: flip_cap
+  grip: standard

@@ -1,0 +1,84 @@
+<% if @transfer && @easy %>
+  <%= turbo_stream_from @kit %>
+  <div class="page page--wide stack">
+    <header class="stack">
+      <h1 class="m-0"><%= @kit.example? ? "#{Examples.fetch(@kit.example_key).name}'s signature look" : "Your signature look, today" %></h1>
+      <p class="lead m-0">The look from the old photo on today's face, and the same look in easier steps.</p>
+    </header>
+
+    <div class="three-up">
+      <figure class="three-up__item">
+        <% if @reference&.image&.attached? %>
+          <%= image_tag proxied_image_path(@reference.image, 900), alt: "The old photo", class: "render__image three-up__photo" %>
+        <% end %>
+        <figcaption class="compare__caption">The old photo</figcaption>
+      </figure>
+      <figure class="three-up__item">
+        <%= render @transfer %>
+        <figcaption class="compare__caption">Today, with the look</figcaption>
+      </figure>
+      <figure class="three-up__item">
+        <%= render @easy %>
+        <figcaption class="compare__caption">Today, easy version</figcaption>
+      </figure>
+    </div>
+    <%= render "components/honest_label" %>
+
+    <% if @signature %>
+      <% if @signature.colours_missing? %>
+        <p class="card m-0">We couldn't read the colours from the old photo, so the easy version only rebuilds the liner. Choosing a clearer photo can help.</p>
+      <% end %>
+      <section class="card stack" aria-labelledby="ease-title">
+        <h2 id="ease-title" class="m-0">How easy for <%= you_or_they(@kit, "your", "their") %> hands</h2>
+        <% classic, easy = @signature.classic_ease, @signature.easy_ease %>
+        <%= render "components/ease_meter", score: classic[:ease], words: Ease::Words.for(classic[:ease]), label: "Signature look" %>
+        <%= render "components/ease_meter", score: easy[:ease], words: Ease::Words.for(easy[:ease]), label: "Easy version" %>
+      </section>
+      <% if @signature.swaps.any? %>
+        <section class="stack" aria-labelledby="swaps-title">
+          <h2 id="swaps-title" class="m-0">What changes</h2>
+          <ul class="swaplist">
+            <% @signature.swaps.each do |swap| %>
+              <li>
+                <span class="swaplist__was"><%= swap[:from].name %></span>
+                <span class="swaplist__now"><span aria-hidden="true">&#8594; </span><span class="sr-only">becomes </span><%= swap[:to]&.name || "Left out" %></span>
+                <% if swap[:why] %><span class="swaplist__why"><strong>Why it's easier:</strong> <%= swap[:why] %></span><% end %>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+      <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: "signature", liner: @signature.liner, lips: @signature.lips }, variant: :primary, icon: :check %>
+      <%= render "components/button", label: "Use a different old photo", href: new_kit_photo_path(@kit, kind: "reference"), variant: :secondary %>
+    <% end %>
+  </div>
+<% elsif @reference.nil? %>
+  <div class="page stack">
+    <h1 class="m-0">Bring back a signature look</h1>
+    <p class="lead m-0">Miss the look in a favourite photo? Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing it. We put it on today's photo, then rebuild it from easy steps.</p>
+    <p class="m-0">Works best with one face, eyes open, looking at the camera.</p>
+    <%= render "components/button", label: "Choose an old photo", href: new_kit_photo_path(@kit, kind: "reference"), variant: :primary %>
+  </div>
+<% elsif @liner.nil? %>
+  <div class="page stack">
+    <%= render "components/step_header", step: 2, of: 3, back: new_kit_photo_path(@kit, kind: "reference"), finish_later: kit_path(@kit) %>
+    <%= image_tag proxied_image_path(@reference.image, 400), alt: "The old photo you chose", class: "signature__thumb" if @reference.image.attached? %>
+    <h1 class="instruction m-0" id="question">Did <%= you_or_they(@kit, "you", "they") %> wear eyeliner?</h1>
+    <ul class="tiles tiles--2" aria-labelledby="question">
+      <% SignatureLook::LINERS.each do |value, label| %>
+        <li><%= render "components/tile", label: label, href: kit_signature_path(@kit, liner: value) %></li>
+      <% end %>
+    </ul>
+  </div>
+<% else %>
+  <div class="page stack">
+    <%= render "components/step_header", step: 3, of: 3, back: kit_signature_path(@kit), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0" id="question">Lips?</h1>
+    <p class="lead m-0">How did <%= you_or_they(@kit, "your", "their") %> lipstick look in the old photo?</p>
+    <ul class="tiles" aria-labelledby="question">
+      <% SignatureLook::LIPS.each do |value, label| %>
+        <li><%= render "components/tile", label: label, url: kit_signature_path(@kit), method: :post, params: { liner: @liner, lips: value } %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

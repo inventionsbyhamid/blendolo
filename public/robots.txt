@@ -1,1 +1,7 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+# Private kits and shares are not blocked here on purpose: they carry noindex, which crawlers only see if they may
+# fetch the page.
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://blendolo.dijmo.com/sitemap.xml

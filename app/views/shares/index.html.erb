@@ -1,0 +1,41 @@
+<div class="page stack">
+  <% made = @shares.find { |share| share.token == params[:made] } if params[:made].present? %>
+  <% audience = params[:audience].presence_in(SharesHelper::AUDIENCES.keys) %>
+
+  <% if made %>
+    <h1 class="m-0">Your link is ready</h1>
+    <p class="lead m-0">Send it to <%= SharesHelper::AUDIENCES.fetch(made.audience).downcase_first %>, or let them scan the code. It works until <%= l made.expires_at.to_date, format: :long %>.</p>
+    <%= render "shares/link", share: made %>
+    <%= render "components/button", label: "Back to your kit", href: kit_path(@kit), variant: :secondary, icon: :back %>
+  <% elsif audience %>
+    <%= render "components/step_header", step: 2, of: 2, back: kit_shares_path(@kit), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0" id="question">What can they see?</h1>
+    <ul class="tiles" aria-labelledby="question">
+      <% SharesHelper::SCOPES.each do |scope, label| %>
+        <li><%= render "components/tile", label:, hint: (scope == "routine_only" ? "Step cards, no photos" : "Step cards, your photo and the easy version"), url: kit_shares_path(@kit), method: :post, params: { audience:, scope: } %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= render "components/step_header", step: 1, of: 2, back: kit_path(@kit), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0" id="question">Who is the link for?</h1>
+    <p class="lead m-0">A private link to <%= you_or_they(@kit, "your", "their") %> routine. It stops working after 30 days, or when you switch it off.</p>
+    <ul class="tiles" aria-labelledby="question">
+      <% SharesHelper::AUDIENCES.each do |key, label| %>
+        <li><%= render "components/tile", label:, href: kit_shares_path(@kit, audience: key) %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% others = @shares.reject { |share| share == made } %>
+  <% if others.any? %>
+    <section class="stack" aria-labelledby="live-title">
+      <h2 id="live-title" class="m-0">Links that work now</h2>
+      <% others.each do |share| %>
+        <div class="card stack">
+          <p class="m-0"><strong><%= SharesHelper::AUDIENCES.fetch(share.audience) %></strong>: <%= SharesHelper::SCOPES.fetch(share.scope).downcase_first %>, until <%= l share.expires_at.to_date, format: :long %></p>
+          <%= render "shares/link", share: share, qr: false %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

@@ -1,0 +1,15 @@
+<%#
+  The top of every step: Back and "Finish later" always in view, and where you are in words ("Step 2 of 5").
+  step:, of:, back: a path (optional on the first step), finish_later: a path
+%>
+<nav class="step-header" aria-label="Steps">
+  <div class="step-header__row">
+    <% if local_assigns[:back] %>
+      <%= render "components/button", label: "Back", href: back, variant: :secondary, icon: :back %>
+    <% else %>
+      <span></span>
+    <% end %>
+    <%= render "components/button", label: "Finish later", href: finish_later, variant: :quiet %>
+  </div>
+  <p class="step-header__count">Step <%= step %> of <%= of %></p>
+</nav>

@@ -1,0 +1,46 @@
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">Shopping list</h1>
+    <p class="lead m-0">What to look for, step by step, with what makes it easy for <%= you_or_they(@kit, "your", "their") %> hands.</p>
+  </header>
+  <% if @steps.empty? %>
+    <%= render "components/empty_state", title: "No routine yet", body: "Pick a look and make it your routine. Your list shows up here.", action_label: "Pick a look", action_href: kit_looks_path(@kit) %>
+  <% else %>
+    <% if @avoid.any? %>
+      <section class="card stack" aria-labelledby="avoid-title">
+        <h2 id="avoid-title" class="m-0">Best to avoid for <%= you_or_they(@kit, "your", "their") %> hands</h2>
+        <ul class="m-0 pl-6 list-disc">
+          <% @avoid.each do |thing| %><li><%= thing %></li><% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <%= render "components/honest_label", text: "Demo catalogue: made-up products that show how ease tags work" %>
+
+    <% @steps.each do |step| %>
+      <section class="card stack" aria-labelledby="step-<%= step.id %>">
+        <h2 id="step-<%= step.id %>" class="m-0"><%= step.product_type %></h2>
+        <p class="muted m-0">For: <%= step.name.downcase_first %></p>
+        <% if step.ease_tags.any? %>
+          <ul class="tags m-0" aria-label="What makes it easy">
+            <% step.ease_tags.sort_by { |tag| @matters.index(tag) || @matters.size }.each do |tag| %>
+              <li class="<%= "tags__match" if @matters.include?(tag) %>"><%= Ease::Words.tag(tag) %><% if @matters.include?(tag) %><span class="sr-only"> (good for <%= you_or_they(@kit, "your", "their") %> hands)</span><% end %></li>
+            <% end %>
+          </ul>
+        <% end %>
+        <% products = ProductEase.for_step(step.id).sort_by { |product| -product.ease.score(@profile) } %>
+        <% products.each do |product| %>
+          <% score = product.ease.score(@profile) %>
+          <div class="product">
+            <p class="product__name m-0"><%= product.name %> <span class="muted">(<%= product.maker %>)</span></p>
+            <p class="m-0"><strong><%= Ease::Words.for(score) %></strong> for <%= you_or_they(@kit, "your", "their") %> hands</p>
+            <ul class="tags m-0">
+              <% product.ease.tags.each do |tag| %><li class="<%= "tags__match" if @matters.include?(tag) %>"><%= Ease::Words.tag(tag) %></li><% end %>
+            </ul>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+    <p class="m-0">Dark tags matter most for <%= you_or_they(@kit, "your", "their") %> hands. <%= link_to "Ease tags for brands and shops", brands_path %></p>
+  <% end %>
+</div>
