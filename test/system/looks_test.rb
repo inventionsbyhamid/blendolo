@@ -70,6 +70,35 @@ class LooksSystemTest < ApplicationSystemTestCase
       "nothing left on its way, so no more reloads"
   end
 
+  test "the page waits to reload while a tap is on its way or the device is offline" do
+    photo = @kit.photos.today.sole
+    look = LookForKit.find(@kit, "red_lip")
+    @kit.renders.create!(Previews.attributes(photo, "red_lip", :classic, look.classic_effects(photo), nil)
+      .merge(status: :running, started_at: Time.current))
+    visit kit_look_path(@kit, "red_lip")
+    assert_selector ".render--running", text: "This takes about half a minute"
+    refresh = "window.Stimulus.getControllerForElementAndIdentifier(document.querySelector('main'), 'refresh')"
+    execute_script %(document.querySelector("main").insertAdjacentHTML("beforeend", '<p id="before-reload">here</p>'))
+
+    # A held control: no reload now, another try at the next tick.
+    execute_script %(document.querySelector("main").insertAdjacentHTML("beforeend", '<button id="held" class="is-working" aria-busy="true">Working on it</button>'))
+    execute_script "#{refresh}.refresh()"
+    sleep 0.5
+    assert_selector "#before-reload"
+    assert evaluate_script("#{refresh}.timer != null"), "tries again at the next tick"
+
+    # Offline: the same.
+    execute_script %(document.getElementById("held").remove(); Object.defineProperty(navigator, "onLine", { get: () => false, configurable: true }))
+    execute_script "#{refresh}.refresh()"
+    sleep 0.5
+    assert_selector "#before-reload"
+
+    # Back online with nothing held: it reloads.
+    execute_script "delete navigator.onLine; #{refresh}.refresh()"
+    assert_no_selector "#before-reload"
+    assert_selector ".render--running", text: "This takes about half a minute"
+  end
+
   test "swaps listed in plain words" do
     visit kit_look_path(@kit, "red_lip")
     look = LookForKit.find(@kit, "red_lip")
