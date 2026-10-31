@@ -40,12 +40,17 @@ class Kit < ApplicationRecord
     update!(last_active_at: Time.current)
   end
 
-  # "Delete everything", and retention: the files go now rather than in a later purge job, then every row.
-  # Provider calls stay, without the kit, for the daily unit count.
+  # "Delete everything", and retention: the files and their resized variants go now rather than in a later purge job,
+  # then every row. Provider calls stay, without the kit and emptied of results, for the daily unit count
+  # (PurgeExpiredKitsJob deletes them after two days).
   def destroy_everything!
     files = photos.includes(image_attachment: :blob).map(&:image) +
       renders.includes(result_attachment: :blob).map(&:result)
-    files.each(&:purge)
+    variants = files.select(&:attached?).flat_map do |file|
+      file.blob.variant_records.includes(image_attachment: :blob).map(&:image)
+    end
+    (variants + files).each(&:purge)
+    provider_calls.update_all(response: {}, updated_at: Time.current)
     destroy!
   end
 

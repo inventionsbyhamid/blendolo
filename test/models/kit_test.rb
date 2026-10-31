@@ -31,17 +31,18 @@ class KitTest < ActiveSupport::TestCase
 
   test "destroy everything removes attachments and rows" do
     kit = Kit.create!
-    today = kit.photos.create!(source: "camera", image: jpeg("today.jpg"))
+    today = kit.photos.create!(source: "camera", image: real_jpeg("today.jpg"))
     reference = kit.photos.create!(kind: :reference, source: "upload", image: jpeg("old.jpg"))
     kit.renders.create!(photo: today, kind: :classic, status: :done, result: jpeg("classic.jpg"))
     kit.renders.create!(photo: today, reference_photo: reference, kind: :transfer)
     kit.shares.create!(audience: :helper)
-    call = ProviderCall.create!(kit: kit, operation: "makeup", input_hash: "a", units: 1)
+    call = ProviderCall.create!(kit: kit, operation: "makeup", input_hash: "a", units: 1, response: { "content_type" => "image/png" })
     other = Kit.create!
     other.photos.create!(source: "camera", image: jpeg("other.jpg"))
+    variant = today.image.variant(resize_to_limit: [ 8, 8 ]).processed.image.blob
 
-    keys = kit.photos.map { it.image.key } + kit.renders.filter_map { it.result.key if it.result.attached? }
-    assert_equal 3, keys.size
+    keys = kit.photos.map { it.image.key } + kit.renders.filter_map { it.result.key if it.result.attached? } << variant.key
+    assert_equal 4, keys.size
     assert keys.all? { ActiveStorage::Blob.service.exist?(it) }
 
     assert_no_enqueued_jobs only: ActiveStorage::PurgeJob do
@@ -51,9 +52,10 @@ class KitTest < ActiveSupport::TestCase
     assert_not Kit.exists?(kit.id)
     assert_equal 0, Photo.where(kit_id: kit.id).count + Render.where(kit_id: kit.id).count + Share.where(kit_id: kit.id).count
     assert keys.none? { ActiveStorage::Blob.service.exist?(it) }
-    assert_equal 1, ActiveStorage::Blob.count
-    assert_equal [ other.photos.sole.image.blob ], ActiveStorage::Blob.all.to_a
+    assert_equal [ other.photos.sole.image.blob ], ActiveStorage::Blob.where(key: keys + [ other.photos.sole.image.key ]).to_a
+    assert_not ActiveStorage::VariantRecord.exists?(blob_id: today.image.blob.id)
     assert_nil call.reload.kit_id
+    assert_equal({}, call.response)
     assert_equal 1, ProviderCall.units_spent_on(call.day)
   end
 
@@ -83,5 +85,10 @@ class KitTest < ActiveSupport::TestCase
   private
     def jpeg(filename)
       { io: StringIO.new("jpeg #{filename}"), filename: filename, content_type: "image/jpeg" }
+    end
+
+    # A decodable image, for variants.
+    def real_jpeg(filename)
+      { io: StringIO.new(Vips::Image.black(16, 16, bands: 3).jpegsave_buffer), filename:, content_type: "image/jpeg" }
     end
 end
