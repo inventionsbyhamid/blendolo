@@ -406,7 +406,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .compare__caption { font-size: 1.125rem; font-weight: 800; text-align: center; }
   .compare__toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
   .toggle {
-    min-height: var(--tap); padding: 8px 12px; border-radius: 999px; border: 3px solid var(--ink);
+    min-height: var(--tap); padding: 8px 12px; border-radius: 18px; border: 3px solid var(--ink);
     background: var(--surface); color: var(--ink); font-family: inherit; font-size: 1.125rem; font-weight: 800; line-height: 1.2;
   }
   .toggle[aria-pressed="true"] { background: var(--ink); color: var(--surface); }

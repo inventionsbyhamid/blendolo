@@ -4,6 +4,8 @@
   <div class="menu__panel">
     <%= render "kits/hands_today", kit: kit, id: "menu" %>
     <%= render "components/button", label: "Your kit", href: kit_path(kit), variant: :secondary %>
-    <%= render "components/button", label: "Delete everything", href: delete_kit_path(kit), variant: :danger %>
+    <% unless kit.example? %>
+      <%= render "components/button", label: "Delete everything", href: delete_kit_path(kit), variant: :danger %>
+    <% end %>
   </div>
 </details>

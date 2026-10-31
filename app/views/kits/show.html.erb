@@ -31,24 +31,30 @@
   <% end %>
   <div class="button-row button-row--2">
     <%= render "components/button", label: "Looks", href: kit_looks_path(@kit), variant: :secondary %>
-    <%= render "components/button", label: "Share with a helper", href: kit_shares_path(@kit), variant: :secondary, icon: :share %>
+    <% if @kit.example? %>
+      <%= render "components/button", label: "Start your own kit", href: start_path, variant: :secondary %>
+    <% else %>
+      <%= render "components/button", label: "Share with a helper", href: kit_shares_path(@kit), variant: :secondary, icon: :share %>
+    <% end %>
   </div>
 
   <%= render "kits/hands_today", kit: @kit %>
 
-  <section class="stack" aria-labelledby="link-title" data-controller="copy">
-    <h2 id="link-title" class="m-0">Your private link</h2>
-    <p class="m-0">Everything is saved. Come back any time with this link. Anyone with it can open your kit.</p>
-    <label class="sr-only" for="kit-link">Your private link</label>
-    <input id="kit-link" class="link-box" type="text" readonly value="<%= kit_link(@kit) %>" data-copy-target="source">
-    <button type="button" class="btn btn--secondary" data-action="copy#copy" data-copy-target="button" hidden>
-      <span data-copy-target="label">Copy the link</span>
-    </button>
-  </section>
+  <% unless @kit.example? %>
+    <section class="stack" aria-labelledby="link-title" data-controller="copy">
+      <h2 id="link-title" class="m-0">Your private link</h2>
+      <p class="m-0">Everything is saved. Come back any time with this link. Anyone with it can open your kit.</p>
+      <label class="sr-only" for="kit-link">Your private link</label>
+      <input id="kit-link" class="link-box" type="text" readonly value="<%= kit_link(@kit) %>" data-copy-target="source">
+      <button type="button" class="btn btn--secondary" data-action="copy#copy" data-copy-target="button" hidden>
+        <span data-copy-target="label">Copy the link</span>
+      </button>
+    </section>
 
-  <section class="stack" aria-labelledby="delete-title">
-    <h2 id="delete-title" class="m-0">Delete everything</h2>
-    <p class="m-0">Deletes your photos, answers and links now.</p>
-    <%= render "components/button", label: "Delete everything", href: delete_kit_path(@kit), variant: :danger, icon: :trash %>
-  </section>
+    <section class="stack" aria-labelledby="delete-title">
+      <h2 id="delete-title" class="m-0">Delete everything</h2>
+      <p class="m-0">Deletes your photos, answers and links now.</p>
+      <%= render "components/button", label: "Delete everything", href: delete_kit_path(@kit), variant: :danger, icon: :trash %>
+    </section>
+  <% end %>
 </div>
