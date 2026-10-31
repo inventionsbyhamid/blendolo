@@ -160,6 +160,10 @@ class KitsTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?]", kit_signature_path(kit), text: /Bring back your signature look/
       assert_select "p", text: /Use an old photo of your favourite look\. We rebuild it from easy steps\./
     end
+
+    helper = make_kit(path: :helper)
+    get kit_path(helper)
+    assert_select "a[href=?]", kit_signature_path(helper), text: /Bring back their signature look/
   end
 
   test "the capture page has no picture without a source" do
