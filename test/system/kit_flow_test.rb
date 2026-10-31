@@ -98,11 +98,21 @@ class KitFlowTest < ApplicationSystemTestCase
 
     assert_selector ".flash", text: "Everything is deleted"
     assert_not Kit.exists?(kit.id)
-    visit kit_path(kit)
+    showing_public_error_pages { visit kit_path(kit) }
     assert_text "This page has wandered off."
   end
 
   private
+    # The test environment shows detailed errors; production shows public/404.html.
+    def showing_public_error_pages
+      env_config = Rails.application.env_config
+      detailed = env_config["action_dispatch.show_detailed_exceptions"]
+      env_config["action_dispatch.show_detailed_exceptions"] = false
+      yield
+    ensure
+      env_config["action_dispatch.show_detailed_exceptions"] = detailed
+    end
+
     def button_height(label)
       find("main a.btn, main button.btn", text: label, match: :first).evaluate_script("Math.round(this.getBoundingClientRect().height)")
     end
