@@ -3,13 +3,16 @@ require "test_helper"
 class Appearance::Youcam::MapperTest < ActiveSupport::TestCase
   Mapper = Appearance::Youcam::Mapper
 
+  # The seven effect look from the effects vocabulary (docs/effects-vocabulary.md), which the live check sent.
   FULL_LOOK = [
-    { category: "foundation", colour: "#7E4A30", intensity: 35 },
-    { category: "blush", colour: "#B5524A", intensity: 45, texture: "matte", pattern: "Oblique1" },
-    { category: "eye_shadow", colour: "#7A4E3A", intensity: 55, texture: "matte", pattern: "1color6" },
-    { category: "eye_liner", colour: "#111111", intensity: 90, texture: "matte", pattern: "OpenWings2" },
-    { category: "eyelashes", colour: "#000000", intensity: 85, pattern: "Natural2" },
-    { category: "eyebrows", colour: "#2B1B14", intensity: 60, texture: "matte", pattern: "SoftArch3", mode: "shape" },
+    { category: "foundation", colour: "#7E4A30", intensity: 35, texture: nil, pattern: nil, mode: nil,
+      coverage: 35, glow: 30 },
+    { category: "blush", colour: "#B5524A", intensity: 45, texture: "matte", pattern: "Oblique1", mode: nil },
+    { category: "eye_shadow", colour: "#7A4E3A", intensity: 55, texture: "matte", pattern: "1color6", mode: nil },
+    { category: "eye_liner", colour: "#111111", intensity: 90, texture: "matte", pattern: "OpenWings2", mode: nil },
+    { category: "eyelashes", colour: "#000000", intensity: 85, texture: nil, pattern: "Natural2", mode: nil },
+    { category: "eyebrows", colour: "#2B1B14", intensity: 60, texture: "matte", pattern: "SoftArch3", mode: "shape",
+      shape: { curvature: 0, thickness: 10, definition: 55 } },
     { category: "lip_color", colour: "#8E1F2F", intensity: 85, texture: "matte", pattern: "original", mode: "full" }
   ].freeze
 
@@ -19,11 +22,51 @@ class Appearance::Youcam::MapperTest < ActiveSupport::TestCase
     easy = FULL_LOOK.map do |effect|
       case effect[:category]
       when "eye_liner" then effect.merge(colour: "#3A2A22", intensity: 70, pattern: "Smoke4")
-      when "lip_color" then effect.merge(colour: "#A84452", intensity: 45, texture: "sheer")
+      when "lip_color" then effect.merge(colour: "#A84452", intensity: 45, texture: "sheer", gloss: 40, transparency: 60)
       else effect
       end
     end
     assert_equal live_effects("makeup_vto_easy_create.json"), Mapper.effects(easy)
+  end
+
+  test "maps the optional settings of the vocabulary" do
+    effects = Mapper.effects([
+      { category: "foundation", colour: "#7E4A30", intensity: 40, coverage: 25, glow: 10 },
+      { category: "concealer", colour: "#C99A7E", intensity: 40, coverage: 70 },
+      { category: "blush", colour: "#D77A6E", intensity: 40, texture: "satin", pattern: "Round1", glow: 25 },
+      { category: "highlighter", colour: "#F3E3D0", intensity: 40, pattern: "Oval2", glow: 50, shimmer: 30 },
+      { category: "eyebrows", colour: "#3B2A20", intensity: 60, texture: "matte", pattern: "SoftArch3", mode: "shape",
+        shape: { curvature: 20, thickness: -10, definition: 70 } },
+      { category: "lip_color", colour: "#B0182A", intensity: 45, texture: "sheer", pattern: "original", mode: "full",
+        gloss: 35, transparency: 60 },
+      { category: "lip_liner", colour: "#8E1424", intensity: 70, texture: "matte", pattern: "Natural1",
+        shape: { thickness: 30, smoothness: 80 } }
+    ].map(&:deep_stringify_keys))
+
+    palettes = effects.map { it["palettes"].sole }
+    assert_equal [ 40, 10, 25 ], palettes[0].values_at("colorIntensity", "glowIntensity", "coverageIntensity")
+    assert_equal [ 40, 40, 70 ], palettes[1].values_at("colorIntensity", "colorUnderEyeIntensity", "coverageLevel")
+    assert_equal 25, palettes[2]["glowStrength"]
+    assert_equal [ 50, 30, 30, 30 ], palettes[3].values_at("glowIntensity", "shimmerIntensity", "shimmerDensity", "shimmerSize")
+    assert_equal({ "type" => "shape", "name" => "SoftArch3", "curvature" => 20, "thickness" => -10, "definition" => 70 },
+      effects[4]["pattern"])
+    assert_equal [ 35, 60 ], palettes[5].values_at("gloss", "transparencyIntensity")
+    assert_equal [ 30, 80 ], palettes[6].values_at("thickness", "smoothness")
+  end
+
+  test "maps the red lip example of the vocabulary, classic and easy" do
+    easy = Mapper.effects([
+      { category: "eyebrows", colour: "#3B2A20", intensity: 45, texture: "matte", pattern: nil, mode: "color" },
+      { category: "eye_liner", colour: "#2B1D16", intensity: 88, texture: "matte", pattern: "Smoke4", mode: nil },
+      { category: "eyelashes", colour: "#000000", intensity: 85, texture: nil, pattern: "Natural2", mode: nil },
+      { category: "lip_color", colour: "#B0182A", intensity: 45, texture: "sheer", pattern: "original", mode: "full",
+        gloss: 35, transparency: 60 }
+    ])
+
+    assert_equal({ "type" => "color" }, easy[0]["pattern"])
+    assert_equal({ "color" => "#000000", "colorIntensity" => 85 }, easy[2]["palettes"].sole)
+    assert_equal({ "color" => "#B0182A", "texture" => "sheer", "colorIntensity" => 45, "gloss" => 35,
+      "transparencyIntensity" => 60 }, easy[3]["palettes"].sole)
   end
 
   test "takes string keys, as stored in jsonb" do
