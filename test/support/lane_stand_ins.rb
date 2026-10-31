@@ -153,7 +153,10 @@ unless Rails.root.join("app/models/ease/step_catalogue.rb").exist?
 
       LOOKS = {
         "everyday_fresh" => [ "Everyday fresh", [ { step: "liquid_foundation_brush" }, { step: "powder_blush_brush", colour: "#E59A7A" }, { step: "tinted_balm", colour: "#B5776B" } ] ],
-        "red_lip" => [ "The red lip", [ { step: "liquid_foundation_brush" }, { step: "liquid_liner_wing", intensity: 90 }, { step: "mascara_upper" }, { step: "liquid_matte_lipstick", colour: "#B0182A" } ] ]
+        "red_lip" => [ "The red lip", [ { step: "liquid_foundation_brush" }, { step: "liquid_liner_wing", intensity: 90 }, { step: "mascara_upper" }, { step: "liquid_matte_lipstick", colour: "#B0182A" } ] ],
+        # These two swap places when pinching is hard and one hand does the work, as real looks do.
+        "barely_there" => [ "Barely there", [ { step: "tinted_balm", colour: "#B5776B" }, { step: "liquid_foundation_brush" } ] ],
+        "rosy_glow" => [ "Rosy glow", [ { step: "cream_blush_fingers", colour: "#E59A7A" }, { step: "smudged_pencil_liner" } ] ]
       }.freeze
 
       def self.all = LOOKS.keys.map { |key| fetch(key) }
