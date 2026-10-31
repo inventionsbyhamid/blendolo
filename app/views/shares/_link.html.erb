@@ -1,0 +1,16 @@
+<%# A share link: the address with Copy, its QR code, and "Switch this link off". %>
+<% url = public_share_url(share.token) %>
+<div class="stack" data-controller="copy">
+  <label class="sr-only" for="share-<%= share.id %>">The link</label>
+  <input id="share-<%= share.id %>" class="link-box" type="text" readonly value="<%= url %>" data-copy-target="source">
+  <button type="button" class="btn btn--secondary" data-action="copy#copy" data-copy-target="button" hidden><span data-copy-target="label">Copy the link</span></button>
+  <% if local_assigns.fetch(:qr, true) %>
+    <%= share_qr(url) %>
+  <% else %>
+    <details class="faq-lite">
+      <summary class="btn btn--quiet">Show the QR code</summary>
+      <%= share_qr(url) %>
+    </details>
+  <% end %>
+  <%= render "components/button", label: "Switch this link off", url: kit_share_path(@kit, share.token), method: :delete, variant: :danger %>
+</div>

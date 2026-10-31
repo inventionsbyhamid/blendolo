@@ -566,3 +566,12 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .print-card { border: 0; padding: 0; font-size: 24pt; }
   .print-card .instruction { font-size: 32pt; }
 }
+
+@layer components {
+  .code { overflow-x: auto; padding: 16px 20px; border-radius: 18px; background: var(--ink); color: var(--surface); font-size: 1rem; line-height: 1.45; }
+  .qr { display: block; width: min(240px, 70vw); height: auto; padding: 16px; border-radius: 18px; background: var(--color-white); }
+  .product { display: grid; gap: 6px; padding: 16px 20px; border-radius: 18px; background: var(--soft); }
+  .product__name { margin: 0; font-weight: 800; }
+  .tags .tags__match { background: var(--ink); color: var(--surface); }
+  .tags .tags__match::before { border-color: var(--surface); }
+}
