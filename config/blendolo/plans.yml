@@ -1,0 +1,21 @@
+# What Blendolo sells. Prices and credits live here, in our code; the payment provider only knows one product id per
+# paid plan (for Dodo: DODO_PRODUCT_LOOK_PACK, DODO_PRODUCT_CLINIC). One credit is one live preview (one YouCam unit).
+# The free credits for a new account are in credits.yml (signup_grant).
+#
+# kind: one_time (a pack, paid once) or monthly (a subscription that adds its credits every month).
+# unit_cost_cents: what one YouCam unit costs us, for the margin check (Billing::Margin): each paid plan keeps at least
+# min_margin of its price after payment fees and every credit spent.
+shared:
+  unit_cost_cents: 18
+  min_margin: 0.5
+  plans:
+    look_pack:
+      name: Look Pack
+      kind: one_time
+      price_cents: 799
+      credits: 16
+    clinic:
+      name: Clinic
+      kind: monthly
+      price_cents: 1900
+      credits: 40
