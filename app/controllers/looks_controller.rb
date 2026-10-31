@@ -2,6 +2,8 @@
 class LooksController < ApplicationController
   include KitScoped
 
+  before_action :keep_example_kits_as_they_are, only: :tweak
+
   before_action :require_consent
   before_action :require_today_photo, only: %i[show tweak]
   before_action :set_look, only: %i[show tweak]

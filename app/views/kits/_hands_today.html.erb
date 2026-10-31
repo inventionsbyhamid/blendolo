@@ -4,7 +4,7 @@
   <ul class="tiles tiles--compact">
     <% KitsHelper::HANDS_TODAY.each_with_index do |label, value| %>
       <li>
-        <%= render "components/tile", label: label, chosen: kit.hands_today == value,
+        <%= render "components/tile", label: label, chosen: hands_today == value,
               url: kit_hands_today_path(kit), method: :patch,
               params: { hands_today: value, return_to: local_assigns[:return_to] || request.fullpath } %>
       </li>

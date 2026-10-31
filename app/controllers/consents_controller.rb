@@ -2,6 +2,8 @@
 class ConsentsController < ApplicationController
   include KitScoped
 
+  before_action :keep_example_kits_as_they_are, only: :create
+
   def show
   end
 

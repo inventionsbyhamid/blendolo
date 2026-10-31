@@ -1,8 +1,14 @@
 <% label, path = next_step_for(@kit) %>
 <div class="page stack">
   <header class="stack">
-    <% if @kit.example? %><%= render "components/honest_label", text: "Example person, AI generated" %><% end %>
-    <h1 class="m-0"><%= @kit.example? ? "#{ExampleKit.name_for(@kit.example_key)}'s kit" : "Your kit" %></h1>
+    <% if @kit.example? %>
+      <% person = Examples.fetch(@kit.example_key) %>
+      <%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %>
+      <h1 class="m-0"><%= person.name %>'s kit</h1>
+      <p class="lead m-0"><%= person.blurb %></p>
+    <% else %>
+      <h1 class="m-0">Your kit</h1>
+    <% end %>
   </header>
 
   <%= render "components/button", label: label, href: path, variant: :primary, icon: :next %>
@@ -13,11 +19,11 @@
       <li class="<%= @kit.consented_at? ? "done" : "todo" %>">Before we start</li>
       <li class="<%= Kit::HAND_QUESTIONS.all? { |question| !@kit.public_send(question).nil? } ? "done" : "todo" %>">Your hands</li>
       <li class="<%= @kit.photos.today.exists? ? "done" : "todo" %>">Your photo</li>
-      <li class="<%= @kit.routine.present? ? "done" : "todo" %>">Your routine</li>
+      <li class="<%= RoutinePlan.entries(@kit).present? ? "done" : "todo" %>">Your routine</li>
     </ul>
   </section>
 
-  <% if @kit.routine.present? %>
+  <% if RoutinePlan.entries(@kit).present? %>
     <div class="button-row button-row--2">
       <%= render "components/button", label: "Step cards", href: kit_routine_path(@kit), variant: :secondary %>
       <%= render "components/button", label: "Shopping list", href: kit_shopping_path(@kit), variant: :secondary %>

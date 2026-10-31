@@ -2,6 +2,9 @@
 class RoutinesController < ApplicationController
   include KitScoped
 
+  before_action :open_example_routine, only: :create
+  before_action :keep_example_kits_as_they_are, only: :create
+
   before_action :require_consent
   before_action :require_routine, only: %i[show step]
 
@@ -15,7 +18,7 @@ class RoutinesController < ApplicationController
     @step = @steps[@number - 1] if @number.positive?
     raise ActiveRecord::RecordNotFound, "No such step" unless @step
 
-    @entry = @kit.routine[@number - 1]
+    @entry = RoutinePlan.entries(@kit)[@number - 1]
   end
 
   # Choosing the same look again just sets the same routine.
@@ -29,8 +32,13 @@ class RoutinesController < ApplicationController
   end
 
   private
+    # An example person's routine follows their chosen look; choosing that look again just opens it.
+    def open_example_routine
+      redirect_to kit_routine_path(@kit) if @kit.example? && params[:look_key] == @kit.chosen_look_key
+    end
+
     def require_routine
-      redirect_to kit_looks_path(@kit) if @kit.routine.blank?
+      redirect_to kit_looks_path(@kit) if RoutinePlan.entries(@kit).empty?
     end
 
     def signature_steps

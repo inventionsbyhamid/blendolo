@@ -2,6 +2,8 @@
 class HandsController < ApplicationController
   include KitScoped
 
+  before_action :keep_example_kits_as_they_are, only: :update
+
   QUESTIONS = Kit::HAND_QUESTIONS
 
   before_action :set_question

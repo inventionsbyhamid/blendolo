@@ -1,6 +1,6 @@
 <%# One preview. Broadcast replaces it by dom_id(render) as it moves from pending to done or failed. %>
 <% kind_words = { "classic" => "classic look", "easy" => "easy version", "tweak" => "easy version", "transfer" => "signature look", "step" => "step" }.fetch(render.kind, "look") %>
-<div id="<%= dom_id(render) %>" class="render render--<%= render.status %>">
+<div id="<%= render.persisted? ? dom_id(render) : "missing_#{render.kind}" %>" class="render render--<%= render.status %>">
   <% if render.done? && render.result.attached? %>
     <%= render_image(render, alt: "Your photo with the #{kind_words}. A preview, not a promise.") %>
   <% elsif render.failed? %>

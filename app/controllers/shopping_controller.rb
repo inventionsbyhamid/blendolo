@@ -3,6 +3,6 @@ class ShoppingController < ApplicationController
   include KitScoped
 
   def show
-    @steps = @kit.routine.present? ? RoutinePlan.steps(@kit) : []
+    @steps = RoutinePlan.steps(@kit)
   end
 end

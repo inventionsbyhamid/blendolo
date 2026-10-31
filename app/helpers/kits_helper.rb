@@ -40,7 +40,7 @@ module KitsHelper
     elsif (number = Kit::HAND_QUESTIONS.index { |question| kit.public_send(question).nil? })
       [ "Carry on: your hands", kit_hand_path(kit, number + 1) ]
     elsif !kit.photos.today.exists? then [ "Carry on: your photo", new_kit_photo_path(kit) ]
-    elsif kit.routine.blank? then [ "Pick a look", kit_looks_path(kit) ]
+    elsif RoutinePlan.entries(kit).empty? then [ "Pick a look", kit_looks_path(kit) ]
     else [ "Open your step cards", kit_routine_path(kit) ]
     end
   end

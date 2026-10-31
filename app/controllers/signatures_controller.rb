@@ -3,6 +3,8 @@
 class SignaturesController < ApplicationController
   include KitScoped
 
+  before_action :keep_example_kits_as_they_are, only: :create
+
   LINERS = %w[winged thin smudged none].freeze
   LIPS = %w[matte shiny sheer].freeze
 
@@ -12,6 +14,8 @@ class SignaturesController < ApplicationController
 
   def show
     @reference = @kit.photos.reference.order(:created_at).last
+    return show_example if @kit.example?
+
     @liner = params[:liner].presence_in(LINERS)
     @lips = params[:lips].presence_in(LIPS)
     return unless @reference && @liner && @lips
@@ -35,9 +39,15 @@ class SignaturesController < ApplicationController
   end
 
   private
+    # An example person's stored signature look: their transfer and its easy version.
+    def show_example
+      @transfer = Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
+      @easy = Previews.for(@kit, today_photo, "signature", :easy, [])
+    end
+
     # A new upload, or the old photo already sent. Example people keep their own old photo.
     def reference_from_params
-      return @kit.photos.reference.order(:created_at).last if params[:image].blank? || @kit.example?
+      return @kit.photos.reference.order(:created_at).last if params[:image].blank?
 
       @upload = PhotoUpload.new(kit: @kit, file: params[:image], kind: "reference", sampled: params[:sampled])
       return @upload.photo if @upload.save

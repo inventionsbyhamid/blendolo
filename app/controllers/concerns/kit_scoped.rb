@@ -2,6 +2,7 @@
 # a kit was ever there. Every visit counts as activity, so retention runs from the last visit.
 module KitScoped
   extend ActiveSupport::Concern
+  include ExampleKitsReadOnly
 
   # Write the activity time at most this often, not on every request.
   TOUCH_EVERY = 1.minute
@@ -16,7 +17,7 @@ module KitScoped
       raise ActiveRecord::RecordNotFound, "No such kit" unless @kit && @kit.purge_after.future?
 
       @kit.touch_activity! if @kit.last_active_at.before?(TOUCH_EVERY.ago)
-      remember_kit(@kit)
+      remember_kit(@kit) unless @kit.example?
       response.set_header("X-Robots-Tag", "noindex, nofollow")
     end
 

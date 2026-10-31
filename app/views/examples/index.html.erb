@@ -2,12 +2,12 @@
 <div class="page stack">
   <header class="stack">
     <h1 class="m-0">Try with an example person</h1>
-    <p class="lead m-0">Their answers and photo are ready, so you can see everything without a photo of you.</p>
-    <%= render "components/honest_label", text: "Example people are AI generated" %>
+    <p class="lead m-0">Their answers and photos are ready, so you can see everything without a photo of you.</p>
+    <%= render "components/honest_label", text: "Example people. #{Examples.photo_label}s" %>
   </header>
   <ul class="tiles">
-    <% ExampleKit::NAMES.each do |key, name| %>
-      <li><%= render "components/tile", label: name, url: start_example_path(key), method: :post %></li>
+    <% @people.each do |person| %>
+      <li><%= render "components/tile", label: person.name, hint: person.blurb, url: start_example_path(person.key), method: :post %></li>
     <% end %>
   </ul>
 </div>

@@ -12,6 +12,11 @@ class KitsController < ApplicationController
   # Safe to send twice: a kit that's already gone ends on the same "deleted" page.
   def destroy
     kit = Kit.find_by(token: params[:token])
+    if kit&.example?
+      @kit = kit
+      return keep_example_kits_as_they_are
+    end
+
     kit&.destroy_everything!
     forget_kit
     redirect_to root_path, notice: "Everything is deleted. Our photo partner deletes its copies within 30 days."

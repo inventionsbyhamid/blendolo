@@ -14,8 +14,16 @@ module RoutinePlan
     end
   end
 
-  # The stored routine as Ease steps, for the step cards and the shopping list.
+  # The kit's routine entries. An example person's kit, which is never written to, follows its chosen look.
+  def entries(kit)
+    return kit.routine if kit.routine.present?
+    return [] unless kit.example? && kit.chosen_look_key.present?
+
+    from(LookForKit.find(kit, kit.chosen_look_key).easy_steps)
+  end
+
+  # The routine as Ease steps, for the step cards and the shopping list.
   def steps(kit)
-    kit.routine.map { |entry| Looks::LookStep.wrap(entry).step }
+    entries(kit).map { |entry| Looks::LookStep.wrap(entry).step }
   end
 end

@@ -7,7 +7,7 @@ class PublicSharesController < ApplicationController
 
     # Not @kit: the layout would show the kit's own menu to the helper.
     @shared_kit = @share.kit
-    @steps = @shared_kit.routine.present? ? RoutinePlan.steps(@shared_kit) : []
+    @steps = RoutinePlan.steps(@shared_kit)
     @photos = @share.routine_and_photos?
     response.set_header("X-Robots-Tag", "noindex, nofollow")
   end
