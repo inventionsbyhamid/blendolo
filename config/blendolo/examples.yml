@@ -1,0 +1,58 @@
+# Example people for "See an example": three made-up people, each with their hand answers, photos, chosen look and
+# finished previews, so a visitor can walk through Blendolo without a photo of their own. Read by Examples.
+#
+# Photos and previews are files under images_dir. Until the generated example photos and their precomputed previews
+# arrive, every person points at the same placeholder images (recorded provider results).
+# hands: tremor, pinch, fatigue, near_vision 0 no / 1 a little / 2 yes; one_hand 0 both / 1 mostly left / 2 mostly right.
+# hands_today: 0 steady, 1 a bit shaky, 2 very shaky or stiff.
+# renders: kind is classic, easy, tweak, transfer or step; look is a key in looks.yml, or "signature" for the easy
+# version of their own signature look.
+
+images_dir: db/seeds/files/examples
+photo_label: AI generated photo
+
+people:
+  rosa:
+    name: Rosa
+    blurb: Rosa is 74 and has Parkinson's. Her hands shake most in the morning.
+    hands: { tremor: 2, pinch: 1, one_hand: 0, fatigue: 1, near_vision: 1 }
+    hands_today: 2
+    chosen_look: red_lip
+    photos:
+      today: placeholder_today.jpg
+      reference: placeholder_reference.jpg
+    renders:
+      - { kind: classic, look: red_lip, file: placeholder_classic.jpg }
+      - { kind: easy, look: red_lip, file: placeholder_easy.jpg }
+      - { kind: transfer, file: placeholder_transfer.jpg }
+      - { kind: easy, look: signature, file: placeholder_easy.jpg }
+
+  june:
+    name: June
+    blurb: June is 66. Arthritis makes small caps and thin pencils hard to grip.
+    hands: { tremor: 0, pinch: 2, one_hand: 0, fatigue: 1, near_vision: 1 }
+    hands_today: 1
+    chosen_look: everyday_fresh
+    photos:
+      today: placeholder_today.jpg
+      reference: placeholder_reference.jpg
+    renders:
+      - { kind: classic, look: everyday_fresh, file: placeholder_classic.jpg }
+      - { kind: easy, look: everyday_fresh, file: placeholder_easy.jpg }
+      - { kind: transfer, file: placeholder_transfer.jpg }
+      - { kind: easy, look: signature, file: placeholder_easy.jpg }
+
+  amara:
+    name: Amara
+    blurb: Amara is 55. Since a stroke she does most things with her right hand, and her arm tires quickly.
+    hands: { tremor: 0, pinch: 1, one_hand: 2, fatigue: 2, near_vision: 0 }
+    hands_today: 1
+    chosen_look: soft_smoky_evening
+    photos:
+      today: placeholder_today.jpg
+      reference: placeholder_reference.jpg
+    renders:
+      - { kind: classic, look: soft_smoky_evening, file: placeholder_classic.jpg }
+      - { kind: easy, look: soft_smoky_evening, file: placeholder_easy.jpg }
+      - { kind: transfer, file: placeholder_transfer.jpg }
+      - { kind: easy, look: signature, file: placeholder_easy.jpg }
