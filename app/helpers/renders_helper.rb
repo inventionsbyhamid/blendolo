@@ -38,8 +38,19 @@ module RendersHelper
     image_tag proxied_image_path(render.result, 900), alt:, class: "render__image"
   end
 
+  # Image links stay the same for this long, so a picture seen again (the next step card, back to a look) comes from
+  # the browser's cache instead of the network. A link made at any moment still works for 50 to 60 minutes: never
+  # longer than the hour image links get (ActiveStorage.urls_expire_in).
+  IMAGE_LINK_STEP = 10.minutes
+
   # An attachment resized to fit size x size, as a same-origin path through the Active Storage proxy.
   def proxied_image_path(attachment, size)
-    rails_storage_proxy_path(ProxiedImage.variant(attachment, size))
+    rails_storage_proxy_path(ProxiedImage.variant(attachment, size), expires_at: image_link_expiry)
+  end
+
+  # When the image links made now stop working: the start of this IMAGE_LINK_STEP, plus the hour.
+  def image_link_expiry(now = Time.current)
+    step = IMAGE_LINK_STEP.to_i
+    Time.at(now.to_i - (now.to_i % step)).utc + ActiveStorage.urls_expire_in
   end
 end
