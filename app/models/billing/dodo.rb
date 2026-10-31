@@ -74,6 +74,10 @@ module Billing
       end.link
     end
 
+    def cancel_subscription(subscription_id)
+      call_api("cancel") { client.subscriptions.update(subscription_id, status: :cancelled) }
+    end
+
     def parse_webhook(request)
       body = request.raw_post.to_s
       parse(body, id: verify!(body, request.headers))

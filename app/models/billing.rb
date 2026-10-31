@@ -25,5 +25,12 @@ module Billing
     def test_mode?
       provider.test_mode?
     end
+
+    # Stops the account's Clinic plan at the provider now, before the account is deleted, so it is never charged
+    # again. Nothing to do when it won't renew anyway. Raises Unavailable when the provider can't be reached.
+    def cancel_subscriptions!(user)
+      renewing = BillingEvent.renewing_subscription_for(user) or return
+      provider.cancel_subscription(renewing.subscription_id)
+    end
   end
 end

@@ -33,11 +33,9 @@ module BillingHelper
 
   # "Renews on 1 December 2026." or "Ends on 1 December 2026." for an account whose Clinic plan is on.
   def clinic_status_words(user)
-    current = BillingEvent.clinic_subscription_for(user)
-    cancelled = current && BillingEvent.where(user:, subscription_id: current.subscription_id)
-      .where(kind: :subscription_cancelled).where("id > ?", current.id).exists?
-    if current&.period_end && !cancelled
-      "Your Clinic plan is on. It renews on #{l current.period_end.to_date, format: :long}."
+    renewing = BillingEvent.renewing_subscription_for(user)
+    if renewing&.period_end
+      "Your Clinic plan is on. It renews on #{l renewing.period_end.to_date, format: :long}."
     else
       "Your Clinic plan is on until #{l user.clinic_until.to_date, format: :long}. It won't renew."
     end

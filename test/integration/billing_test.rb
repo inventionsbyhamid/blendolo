@@ -175,6 +175,45 @@ class BillingTest < ActionDispatch::IntegrationTest
     assert_empty CopyRules.problems(response.body)
   end
 
+  test "deleting the account stops a renewing Clinic plan first" do
+    user = make_user
+    deliver_clinic(user)
+    sign_in_as(user)
+    get delete_account_path
+    assert_includes response.body, "Your Clinic plan stops now too, and won't be charged again."
+
+    cancel = stub_request(:patch, "https://test.dodopayments.com/subscriptions/sub_test_clinic_0001")
+      .with(body: hash_including("status" => "cancelled"))
+      .to_return(status: 200, headers: { "Content-Type" => "application/json" }, body: "{}")
+    delete account_path
+
+    assert_requested cancel
+    assert_redirected_to root_path
+    assert_not User.exists?(user.id)
+  end
+
+  test "if the Clinic plan can't be stopped, nothing is deleted" do
+    user = make_user
+    deliver_clinic(user)
+    sign_in_as(user)
+    stub_request(:patch, "https://test.dodopayments.com/subscriptions/sub_test_clinic_0001").to_return(status: 500, body: "{}")
+
+    delete account_path
+
+    assert_redirected_to account_path
+    assert User.exists?(user.id)
+  end
+
+  test "deleting an account without a Clinic plan calls no one" do
+    user = make_user
+    sign_in_as(user)
+
+    delete account_path
+
+    assert_redirected_to root_path
+    assert_not_requested :any, /dodopayments/
+  end
+
   test "the client list needs sign in and the Clinic plan" do
     get clinic_path
     assert_redirected_to sign_in_path(origin: clinic_path)
@@ -244,4 +283,10 @@ class BillingTest < ActionDispatch::IntegrationTest
     get clinic_path
     assert_select "a[href='#{print_kit_routine_path(kit)}']"
   end
+
+  private
+    def deliver_clinic(user)
+      body = dodo_body("subscription_active", user:, next_billing_date: 1.month.from_now.utc.iso8601)
+      BillingEvent.receive!(dodo_provider.parse(body, id: "msg_clinic_#{user.id}"), provider: "dodo")
+    end
 end

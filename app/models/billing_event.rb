@@ -45,6 +45,14 @@ class BillingEvent < ApplicationRecord
     where(user:, kind: CLINIC_STARTS).where.not(subscription_id: nil).order(:id).last
   end
 
+  # That subscription while it will still renew (not cancelled or expired since its latest payment), or nil.
+  def self.renewing_subscription_for(user)
+    current = clinic_subscription_for(user) or return
+    ended = where(user:, subscription_id: current.subscription_id, kind: %i[subscription_cancelled subscription_expired])
+      .where("id > ?", current.id).exists?
+    current unless ended
+  end
+
   def apply!(user_id)
     self.user = account_for(user_id)
     self.note = settle

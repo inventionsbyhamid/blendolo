@@ -2,6 +2,9 @@
 <div class="page stack">
   <h1 class="m-0">Delete your account?</h1>
   <p class="lead m-0">This deletes your account, <%= pluralize(current_user.kits.count, "kit") %> with their photos, looks and share links, and <%= pluralize(Credits.balance(current_user), "credit") %> now. It can't be undone.</p>
+  <% if BillingEvent.renewing_subscription_for(current_user) %>
+    <p class="m-0">Your Clinic plan stops now too, and won't be charged again.</p>
+  <% end %>
   <p class="m-0">Our photo partner deletes its copies within 30 days.</p>
   <%= render "components/button", label: "Yes, delete my account", url: account_path, method: :delete, variant: :danger, css: "btn--big", icon: :trash %>
   <%= render "components/button", label: "No, keep my account", href: account_path, variant: :secondary %>
