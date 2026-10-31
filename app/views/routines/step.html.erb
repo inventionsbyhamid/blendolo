@@ -7,7 +7,7 @@
 
   <% if picture&.attached? && @step.area != "finish" %>
     <figure class="step-zoom step-zoom--<%= @step.area %> m-0">
-      <%= image_tag proxied_image_path(picture, 900), alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image" %>
+      <%= proxied_image_tag(picture, 900, alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image") %>
     </figure>
     <% if @with %><%= render "components/honest_label" %><% end %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>

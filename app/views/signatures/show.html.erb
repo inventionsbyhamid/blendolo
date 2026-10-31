@@ -19,7 +19,7 @@
     <div class="three-up">
       <figure class="three-up__item">
         <% if @reference&.image&.attached? %>
-          <%= image_tag proxied_image_path(@reference.image, 900), alt: "The old photo", class: "render__image three-up__photo" %>
+          <%= proxied_image_tag(@reference.image, 900, alt: "The old photo", class: "render__image three-up__photo") %>
         <% end %>
         <figcaption class="compare__caption">The old photo</figcaption>
       </figure>
@@ -79,7 +79,7 @@
 <% elsif @liner.nil? %>
   <div class="page stack">
     <%= render "components/step_header", step: 2, of: 3, back: new_kit_photo_path(@kit, kind: "reference"), finish_later: kit_path(@kit) %>
-    <%= image_tag proxied_image_path(@reference.image, 400), alt: "The old photo you chose", class: "signature__thumb" if @reference.image.attached? %>
+    <%= proxied_image_tag(@reference.image, 400, alt: "The old photo you chose", class: "signature__thumb") if @reference.image.attached? %>
     <h1 class="instruction m-0" id="question">Did <%= you_or_they(@kit, "you", "they") %> wear eyeliner?</h1>
     <ul class="tiles tiles--2" aria-labelledby="question">
       <% SignatureLook::LINERS.each do |value, label| %>
