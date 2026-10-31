@@ -23,6 +23,7 @@
       </figure>
     </div>
     <%= render "components/honest_label" %>
+    <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}s" %><% end %>
 
     <% if @signature %>
       <% if @signature.colours_missing? %>

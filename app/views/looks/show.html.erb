@@ -7,6 +7,7 @@
   </header>
 
   <%= render "components/compare", classic: render(@classic), easy: render(@tweak || @easy) %>
+  <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
 
   <section class="card stack" aria-labelledby="ease-title">
     <h2 id="ease-title" class="m-0">How easy for <%= you_or_they(@kit, "your", "their") %> hands</h2>

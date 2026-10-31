@@ -11,6 +11,7 @@
       <%= image_tag proxied_image_path(picture, 900), alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image" %>
       <canvas class="step-zoom__glow" data-glow-target="canvas" hidden aria-hidden="true"></canvas>
     </figure>
+    <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
   <% end %>
 
   <%= render "routines/card_text", step: @step, speak: true %>
