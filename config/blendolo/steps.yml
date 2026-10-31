@@ -1,0 +1,597 @@
+# Every makeup step Blendolo knows, read by Ease::StepCatalogue.
+#
+# dims, each 0 (easy) to 3 (hard):
+#   P precision        0 more than 10 mm leeway (blush) .. 3 under 2 mm (liquid liner, lip line)
+#   E near the eye     0 not near the eye .. 3 waterline, lash roots, glue
+#   G grip             0 fingers or palm .. 3 fine pinch (strips, tweezers, thin pencil)
+#   H hands needed     0 one hand, nothing to hold .. 3 both hands working together
+#   T time and strokes 0 under 30 s .. 3 over 3 min with many repeat strokes
+#   F forgiveness      0 sheer, blends out .. 3 sets fast, must remove and redo
+#   O opening          0 pump, flip or magnetic cap .. 3 twist cap, clasp compact or slim palette
+# P to F for the numbered steps are the ease table, unchanged. O is our own judgement for the usual
+# packaging of each product type (see the comment on each line). Steps without a number are the easier
+# versions the table names as swaps.
+#
+# swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version.
+# effect: what renders the step in a preview (docs/effects-vocabulary.md). Steps that don't show in a
+# photo (powder, setting spray, tidying up) have no effect. Look colours replace the default colour.
+# Pattern ids come from the provider's pattern catalogue. Checked in a live render: OpenWings2, Smoke4,
+# 1color6, Oblique1, Natural2, SoftArch3, and the lip and foundation settings below.
+
+# Base
+
+liquid_foundation_brush:
+  number: 1
+  name: Liquid foundation with a brush
+  instruction: Dot foundation on your face, then buff it in with a brush.
+  dims: { P: 0, E: 0, G: 1, H: 1, T: 2, F: 0, O: 2 } # O: screw cap tube
+  swap: tinted_moisturiser_fingers
+  swap_why: A pump and your fingers. No brush to hold and no cap to twist.
+  why_easier: Big, slow strokes with lots of room for error.
+  tips:
+    - Rest your elbow on the table.
+    - Foam tubing on the handle makes a brush easier to hold.
+  product_type: Liquid foundation and a brush
+  ease_tags: [forgiving, away_from_eyes]
+  effect: { category: foundation, intensity: 40, coverage: 60, glow: 20 }
+
+tinted_moisturiser_fingers:
+  name: Tinted moisturiser with your fingers
+  instruction: Pump a little onto your fingers and smooth it over your face.
+  dims: { P: 0, E: 0, G: 0, H: 0, T: 1, F: 0, O: 0 } # O: pump bottle
+  swap: none
+  why_easier: A pump, your fingers and a sheer tint. Nothing to aim and nothing to twist.
+  tips:
+    - Press the pump with your palm, not a fingertip.
+    - Sheer tint blends out, so missed bits don't show.
+  product_type: Tinted moisturiser or BB cream in a pump bottle
+  ease_tags: [pump, opens_one_handed, finger_applied, forgiving, away_from_eyes]
+  effect: { category: foundation, intensity: 30, coverage: 25, glow: 30 }
+
+concealer_wand:
+  number: 2
+  name: Concealer with a wand under the eyes
+  instruction: Dab concealer under each eye with the wand, then blend.
+  dims: { P: 1, E: 1, G: 2, H: 0, T: 1, F: 0, O: 2 } # O: small twist off wand
+  swap: stick_concealer_finger
+  swap_why: A chunky stick and a fingertip. No tiny wand to pinch.
+  why_easier: Small dabs that you blend with a fingertip afterwards.
+  tips:
+    - Anchor your little finger on your cheek.
+    - Pat, don't swipe.
+  product_type: Liquid concealer with a wand
+  ease_tags: [forgiving]
+  effect: { category: concealer, intensity: 40, coverage: 60 }
+
+stick_concealer_finger:
+  name: Stick concealer, patted in with a finger
+  instruction: Dot the stick under each eye and pat it in.
+  dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: cap pulls straight off
+  swap: none
+  why_easier: A chunky stick you can hold in your fist. Patting with a finger hides wobbles.
+  tips:
+    - Hold the stick in your fist like a big pen.
+    - Rest your elbow on the table.
+  product_type: Concealer stick
+  ease_tags: [chunky, easy_cap, finger_applied, forgiving]
+  effect: { category: concealer, intensity: 35, coverage: 45 }
+
+pressed_powder_compact:
+  number: 3
+  name: Pressed powder from a compact with a puff
+  instruction: Press the puff into the powder, then onto your face.
+  dims: { P: 0, E: 0, G: 2, H: 2, T: 1, F: 0, O: 3 } # O: clasp compact
+  swap: kabuki_powder
+  swap_why: A big brush that sits in your palm. No clasp to open and no puff to pinch.
+  why_easier: Big soft presses with no aim needed.
+  tips:
+    - Set the compact on the table, not in your hand.
+  product_type: Pressed powder compact
+  ease_tags: [away_from_eyes]
+  effect: # powder doesn't show in a preview
+
+kabuki_powder:
+  name: Loose powder with a big kabuki brush
+  instruction: Swirl the big brush in powder and buff over your face.
+  dims: { P: 0, E: 0, G: 0, H: 1, T: 1, F: 0, O: 2 } # O: screw lid jar
+  swap: none
+  why_easier: A short, fat brush sits in your palm. Big circles, no aim.
+  tips:
+    - Tip a little powder into the lid first.
+    - On a tired day, skip powder. Nobody will notice.
+  product_type: Loose powder and a kabuki brush
+  ease_tags: [big_handle, no_pinch_grip, forgiving, away_from_eyes]
+  effect: # powder doesn't show in a preview
+
+# Cheeks
+
+powder_blush_brush:
+  number: 4
+  name: Powder blush with a small brush
+  instruction: Tap the brush in blush and sweep it along your cheekbones.
+  dims: { P: 1, E: 0, G: 2, H: 1, T: 1, F: 1, O: 2 } # O: compact with a clasp lid
+  swap: cream_blush_fingers
+  swap_why: Cream blush dabbed on with your fingers. It blends out, so wobbles vanish.
+  why_easier: Cheeks leave lots of room. Sweep, then blend.
+  tips:
+    - Tap off extra powder first.
+    - A bigger brush is easier to hold than a small one.
+  product_type: Powder blush and a brush
+  ease_tags: [away_from_eyes]
+  effect: { category: blush, colour: "#B5524A", intensity: 45, texture: matte, pattern: Oblique1 }
+
+cream_blush_fingers:
+  name: Cream blush with your fingers
+  instruction: Dab blush on your cheeks with two fingers, then blend.
+  dims: { P: 0, E: 0, G: 0, H: 1, T: 1, F: 0, O: 1 } # O: stick, cap pulls straight off
+  swap: none
+  why_easier: Your fingers do the work, and cream blends away any wobble.
+  tips:
+    - Smile, then dab on the round part of your cheeks.
+    - Start with a little. You can always add more.
+  product_type: Cream blush stick
+  ease_tags: [finger_applied, forgiving, easy_cap, away_from_eyes]
+  effect: { category: blush, colour: "#B5524A", intensity: 45, texture: satin, pattern: Oblique1, glow: 30 }
+
+bronzer_big_brush:
+  number: 5
+  name: Bronzer with a big brush
+  instruction: Sweep bronzer where the sun would hit your face.
+  dims: { P: 0, E: 0, G: 1, H: 1, T: 1, F: 0, O: 2 } # O: compact
+  swap: none
+  why_easier: A big brush covers a big area. There is nothing to aim at.
+  tips:
+    - Choose a brush with a thick handle.
+    - Sweep across your forehead, cheeks and jaw.
+  product_type: Powder bronzer and a big brush
+  ease_tags: [big_handle, forgiving, away_from_eyes]
+  effect: { category: bronzer, colour: "#A86B4A", intensity: 40, pattern: Bronzer1 }
+
+contour_line:
+  number: 6
+  name: Contour line under the cheekbones
+  instruction: Draw a line under each cheekbone, then blend it upwards.
+  dims: { P: 2, E: 0, G: 2, H: 0, T: 2, F: 1, O: 2 } # O: slim compact or pencil cap
+  swap: bronzer_stick_sponge
+  swap_why: A soft sweep of bronzer instead of a sharp line. A sponge blends it for you.
+  tips:
+    - Soften the line with a sponge.
+  product_type: Contour powder or pencil
+  ease_tags: []
+  effect: { category: contour, colour: "#8A5B3E", intensity: 50, pattern: OvalFace6 }
+
+bronzer_stick_sponge:
+  name: Bronzer stick, blended with a sponge
+  instruction: Swipe the stick on your cheeks, then bounce a sponge over it.
+  dims: { P: 0, E: 0, G: 1, H: 0, T: 1, F: 0, O: 1 } # O: stick, cap pulls straight off
+  swap: none
+  why_easier: No line to draw. A sponge is easy to grip and blends it soft.
+  tips:
+    - Hold the sponge in your fist.
+    - Three swipes on each cheek is plenty.
+  product_type: Cream bronzer stick and a sponge
+  ease_tags: [chunky, easy_cap, forgiving, away_from_eyes]
+  effect: { category: bronzer, colour: "#A86B4A", intensity: 35, pattern: Bronzer1 }
+
+highlighter_fan_brush:
+  number: 7
+  name: Highlighter with a fan brush
+  instruction: Flick the fan brush along the top of your cheekbones.
+  dims: { P: 1, E: 1, G: 2, H: 0, T: 1, F: 0, O: 2 } # O: compact
+  swap: cream_highlighter_finger
+  swap_why: Tap it on with a fingertip. No thin brush to steer.
+  why_easier: A soft sweep where the light hits.
+  tips:
+    - Keep it on the cheekbone, away from your eyes.
+  product_type: Powder highlighter and a fan brush
+  ease_tags: []
+  effect: { category: highlighter, colour: "#F3D9C0", intensity: 50, pattern: OvalFace2, glow: 60, shimmer: 40 }
+
+cream_highlighter_finger:
+  name: Cream highlighter, tapped on with a finger
+  instruction: Tap a little highlighter on top of each cheekbone.
+  dims: { P: 1, E: 1, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: stick, cap pulls straight off
+  swap: none
+  why_easier: One fingertip, a few taps, and it melts in.
+  tips:
+    - Keep it on the cheekbone, away from your eyes.
+  product_type: Cream highlighter stick
+  ease_tags: [finger_applied, forgiving, easy_cap]
+  effect: { category: highlighter, colour: "#F3D9C0", intensity: 35, pattern: OvalFace2, glow: 50, shimmer: 10 }
+
+# Brows
+
+brow_pencil:
+  number: 8
+  name: Brow pencil, hair by hair
+  instruction: Draw small hair strokes along each brow with the pencil.
+  dims: { P: 3, E: 1, G: 3, H: 0, T: 3, F: 1, O: 2 } # O: slim pencil with a small cap
+  swap: tinted_brow_gel
+  swap_why: One sweep of a big wand tints the brows you already have. No hair strokes to draw.
+  tips:
+    - Rest your elbow and anchor your little finger.
+    - Short strokes, then join them.
+  product_type: Fine brow pencil
+  ease_tags: []
+  effect:
+    category: eyebrows
+    colour: "#2B1B14"
+    intensity: 60
+    texture: matte
+    pattern: SoftArch3
+    mode: shape
+    shape: { curvature: 0, thickness: 10, definition: 55 }
+
+brow_powder_brush:
+  number: 9
+  name: Brow powder with an angled brush
+  instruction: Press powder into each brow with the angled brush.
+  dims: { P: 2, E: 1, G: 2, H: 1, T: 2, F: 1, O: 3 } # O: slim palette
+  swap: tinted_brow_gel
+  swap_why: One sweep of a big wand. No small brush and no slim palette.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Brow powder and an angled brush
+  ease_tags: []
+  effect:
+    category: eyebrows
+    colour: "#3B2A20"
+    intensity: 50
+    texture: matte
+    pattern: SoftArch3
+    mode: shape
+    shape: { curvature: 0, thickness: 10, definition: 35 }
+
+brow_stamp:
+  number: 10
+  name: Brow stamp
+  instruction: Press the stamp on the front of each brow, then lift.
+  dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 } # O: stamp with a cap that pulls off
+  swap: tinted_brow_gel
+  swap_why: Nothing to line up. The gel follows the brows you already have.
+  why_easier: One press makes the shape. Lining it up is the only careful part.
+  tips:
+    - Line it up in the mirror before you press.
+    - A helper can place it the first time.
+  product_type: Brow stamp
+  ease_tags: [one_step]
+  effect:
+    category: eyebrows
+    colour: "#3B2A20"
+    intensity: 50
+    texture: matte
+    pattern: SoftArch3
+    mode: shape
+    shape: { curvature: 0, thickness: 0, definition: 40 }
+
+tinted_brow_gel:
+  name: Tinted brow gel with a big wand
+  instruction: Brush the gel up through each brow in one sweep.
+  dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 0, O: 2 } # O: wand in a twist cap tube
+  swap: none
+  why_easier: It follows the brows you already have. One sweep, no lines to draw.
+  tips:
+    - Brush up, then out.
+    - Wipe the wand on the rim first so it doesn't clump.
+  product_type: Tinted brow gel
+  ease_tags: [one_step, forgiving]
+  effect: { category: eyebrows, colour: "#3B2A20", intensity: 45, texture: matte, mode: color }
+
+# Eyes
+
+one_colour_lid_wash:
+  number: 11
+  name: One colour on the lid
+  instruction: Swipe the stick on your lid, then pat it in.
+  dims: { P: 1, E: 1, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: cream stick, cap pulls straight off
+  swap: none
+  why_easier: One colour and one fingertip. Cream blends itself, so edges don't matter.
+  tips:
+    - Close your eye and press gently.
+    - Do your eyes first, while your hands are freshest.
+  product_type: Cream eyeshadow stick
+  ease_tags: [chunky, finger_applied, forgiving, easy_cap]
+  effect: { category: eye_shadow, colour: "#7A4E3A", intensity: 55, texture: matte, pattern: 1color6 }
+
+two_tone_crease:
+  number: 12
+  name: Two shades blended in the crease
+  instruction: Light shade on the lid, deep shade blended into the crease.
+  dims: { P: 2, E: 1, G: 2, H: 0, T: 2, F: 1, O: 3 } # O: slim palette
+  swap: one_colour_lid_wash
+  swap_why: One colour pressed on with a finger. No crease to find and nothing to blend.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Eyeshadow palette and small brushes
+  ease_tags: []
+  effect: { category: eye_shadow, colour: ["#C9A48A", "#6B4632"], intensity: 55, texture: matte, pattern: 2colors1 }
+
+cut_crease:
+  number: 13
+  name: Cut crease
+  instruction: Carve the crease with a deep shade, then fill the lid.
+  dims: { P: 3, E: 1, G: 3, H: 1, T: 3, F: 2, O: 3 } # O: slim palette
+  swap: wash_and_smudged_lash_line
+  swap_why: One colour on the lid, darker at the lashes. No sharp line to cut.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Eyeshadow palette, concealer and fine brushes
+  ease_tags: []
+  effect: { category: eye_shadow, colour: ["#D9B99B", "#9A6A3E", "#4A3029"], intensity: 60, texture: matte, pattern: 3colors19 }
+
+wash_and_smudged_lash_line:
+  name: Lid wash, smudged darker at the lashes
+  instruction: Pat colour on the lid. Smudge a deeper shade along the lashes.
+  dims: { P: 2, E: 1, G: 1, H: 0, T: 1, F: 0, O: 2 } # O: small pot or palette
+  swap: none
+  why_easier: Smudging is meant to look soft, so a wobble just adds to it.
+  tips:
+    - Use a fingertip or a small flat brush.
+    - Rest your elbow on the table.
+  product_type: Cream eyeshadow and a smudgy eye pencil
+  ease_tags: [forgiving, finger_applied]
+  effect: { category: eye_shadow, colour: "#6B4632", intensity: 50, texture: matte, pattern: 1color9 }
+
+pencil_liner_crisp:
+  number: 14
+  name: Crisp pencil eyeliner
+  instruction: Draw a thin, sharp line along your upper lashes.
+  dims: { P: 2, E: 2, G: 2, H: 1, T: 1, F: 1, O: 1 } # O: pencil cap
+  swap: smudged_pencil_liner
+  swap_why: A chunky pencil in short dabs, smudged soft. No crisp line needed.
+  tips:
+    - Short strokes, then join them.
+  product_type: Thin eyeliner pencil
+  ease_tags: []
+  effect: { category: eye_liner, colour: "#1E1612", intensity: 85, texture: matte, pattern: Upper2 }
+
+gel_liner_brush:
+  number: 15
+  name: Gel eyeliner with a brush
+  instruction: Paint a line along your upper lashes with the fine brush.
+  dims: { P: 3, E: 2, G: 3, H: 1, T: 2, F: 2, O: 3 } # O: small screw lid pot
+  swap: shadow_liner
+  swap_why: Dark shadow pressed along the lashes. It doesn't set, so you can tidy it.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Gel eyeliner and a fine brush
+  ease_tags: []
+  effect: { category: eye_liner, colour: "#111111", intensity: 85, texture: matte, pattern: Upper1 }
+
+liquid_liner_thin:
+  number: 16
+  name: Thin liquid eyeliner
+  instruction: Draw one thin line along your upper lashes.
+  dims: { P: 3, E: 2, G: 2, H: 1, T: 1, F: 3, O: 2 } # O: twist cap
+  swap: shadow_liner
+  swap_why: Dark shadow pressed along the lashes. No steady line, and slips wipe away.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Liquid eyeliner
+  ease_tags: []
+  effect: { category: eye_liner, colour: "#111111", intensity: 85, texture: matte, pattern: Upper2 }
+
+liquid_liner_wing:
+  number: 17
+  name: Winged liquid eyeliner
+  instruction: Draw a line along your lashes and flick a wing out.
+  dims: { P: 3, E: 2, G: 2, H: 1, T: 2, F: 3, O: 2 } # O: twist cap
+  swap: smudged_pencil_liner
+  swap_why: No steady line and no sharp wing. Short dabs blend into one soft line.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Liquid eyeliner
+  ease_tags: []
+  effect: { category: eye_liner, colour: "#111111", intensity: 90, texture: matte, pattern: OpenWings2 }
+
+smudged_pencil_liner:
+  name: Smudged pencil eyeliner
+  instruction: Dab short strokes along your lashes, then smudge them together.
+  dims: { P: 2, E: 2, G: 1, H: 0, T: 1, F: 0, O: 1 } # O: chunky pencil, cap pulls straight off
+  swap: none
+  why_easier: Short dabs are easier than one long line, and smudging hides any wobble.
+  tips:
+    - Rest your elbow on the table and your little finger on your cheek.
+    - Short strokes, then join them.
+    - A chunky pencil is easier to hold than a thin one.
+  product_type: Chunky eyeliner pencil with a smudger
+  ease_tags: [chunky, forgiving, easy_cap]
+  # A soft line needs a strong colour: 85 to 90 still shows on deep skin, 70 nearly vanishes.
+  effect: { category: eye_liner, colour: "#2B1D16", intensity: 88, texture: matte, pattern: Smoke4 }
+
+shadow_liner:
+  name: Shadow liner with a flat brush
+  instruction: Press dark shadow along your lashes with a damp flat brush.
+  dims: { P: 1, E: 2, G: 1, H: 0, T: 1, F: 0, O: 2 } # O: shadow pan or palette
+  swap: none
+  why_easier: You press instead of drawing, and shadow stays soft and easy to tidy.
+  tips:
+    - Press, lift, move along. Don't drag.
+    - Rest your elbow on the table.
+  product_type: Dark eyeshadow and a small flat brush
+  ease_tags: [forgiving]
+  effect: { category: eye_liner, colour: "#2B1D16", intensity: 85, texture: matte, pattern: Smoke19 }
+
+tightline:
+  number: 18
+  name: Tightlining the waterline
+  instruction: Run the pencil along your upper waterline, under the lashes.
+  dims: { P: 3, E: 3, G: 2, H: 2, T: 1, F: 2, O: 1 } # O: pencil cap
+  swap: skip
+  swap_why: Left out. It is the step closest to the eye, and the look works without it.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Waterproof eyeliner pencil
+  ease_tags: []
+  effect: # the waterline doesn't show in a preview
+
+mascara_upper:
+  number: 19
+  name: Mascara on the upper lashes
+  instruction: Wiggle the wand at the lash roots, then pull it up.
+  dims: { P: 2, E: 3, G: 2, H: 0, T: 1, F: 2, O: 2 } # O: twist cap tube
+  swap: none
+  why_easier: There is no truly easy version of mascara. These tips make it calmer.
+  tips:
+    - Hold the wand in your fist with a ring or knob grip.
+    - Rest your elbow on the table.
+    - A mascara shield behind the lashes catches slips.
+  product_type: Mascara
+  ease_tags: []
+  effect: { category: eyelashes, colour: "#000000", intensity: 75, pattern: Natural2 }
+
+mascara_lower:
+  number: 20
+  name: Mascara on the lower lashes
+  instruction: Tip the wand and touch it lightly to your lower lashes.
+  dims: { P: 3, E: 3, G: 2, H: 0, T: 1, F: 3, O: 2 } # O: twist cap tube
+  swap: skip
+  swap_why: Left out. Lower lashes are the hardest to reach, and the upper lashes do most of the work.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Mascara
+  ease_tags: []
+  effect: # the lash pattern already covers both rows
+
+eyelash_curler:
+  number: 21
+  name: Eyelash curler
+  instruction: Clamp the curler at the lash roots and hold for five seconds.
+  dims: { P: 2, E: 3, G: 3, H: 1, T: 1, F: 1, O: 0 } # O: nothing to open
+  swap: skip
+  swap_why: Left out. It clamps right next to the eye, and mascara lifts the lashes on its own.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Eyelash curler
+  ease_tags: []
+  effect: # a curl doesn't show in a preview
+
+strip_lashes:
+  number: 22
+  name: Strip lashes with glue
+  instruction: Glue the strip, wait, then press it onto your lash line.
+  dims: { P: 3, E: 3, G: 3, H: 3, T: 3, F: 3, O: 3 } # O: clasp case and a small glue tube
+  swap: mascara_upper
+  swap_why: Mascara instead. No glue, no tweezers, nothing to line up on the lid.
+  tips:
+    - A helper can put them on for you.
+  product_type: Strip lashes and lash glue
+  ease_tags: []
+  effect: { category: eyelashes, colour: "#000000", intensity: 90, pattern: UpperDense1 }
+
+magnetic_liner_lashes:
+  number: 23
+  name: Magnetic liner and lashes
+  instruction: Draw magnetic liner, then click the lash strip onto it.
+  dims: { P: 2, E: 3, G: 3, H: 1, T: 2, F: 2, O: 3 } # O: clasp case and a twist cap liner
+  swap: none
+  why_easier: Still hard, because the strip has to be pinched and placed at the lash line. Mascara is gentler.
+  tips:
+    - Some people find magnets easier than glue. Try it on a calm day.
+    - A helper can place the strip for you.
+  product_type: Magnetic eyeliner and lashes
+  ease_tags: []
+  effect: { category: eyelashes, colour: "#000000", intensity: 85, pattern: Winged1 }
+
+# Lips
+
+bullet_lipstick:
+  number: 24
+  name: Bullet lipstick
+  instruction: Twist up the lipstick and trace it over your lips.
+  dims: { P: 2, E: 0, G: 1, H: 0, T: 1, F: 1, O: 2 } # O: pull off cap, twist up base
+  swap: tinted_balm
+  swap_why: A sheer balm dabbed on with a finger. No edge to follow.
+  tips:
+    - Tap it on with a fingertip instead of tracing the edge.
+  product_type: Lipstick
+  ease_tags: [away_from_eyes]
+  effect: { category: lip_color, colour: "#B26A6A", intensity: 75, texture: satin, pattern: original, mode: full }
+
+liquid_matte_lipstick:
+  number: 25
+  name: Liquid matte lipstick
+  instruction: Paint the colour on with the wand, edges first.
+  dims: { P: 3, E: 0, G: 2, H: 1, T: 1, F: 3, O: 2 } # O: twist cap wand
+  swap: tinted_balm
+  swap_why: A sheer balm dabbed on with a finger. It doesn't set, so a wobble just blends in.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Liquid matte lipstick
+  ease_tags: [away_from_eyes]
+  effect: { category: lip_color, colour: "#8E1F2F", intensity: 85, texture: matte, pattern: original, mode: full }
+
+lip_liner:
+  number: 26
+  name: Lip liner
+  instruction: Trace the edge of your lips with the pencil.
+  dims: { P: 3, E: 0, G: 3, H: 0, T: 2, F: 2, O: 1 } # O: pencil cap
+  swap: skip
+  swap_why: Left out. Sheer colour dabbed on with a finger needs no edge.
+  tips:
+    - Rest your elbow on the table.
+  product_type: Lip liner pencil
+  ease_tags: [away_from_eyes]
+  effect:
+    category: lip_liner
+    colour: "#7A1A28"
+    intensity: 70
+    texture: matte
+    pattern: Natural1
+    shape: { thickness: 50, smoothness: 50 }
+
+tinted_balm:
+  number: 27
+  name: Tinted balm or chubby crayon
+  instruction: Dab the balm on your lips and press them together.
+  dims: { P: 1, E: 0, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: chubby crayon or stick, cap pulls straight off
+  swap: none
+  why_easier: Sheer colour you can dab on with a finger. No edge to follow, and it blends itself.
+  tips:
+    - Press your lips together to spread it.
+    - Add a second layer for more colour.
+  product_type: Tinted lip balm or chubby lip crayon
+  ease_tags: [chunky, forgiving, finger_applied, easy_cap, away_from_eyes]
+  effect: { category: lip_color, colour: "#A84452", intensity: 45, texture: sheer, pattern: original, mode: full, gloss: 35, transparency: 60 }
+
+doe_foot_gloss:
+  number: 28
+  name: Lip gloss with a wand
+  instruction: Swipe the gloss wand across your lips.
+  dims: { P: 1, E: 0, G: 2, H: 1, T: 0, F: 1, O: 2 } # O: twist cap wand
+  swap: tinted_balm
+  swap_why: A tinted balm dabbed on with a finger. No small wand to pinch.
+  why_easier: Gloss is forgiving. A wobble just looks shiny.
+  tips:
+    - Dab it on with a fingertip if the wand is fiddly.
+  product_type: Lip gloss
+  ease_tags: [forgiving, away_from_eyes]
+  effect: { category: lip_color, colour: "#C0737A", intensity: 40, texture: gloss, pattern: original, mode: full, gloss: 70, transparency: 55 }
+
+# Finish
+
+setting_spray:
+  number: 29
+  name: Setting spray
+  instruction: Close your eyes and mist your face from arm's length.
+  dims: { P: 0, E: 1, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: spray pump, some are stiff to press
+  swap: none
+  why_easier: One press and your makeup lasts longer, so there is less to redo later.
+  tips:
+    - Check the pump is light enough to press. Some are stiff.
+  product_type: Setting spray
+  ease_tags: [pump, one_step]
+  effect: # spray doesn't show in a preview
+
+fixup:
+  name: Tidy up with a cotton bud
+  instruction: Dip a cotton bud in micellar water and wipe away smudges.
+  dims: { P: 0, E: 0, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: flip cap bottle
+  swap: none
+  why_easier: Any slip can come off. Knowing that makes every other step calmer.
+  tips:
+    - Pour a little micellar water into the cap first.
+    - Pointed cotton buds are easier to aim.
+  product_type: Micellar water and cotton buds
+  ease_tags: [forgiving]
+  effect: # tidying up doesn't show in a preview
