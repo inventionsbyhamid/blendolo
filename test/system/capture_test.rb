@@ -68,6 +68,29 @@ class CaptureTest < ApplicationSystemTestCase
     assert_selector "[data-capture-state=review]", wait: 10
   end
 
+  test "a stopped worker gives way before a chosen photo is checked" do
+    visit new_kit_photo_path(@kit, kind: "reference")
+    assert_selector "[data-capture-state=choose]", wait: 10
+    two_faces = FaceResults.result(FaceResults.face(centre: [ 0.3, 0.5 ], width: 0.3), FaceResults.face(centre: [ 0.7, 0.5 ], width: 0.3))
+    execute_script <<~JS, two_faces[:faceLandmarks]
+      const faces = arguments[0]
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const worker = fakeChecks("worker", async () => noFace)
+      worker.broken = new Error("The face checks stopped answering")
+      capture.loadGates = async () => {
+        log.push("load page checks")
+        capture.gate = { ...fakeChecks("page", async () => noFace), still: async () => faces }
+      }
+      capture.gate = worker
+    JS
+
+    find("input[data-capture-target=choose]", visible: :all).attach_file(file_fixture("face.jpg"))
+    assert_selector "[data-capture-target=message]", text: "Try a photo of just you", wait: 10
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+  end
+
   test "a worker that stops after starting gives way at once, and no face in view isn't a failure" do
     on_phone { visit new_kit_photo_path(@kit) }
     assert_selector "[data-capture-state=live]", wait: 10

@@ -376,6 +376,8 @@ export default class extends Controller {
 
   // Face landmarks of a still image, or null when the checks aren't there (or take more than 8 s to load).
   async detectStill(source) {
+    // A worker that stopped (on an earlier photo, say) gives way first, so this photo is still checked.
+    if (this.gate?.broken) this.giveWay(this.gate)
     if (this.gatesLoading) {
       await Promise.race([this.gatesLoading.catch(() => {}), new Promise((resolve) => setTimeout(resolve, CHECKS_WAIT_MS))])
     }
