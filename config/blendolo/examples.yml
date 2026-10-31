@@ -1,8 +1,8 @@
 # Example people for "See an example": three made-up people, each with their hand answers, photos, chosen look and
 # finished previews, so a visitor can walk through Blendolo without a photo of their own. Read by Examples.
 #
-# Photos and previews are files under images_dir. Until the generated example photos and their precomputed previews
-# arrive, every person points at the same placeholder images (recorded provider results).
+# Photos and previews are files under images_dir: AI generated people, and previews rendered once with the live
+# provider from these photos (the easy versions follow each person's hands).
 # hands: tremor, pinch, fatigue, near_vision 0 no / 1 a little / 2 yes; one_hand 0 both / 1 mostly left / 2 mostly right.
 # hands_today: 0 steady, 1 a bit shaky, 2 very shaky or stiff.
 # renders: kind is classic, easy, tweak, transfer or step; look is a key in looks.yml, or "signature" for the easy
@@ -19,13 +19,13 @@ people:
     hands_today: 2
     chosen_look: red_lip
     photos:
-      today: placeholder_today.jpg
-      reference: placeholder_reference.jpg
+      today: rosa_today.jpg
+      reference: rosa_reference.jpg
     renders:
-      - { kind: classic, look: red_lip, file: placeholder_classic.jpg }
-      - { kind: easy, look: red_lip, file: placeholder_easy.jpg }
-      - { kind: transfer, file: placeholder_transfer.jpg }
-      - { kind: easy, look: signature, file: placeholder_easy.jpg }
+      - { kind: classic, look: red_lip, file: rosa_classic.jpg }
+      - { kind: easy, look: red_lip, file: rosa_easy.jpg }
+      - { kind: transfer, file: rosa_transfer.jpg }
+      - { kind: easy, look: signature, file: rosa_signature_easy.jpg }
 
   june:
     name: June
@@ -34,13 +34,13 @@ people:
     hands_today: 1
     chosen_look: everyday_fresh
     photos:
-      today: placeholder_today.jpg
-      reference: placeholder_reference.jpg
+      today: june_today.jpg
+      reference: june_reference.jpg
     renders:
-      - { kind: classic, look: everyday_fresh, file: placeholder_classic.jpg }
-      - { kind: easy, look: everyday_fresh, file: placeholder_easy.jpg }
-      - { kind: transfer, file: placeholder_transfer.jpg }
-      - { kind: easy, look: signature, file: placeholder_easy.jpg }
+      - { kind: classic, look: everyday_fresh, file: june_classic.jpg }
+      - { kind: easy, look: everyday_fresh, file: june_easy.jpg }
+      - { kind: transfer, file: june_transfer.jpg }
+      - { kind: easy, look: signature, file: june_signature_easy.jpg }
 
   amara:
     name: Amara
@@ -49,10 +49,10 @@ people:
     hands_today: 1
     chosen_look: soft_smoky_evening
     photos:
-      today: placeholder_today.jpg
-      reference: placeholder_reference.jpg
+      today: amara_today.jpg
+      reference: amara_reference.jpg
     renders:
-      - { kind: classic, look: soft_smoky_evening, file: placeholder_classic.jpg }
-      - { kind: easy, look: soft_smoky_evening, file: placeholder_easy.jpg }
-      - { kind: transfer, file: placeholder_transfer.jpg }
-      - { kind: easy, look: signature, file: placeholder_easy.jpg }
+      - { kind: classic, look: soft_smoky_evening, file: amara_classic.jpg }
+      - { kind: easy, look: soft_smoky_evening, file: amara_easy.jpg }
+      - { kind: transfer, file: amara_transfer.jpg }
+      - { kind: easy, look: signature, file: amara_signature_easy.jpg }
