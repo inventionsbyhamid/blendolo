@@ -1,7 +1,7 @@
 <% page_title "Step #{@number} of #{@steps.size}: #{@step.name}" %>
 <% last = @number == @steps.size
    picture = @with&.result || @photo&.image %>
-<div class="page stack" data-controller="speak">
+<div class="page stack" data-controller="speak" data-speak-voices-value="<%= Voice.versions([ Voice.card(@step) ]).to_json %>">
   <%= render "components/step_header", step: @number, of: @steps.size, back: (@number > 1 ? step_kit_routine_path(@kit, @number - 1) : kit_routine_path(@kit)), finish_later: kit_path(@kit) %>
   <h1 class="sr-only"><%= @step.name %></h1>
 
