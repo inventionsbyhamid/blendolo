@@ -541,3 +541,28 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .three-up__photo { aspect-ratio: 3 / 4; border-radius: 16px; }
   .signature__thumb { width: 140px; height: 175px; object-fit: cover; border-radius: 16px; background: var(--color-canvas); }
 }
+
+@layer components {
+  /* Step cards: the easy preview zoomed to the step's part of the face, and a soft glow where it goes. */
+  .step-zoom { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-card); background: var(--color-canvas); }
+  .step-zoom__image, .step-zoom__glow { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 45%; transform: scale(1.15); }
+  .step-zoom__glow { filter: blur(6px); mix-blend-mode: screen; }
+  .step-zoom--eyes :is(.step-zoom__image, .step-zoom__glow) { transform-origin: 50% 40%; transform: scale(2.3); }
+  .step-zoom--brows :is(.step-zoom__image, .step-zoom__glow) { transform-origin: 50% 33%; transform: scale(2.3); }
+  .step-zoom--lips :is(.step-zoom__image, .step-zoom__glow) { transform-origin: 50% 68%; transform: scale(2.5); }
+  .step-zoom--cheeks :is(.step-zoom__image, .step-zoom__glow) { transform-origin: 50% 55%; transform: scale(1.8); }
+
+  /* Printed step cards: one per page, 24 pt and up. */
+  .print-card { break-after: page; break-inside: avoid; padding: 32px; border: 2px solid var(--line); border-radius: var(--radius-card); background: var(--surface); font-size: 2rem; line-height: 1.35; }
+  .print-card .instruction { font-size: 2.6rem; }
+  .print-card .tags li { font-size: 1.6rem; }
+  .print-card__count { font-weight: 800; color: var(--muted); }
+}
+
+@media print {
+  .top, .foot, .skip, .no-print, .menu { display: none !important; }
+  body { background: #FFFFFF; }
+  .page { width: auto; padding: 0; }
+  .print-card { border: 0; padding: 0; font-size: 24pt; }
+  .print-card .instruction { font-size: 32pt; }
+}

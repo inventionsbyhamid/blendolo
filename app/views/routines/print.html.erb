@@ -1,0 +1,14 @@
+<div class="page stack" data-controller="print">
+  <header class="stack no-print">
+    <h1 class="m-0">Your step cards</h1>
+    <p class="lead m-0">One card per page, in large print. Keep them by the mirror, or give them to someone who helps.</p>
+    <button type="button" class="btn btn--primary" data-action="print#print"><span class="btn__label">Print the cards</span></button>
+    <%= render "components/button", label: "Back to the routine", href: kit_routine_path(@kit), variant: :secondary, icon: :back %>
+  </header>
+  <% @steps.each.with_index(1) do |step, number| %>
+    <article class="print-card stack">
+      <p class="print-card__count m-0">Step <%= number %> of <%= @steps.size %></p>
+      <%= render "routines/card_text", step: step %>
+    </article>
+  <% end %>
+</div>

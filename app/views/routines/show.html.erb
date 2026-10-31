@@ -7,4 +7,8 @@
     <% end %>
   </ol>
   <%= render "components/button", label: "Start with step 1", href: step_kit_routine_path(@kit, 1), variant: :primary, icon: :next %>
+  <div class="button-row button-row--2">
+    <%= render "components/button", label: "Print the cards", href: print_kit_routine_path(@kit), variant: :secondary %>
+    <%= render "components/button", label: "Shopping list", href: kit_shopping_path(@kit), variant: :secondary %>
+  </div>
 </div>
