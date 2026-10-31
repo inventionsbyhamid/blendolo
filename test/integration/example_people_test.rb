@@ -76,4 +76,17 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     get example_path("amara", soon: 1)
     assert_select ".empty__title", "Example coming soon"
   end
+
+  test "a write the models refuse on an example kit ends with the example message" do
+    kit = Examples.kit_for("rosa")
+    # Past the controller's own check, the model refuses: the visitor sees the same message.
+    HandsController.define_method(:keep_example_kits_as_they_are) { nil }
+    patch kit_hand_path(kit, 2), params: { answer: 2 }, headers: { "HTTP_REFERER" => kit_hand_path(kit, 2) }
+
+    assert_redirected_to kit_hand_path(kit, 2)
+    assert_equal "This is Rosa's example kit, so it stays as it is. Start your own kit to make it yours.", flash[:notice]
+    assert_equal Examples.fetch(:rosa).hands[:pinch], kit.reload.pinch
+  ensure
+    HandsController.remove_method(:keep_example_kits_as_they_are)
+  end
 end
