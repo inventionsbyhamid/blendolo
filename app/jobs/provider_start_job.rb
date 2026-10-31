@@ -1,7 +1,8 @@
 # Starts the provider task for a render that ProviderTracked#request! queued, scheduling the first poll first.
 # Only the job that claims the render (pending to running) calls the provider. Any failure fails the render: a
-# definite refusal is refunded; anything else (a server or network error, our own error) keeps its units, because
-# the provider may have started and charged the task.
+# definite refusal, or our own error before anything is sent (reading the photos), is refunded; anything else (a
+# server or network error, an error during the call) keeps its units, because the provider may have started and
+# charged the task.
 class ProviderStartJob < ApplicationJob
   queue_as :youcam
   # The kit was deleted meanwhile.
@@ -14,7 +15,15 @@ class ProviderStartJob < ApplicationJob
     # times the render out (a render with no task id just waits for its deadline).
     ProviderPollJob.set(wait_until: ProviderPollJob.next_poll_at(render.started_at)).perform_later(render)
 
-    job = Appearance.provider.start(render.operation, render.provider_inputs)
+    # Reading the photos is ours: if it fails, nothing was sent to the provider, so the credits go back.
+    inputs = begin
+      render.provider_inputs
+    rescue StandardError => error
+      Rails.error.report(error, handled: true, context: { render_id: render.id })
+      return render.fail_call!(:provider_error, refund: true)
+    end
+
+    job = Appearance.provider.start(render.operation, inputs)
     raise Appearance::Error.new(:provider_error, maybe_charged: true, message: "no task id") if job.external_id.blank?
 
     render.update!(external_id: job.external_id)
