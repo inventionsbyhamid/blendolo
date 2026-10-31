@@ -1,6 +1,7 @@
 # The routine a kit follows: the easy steps of the chosen look in the order to do them (detailed steps first while
 # hands are fresh, the fix-up step last), each with the look's colour. Stored on kit.routine as
-# [{ "step" => id, "colour" => hex or nil, "intensity" => 0..100 or nil }].
+# [{ "step" => id, "colour" => hex or nil, "intensity" => 0..100 or nil, "optional" => true when the look can do
+# without it }].
 module RoutinePlan
   module_function
 
@@ -11,6 +12,7 @@ module RoutinePlan
     Ease::RoutineOrder.order(look_steps.map(&:step)).map do |step|
       look_step = by_id[step.id]
       { "step" => step.id, "colour" => look_step&.colour, "intensity" => look_step&.intensity }
+        .merge(step.optional? ? { "optional" => true } : {})
     end
   end
 

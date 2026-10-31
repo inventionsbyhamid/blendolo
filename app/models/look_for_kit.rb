@@ -1,5 +1,7 @@
-# One look for one kit: the classic steps, the easy version for these hands, how easy each is, and the effects that
-# render each on today's photo. Glue between Looks (what a look is) and Ease (how hard it is for these hands).
+# One look for one kit: the classic steps, the easy version for these hands (the planner picks, for each hard step,
+# the easier candidate that suits these hands best), how easy each version is, and the effects that render each on
+# today's photo. A look's optional steps (mascara, lashes, curler, setting spray) never set its grade: they're listed
+# apart, each with its own ease in words. Glue between Looks (what a look is) and Ease (how hard it is for these hands).
 class LookForKit
   attr_reader :look, :kit
 
@@ -37,7 +39,11 @@ class LookForKit
 
   def swaps = plan[:swaps]
 
-  def unswappable = plan[:unswappable]
+  # Hard steps with no easier version, that do set the grade (optional ones are listed under #optional_steps).
+  def unswappable = plan[:unswappable].reject(&:optional?)
+
+  # The easy version's optional steps: [{ step:, ease:, words: }], each with its own ease, never the look's grade.
+  def optional_steps = easy_ease[:optional]
 
   def easy_steps
     @easy_steps ||= look.easy_steps(profile)

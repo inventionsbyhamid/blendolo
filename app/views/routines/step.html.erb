@@ -15,6 +15,10 @@
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
   <% end %>
 
+  <% if @step.optional? %>
+    <p class="m-0"><span class="chip chip--sun m-0">Optional</span></p>
+    <p class="m-0" data-speak-target="text"><%= @step.optional_why %></p>
+  <% end %>
   <%= render "routines/card_text", step: @step, speak: true %>
 
   <%= render "components/button", label: (last ? "Done, all finished" : "Done, next step"), href: (last ? kit_path(@kit) : step_kit_routine_path(@kit, @number + 1)), variant: :primary, icon: :check %>
