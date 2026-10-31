@@ -2,135 +2,183 @@
 
 **Makeup made easy for hands that shake.**
 
-Blendolo is makeup try-on for people whose hands shake or are stiff: Parkinson's, essential tremor, arthritis, MS, a stroke. It scores each look for your hands, swaps the hard steps for easier ones, and shows the classic and the easy version side by side on your own face before you buy anything.
+Makeup try-on for people with Parkinson's, essential tremor, arthritis, MS or after a stroke. Blendolo scores every look for *your* hands, swaps the hard steps for easier ones, and shows the classic and the easy version on your own face with the YouCam API.
 
-- Live: https://blendolo.dijmo.com
-- Try it with an example person (no photo, no account): https://blendolo.dijmo.com/examples
-- For brands and shops: https://blendolo.dijmo.com/brands
+**[Live site](https://blendolo.dijmo.com)** · **[Try an example person](https://blendolo.dijmo.com/examples)** (no photo, no sign in) · **Demo video (link coming)** · **[For shops](https://blendolo.dijmo.com/brands)**
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/inventionsbyhamid/blendolo)
+
+![Blendolo's looks list for Rosa, an AI generated example person, with each look's ease before and after, next to the red lip page: the classic look and the easy version side by side on her face, rated Hard before and Some care after](docs/images/classic-and-easy.png)
 
 ## Why
 
-- More than one in four of 2,864 people with essential tremor say tremor affects putting on makeup ([Gupta et al. 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8710410)).
+- More than 1 in 4 of 2,864 people with essential tremor say tremor affects putting on makeup ([Gupta et al. 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8710410)).
 - 5.33 million women live with Parkinson's, 45% of everyone with it ([GBD 2021, via Frontiers in Aging Neuroscience 2025](https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2024.1498756/full)).
 - 194 million people have osteoarthritis in their hands, women about twice as often as men ([Wei et al. 2025](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12350485/)).
-
-Today's help is tip sheets and single tools for single steps. Virtual try-on shows a look on your face but never asks whether your hands can do it. Blendolo answers that question: can I do this look, and what is the easy version of it on me?
+- Virtual try-on shows a look on your face. It never asks whether your hands can do it. Blendolo does.
 
 ## What it does
 
-1. **Five questions about your hands**: tremor, pinch or grip pain, one hand, arms that tire, close-up reading. They set your hand profile and how big the app's buttons are.
-2. **A photo, hands free**: prop the phone up; the browser waits for one face, open eyes and a still second, then takes the photo with spoken help.
-3. **Eight looks, scored for your hands**: each look is as easy as its hardest required step (Easy, Some care, Tricky or Hard), and each tile shows before and after, like "Hard → Some care".
-4. **Classic and easy, side by side on your face**: hard steps are swapped for easier ones picked for your hands (winged liquid liner becomes shadow liner or a smudged pencil, liquid matte lipstick becomes a tinted balm dabbed on with a finger, brow pencil becomes tinted brow gel), and both versions are rendered on your photo in about 25 seconds; the page updates by itself. Each swap says why it's easier. Mascara has no easy version, and the app says so.
-5. **Your signature look** ("Bring back your signature look" on the kit home or the looks list): an old photo of you wearing a look you loved is put on today's face, then rebuilt from easy steps in the same colours.
-6. **Step cards, read aloud**: one step per screen, detailed steps first while hands are fresh, tidying up last; a large print view.
-7. **A shopping list with ease tags**: what to look for and what to avoid for your hands ("Opens with one hand", "No pinch grip", "Pump", "Chunky, easy to hold").
-8. **Ease tags for shops**: `GET /api/ease_tags?product_format=stick&closure=pull_cap&grip=chunky&step=tinted_balm` answers a product's tags and its ease for six kinds of hands. Free, no key, up to 60 requests a minute.
-9. **Share with a helper or an occupational therapist**: a private link with a QR code that expires after 30 days and can be switched off. Example people have a read only demo share, "See what a helper sees".
-10. **Three example people** (Rosa, June, Amara) with stored results.
+- **5 questions about your hands** set your hand profile and how big the buttons get.
+- **Hands-free photo**: prop the phone up. It waits for one face, looking straight, eyes open, then a still second, and talks you through it.
+- **8 looks, scored for your hands**: Easy, Some care, Tricky or Hard, by the look's hardest step, shown as "Hard → Some care".
+- **Classic vs easy, on your face**: hard steps become easier ones, rendered side by side. Winged liquid liner → shadow liner or a smudged pencil. Liquid matte lipstick → tinted balm dabbed on with a finger.
+- **Signature look**: an old photo of a look you loved, put on today's face, then rebuilt from easy steps.
+- **Step cards** read aloud, a **shopping list** tagged by grip and closure, and a **share link** for a helper or an occupational therapist (expires after 30 days, can be switched off).
+- **Ease tags API for shops**: `GET /api/ease_tags?product_format=stick&closure=pull_cap&grip=chunky&step=tinted_balm`. Free, no key, 60 requests a minute.
+- **Accounts and plans**: Google sign in, 2 free credits (one look on your face), a Look Pack ($7.99, 16 credits) and a Clinic plan for occupational therapists ($19 a month, 40 credits), through Dodo Payments.
+- **3 example people** (Rosa, June, Amara) with stored results: explore for free, with no photo and no account.
 
-The app follows its own advice: targets are 64 to 104 px depending on "My hands today", main buttons at least 88 px; a tap counts when you lift your finger and a quick second tap is ignored; no dragging, swiping, pinching, double taps or long presses; every control has visible words for Voice Control and Voice Access; one decision per screen; no time limits.
+The app follows its own advice: targets 64 to 104 px by "My hands today", main buttons at least 88 px, a tap counts on release and repeat taps are ignored, no drag, swipe, pinch or long press.
 
-## How it uses the YouCam API
+## How it works
 
-Blendolo uses two YouCam APIs from Perfect Corp, called only from the server.
+```mermaid
+flowchart LR
+  subgraph Phone["Phone browser"]
+    UI["Hotwire pages<br/>big targets, tap guard"]
+    FC["Face checks<br/>MediaPipe, in the browser"]
+    TTS["Read aloud<br/>Web Speech"]
+  end
 
-| Endpoint | What it does here | Units |
+  subgraph App["Rails 8.1 app"]
+    Web["Web<br/>Puma + Thruster"]
+    Ease["Ease engine<br/>scores, swaps, routine"]
+    Guard["Cache, unit guard, credits"]
+    Jobs["Solid Queue worker<br/>start + poll jobs"]
+  end
+
+  DB[("Postgres<br/>data, queue, cache, cable")]
+  R2[("Cloudflare R2<br/>photos + renders")]
+  YC["YouCam API<br/>Makeup VTO, Makeup Transfer"]
+  G["Google sign in"]
+  Dodo["Dodo Payments"]
+
+  FC --> UI
+  UI --> TTS
+  UI <--> Web
+  Web --> Ease --> Guard --> Jobs
+  Jobs <--> YC
+  YC -. webhook .-> Web
+  Web <--> R2
+  Jobs --> R2
+  Web <--> DB
+  Jobs <--> DB
+  Web -. live update .-> UI
+  Web <--> G
+  Web <--> Dodo
+  Dodo -. webhook .-> Web
+```
+
+**One preview, step by step**
+
+```mermaid
+sequenceDiagram
+  actor P as Person
+  participant W as Rails web
+  participant Q as Worker
+  participant Y as YouCam API
+  participant S as Storage
+  P->>W: Show it on my face
+  W->>W: Made before with this photo? Copy it, free
+  W->>W: Unit guard, then claim and take credits in one transaction
+  W->>Q: Start job
+  Q->>Y: Upload photo, create Makeup VTO task
+  loop Until done, up to 3 minutes
+    Q->>Y: Done yet? At 3, 5, 8, 13 and 21 s, then every 20 s
+  end
+  Note over W,Y: A webhook from YouCam makes the worker ask at once
+  Q->>S: Save the result
+  Q-->>P: Page updates by itself, Turbo Stream
+```
+
+## YouCam API
+
+| Endpoint | Used for | Units |
 |---|---|---|
-| `POST /s2s/v2.0/task/makeup-vto` | The classic look and the easy version on your photo; the easy version of a signature look; "Softer" and "Bolder" | 1 per render, any number of effects in one call |
-| `POST /s2s/v2.0/task/mu-transfer` | Puts the look from an old photo on today's photo | 2 |
-| `POST /s2s/v2.0/file`, `GET /s2s/v2.0/credit/feature-cost`, `GET /s2s/v1.0/client/credit` | Photo upload, the live price list and the balance, for the unit guard | 0 |
+| `POST /s2s/v2.0/task/makeup-vto` | Classic and easy look on your photo, the easy signature look, Softer and Bolder | 1 per render, any number of effects |
+| `POST /s2s/v2.0/task/mu-transfer` | Signature look from an old photo | 2 |
+| `POST /s2s/v2.0/file`, `GET /s2s/v2.0/credit/feature-cost`, `GET /s2s/v1.0/client/credit` | Upload, live prices and balance for the unit guard | 0 |
 
-Every swap is a parameter change in the Makeup VTO request: a winged liner pattern becomes a smudged one, a matte lip becomes sheer with more transparency, drawn brows become tinted brows, lip liner is left out. The full table and the request shape are in [docs/effects-vocabulary.md](docs/effects-vocabulary.md).
-
-Around the API:
-
-- **Cache**: one render per photo, operation and effect list, under a row lock, so a repeated view or a double tap never calls twice. Results are copied to our storage straight away.
-- **Unit guard**: example people never call the API; each kit can make 10 Makeup VTO renders and 2 transfers; the app stops at `YOUCAM_DAILY_UNIT_CAP` units a day (40 on the live site) and never goes below `YOUCAM_UNIT_FLOOR` (150). Failures that may have been charged still count.
-- **Throttle**: at least 1.4 s between any two requests across the web app and the worker, under YouCam's 250 requests per 5 minutes.
-- **Webhook and polling**: a webhook at `POST /webhooks/youcam` triggers a poll; polling runs anyway and gives up after 3 minutes with a clear message.
-- **Several keys**: `YOUCAM_API_KEYS` takes a comma separated list; a call uses the first key above the floor.
-
-## How it is built
-
-Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active Storage (Cloudflare R2 in production), MediaPipe Face Landmarker in the browser for capture checks and colour sampling, and the Web Speech API for reading cards aloud.
-
-| Where | What |
-|---|---|
-| `config/blendolo/steps.yml` | 40 makeup steps, classic and easy, each scored 0 to 3 for precision, closeness to the eye, grip, hands needed, time, forgiveness and opening, with their easier swaps, tips and product types |
-| `config/blendolo/looks.yml`, `examples.yml`, `products.yml`, `caps.yml` | The 8 looks, the example people, the demo catalogue and the unit caps |
-| `app/models/ease/` | The ease engine: hand profile weights, step and look scores, the swap planner, routine order |
-| `app/models/looks/` | Turns steps into effects in our own vocabulary; snaps colours read from a photo to our shades |
-| `app/models/appearance/` | The provider interface, the YouCam adapter and a fake provider that replays recorded responses |
-| `app/models/unit_guard.rb`, `provider_throttle.rb`, `previews.rb`, `app/jobs/provider_*` | Caps, throttle, cache, start and poll jobs |
-| `app/javascript/capture/` | The capture checks and colour sampling in the browser |
-
-## Try it in 90 seconds
-
-1. Open https://blendolo.dijmo.com/examples, choose **Rosa**, then "Open Rosa's kit".
-2. **Looks** → **The red lip**: classic and easy side by side, what changes and why, the ease before and after.
-3. **Make this my routine** → **Start with step 1** → "Read it to me".
-4. **Shopping list**, then "Ease tags for brands and shops".
-5. **Bring back your signature look**, then back on Rosa's kit, **See what a helper sees**.
-6. In the **Menu**, set "My hands today" to "Very shaky or stiff" and watch every button grow.
-
-## Honest limits
-
-- Ease scores are our own rubric, built from published guidance (Parkinson's UK, the Parkinson's Foundation) and people's own words. They are not a clinical measure, and they have not been tested with people with tremor yet.
-- Previews are visual simulations: renders are always clean, real lines wobble. That's why the easy steps are forgiving ones.
-- Makeup VTO smooths skin a little by default and brightens the whole frame, so we compare render with render.
-- Makeup Transfer moves a whole look at once; blush can land stronger on one cheek.
-- Colours read from an old photo are approximate and snap to a small set of shades.
-- Taking the photo hands free needs a recent browser with camera access; "Choose a photo" always works.
-- Example people are AI generated. The shopping catalogue is made-up demo products.
-- Blendolo is not a medical device and gives no medical advice.
-
-## Privacy
-
-No trackers and no passwords. The example people and starting a kit need no account; seeing looks on your own face needs Google sign in, which gives us your name, email and Google id, nothing else. Your first look is free. A kit lives behind a private link and is deleted 30 days (or 7, your choice) after your last visit, or at once with "Delete everything"; "Delete my account" deletes the account, its kits and its credits. Photos go from your phone to our server and storage, then to YouCam to make the previews; YouCam deletes its copies within 30 days.
-
-## Run it
-
-Development and tests use the fake provider, so they need no keys and spend no units. See "Run it locally" and "Tests" below. The example people are seeded when `bin/setup` prepares a new database, and `bin/rails examples:rebuild` builds them again.
-
-To use the real API, set `APPEARANCE_PROVIDER=youcam` and `YOUCAM_API_KEYS`, and optionally `YOUCAM_DAILY_UNIT_CAP`, `YOUCAM_UNIT_FLOOR` and `YOUCAM_WEBHOOK_SECRET` (point the webhook at `/webhooks/youcam`). [.env.example](.env.example) explains every variable.
+- **Every swap is a parameter change** in one Makeup VTO call. Mapping: [docs/effects-vocabulary.md](docs/effects-vocabulary.md).
+- **Never pays twice**: one render per photo and effect list, under a row lock. A repeat view or a double tap is free.
+- **Never runs dry**: every live preview is paid with credits. The app stops at a daily unit cap (`YOUCAM_DAILY_UNIT_CAP`, 60 by default) or before the balance drops below a floor (`YOUCAM_UNIT_FLOOR`, 150). Example people never call the API.
+- **Stays under the rate limit**: 1.4 s between calls across web and worker, under YouCam's 250 requests per 5 minutes.
+- **Never hangs**: webhook plus polling, with a clear message after 3 minutes.
+- **Several keys**: `YOUCAM_API_KEYS` takes a comma separated list. A call uses the first key above the floor.
 
 ## Run it locally
 
-You need Ruby 3.4.12 (see `.ruby-version`), PostgreSQL, and Google Chrome for the system tests.
+No keys needed. Needs Ruby 3.4.12 (`.ruby-version`), PostgreSQL and libvips.
 
 ```sh
-bin/setup   # installs gems, prepares the database and starts the app
-bin/dev     # starts the app again later
+git clone https://github.com/inventionsbyhamid/blendolo.git
+cd blendolo
+bin/setup
 ```
 
-The app runs at http://localhost:3107. Development and tests need no environment variables, except that signing in with Google locally needs a Google OAuth client (redirect URI `http://localhost:3107/auth/google_oauth2/callback`) in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Tests sign in through OmniAuth's test mode.
+`bin/setup` installs gems, makes the database, seeds the 3 example people and starts the app at http://localhost:3107. Run `bin/dev` to start it again later.
+
+| Needs a key in production | Locally, with no key |
+|---|---|
+| YouCam API | A fake provider replays recorded responses. No units spent. |
+| Google sign in | "Sign in as a test person (local only)": one tap, no typing. You get the 2 free credits. |
+| Dodo Payments | A local test checkout. "Pay" adds credits through the same code as a paid webhook. Nothing is charged. |
+
+The sign in and checkout stand-ins turn off when their key is set (`GOOGLE_CLIENT_ID`, `DODO_API_KEY`). Production and tests never have them. The fake provider runs unless `APPEARANCE_PROVIDER=youcam`.
+
+**One click instead:** open it in GitHub Codespaces (badge above), or "Reopen in Container" in VS Code. The dev container ([.devcontainer/](.devcontainer)) brings Ruby, Postgres 18 and libvips, runs `bin/setup --skip-server`, and forwards port 3107. Then run `bin/dev`.
 
 ## Tests
 
 ```sh
-bin/rails test          # unit and integration tests
-bin/rails test:system   # browser tests in headless Chrome
-bin/ci                  # everything CI checks
+bin/rails test          # unit and integration
+bin/rails test:system   # browser tests, headless Chrome
+bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 ```
 
-`bin/ci` runs RuboCop (Rails omakase style), Brakeman, the tests, the system tests and the seeds. The steps live in `config/ci.rb`.
+- 427 unit and integration tests and 47 system tests in headless Chrome, all green at the last CI run.
+- `BLENDOLO_CI_HOST=<ssh host> bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine, so the full suite doesn't load your laptop. It needs Docker, rsync and flock there. Steps live in `config/ci.rb`.
 
-At the last CI run there were 316 unit and integration tests and 42 system tests in headless Chrome, all passing.
+## Code map
 
-`bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine over ssh, so the full suite doesn't load your laptop. It copies the working tree, builds a CI image with Chromium (`script/ci/Dockerfile`), starts a throwaway Postgres 18 beside it and cleans up afterwards. Set `BLENDOLO_CI_HOST` to the ssh host, which needs Docker, rsync and flock. Lanes let several worktrees run at once:
+| Path | What |
+|---|---|
+| `config/blendolo/*.yml` | Steps, looks, examples, products, plans, credits, caps. Data, not code |
+| `app/models/ease/` | Ease engine: hand profiles, step and look scores, swaps, routine order |
+| `app/models/looks/` | Steps to effects in our own words; colour snapping |
+| `app/models/appearance/` | Provider interface, YouCam adapter, fake provider |
+| `app/models/billing/` | Billing interface, Dodo adapter, local test checkout, plans, margin check |
+| `app/controllers/local/` | Test person sign in and test checkout, development only |
+| `app/models/credits.rb`, `unit_guard.rb`, `provider_throttle.rb`, `previews.rb` | Credits ledger, unit caps, throttle, render cache |
+| `app/jobs/provider_*` | Start and poll jobs |
+| `app/javascript/capture/` | Face checks and colour sampling in the browser |
 
-```sh
-BLENDOLO_CI_HOST=ci.example.com bin/ci-remote main
-```
+## Deploy
 
-## Environment
+- One Docker image runs the web (Thruster + Puma, port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker.
+- Production needs `SECRET_KEY_BASE` (or `RAILS_MASTER_KEY`), `DB_HOST`, `BLENDOLO_DATABASE_PASSWORD`, the 4 `R2_*` values, `APPEARANCE_PROVIDER`, `BLENDOLO_PROCESS` and the Google client. `APPEARANCE_PROVIDER=youcam` adds the 3 `YOUCAM_*` values. Payments are optional.
+- It refuses to boot while a required one is missing. [.env.example](.env.example) explains every variable.
+- Health check: `GET /up`, on any host. Settings, storage, deploys, checks and backups: [docs/deploy.md](docs/deploy.md).
 
-Production reads its settings from environment variables and refuses to boot while a required one is missing. [`.env.example`](.env.example) lists and explains each one.
+## Honest limits
 
-## Production image
+- Ease scores are our own rubric from published guidance (Parkinson's UK, the Parkinson's Foundation) and people's own words. Not a clinical measure, and not yet tested with people with tremor.
+- Previews are clean; real lines wobble. That's why the easy steps are forgiving ones.
+- Makeup VTO smooths skin a little and brightens the frame, so we compare render with render.
+- Makeup Transfer moves a whole look at once; blush can land stronger on one cheek.
+- Colours read from an old photo are approximate and snap to a small set of shades.
+- Hands-free capture needs a recent browser with camera access. "Choose a photo" always works.
+- Example people are AI generated. The shop catalogue is made-up demo products.
+- Not a medical device. No medical advice.
 
-The `Dockerfile` builds one image for both processes: the web server (Thruster in front of Puma, on port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker. The web container prepares the databases when it starts. Health checks use `GET /up`, which answers on any host. [docs/deploy.md](docs/deploy.md) covers running it in production: settings, storage, deploys, checks and backups.
+## Privacy
+
+- No trackers, no passwords. Example people and starting a kit need no account.
+- Google sign in gives us your name, email, Google id and picture link. Nothing else.
+- Photos go to our storage, and to YouCam only to make previews. YouCam deletes its copies within 30 days.
+- A kit is deleted 30 days after your last visit (or 7, your choice), or at once with "Delete everything".
+- "Delete my account" deletes the account, its kits and its credits. Dodo Payments handles cards; we never see them.
 
 ## License
 
