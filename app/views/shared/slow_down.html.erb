@@ -1,0 +1,5 @@
+<div class="page stack">
+  <h1>That was a lot at once.</h1>
+  <p class="lead">Please wait a minute, then try again. Everything you've done so far is saved.</p>
+  <%= render "components/button", label: "Go back", href: (url_from(request.referer) || root_path), variant: :primary, commit: false %>
+</div>

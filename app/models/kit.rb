@@ -35,6 +35,11 @@ class Kit < ApplicationRecord
     Ease::HandProfile.new(**hand_answers)
   end
 
+  # Links use the private token: /k/<token>.
+  def to_param
+    token
+  end
+
   # Called on every visit: retention counts from the last activity.
   def touch_activity!
     update!(last_active_at: Time.current)

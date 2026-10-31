@@ -11,6 +11,43 @@ Rails.application.routes.draw do
   get "guides/:slug" => "pages#guide", as: :guide
   get "sitemap.xml" => "pages#sitemap", as: :sitemap, defaults: { format: :xml }
 
+  # Start a kit: for me or for someone I help. Example people start from /examples.
+  resource :start, only: %i[show create]
+
+  # A kit is reached by its private token: /k/:token.
+  resources :kits, path: "k", param: :token, only: %i[show destroy] do
+    member do
+      get :delete
+    end
+
+    resource :consent, only: %i[show create]
+    get "hands/:question" => "hands#show", as: :hand, constraints: { question: /[1-5]/ }
+    patch "hands/:question" => "hands#update", constraints: { question: /[1-5]/ }
+    patch "hands_today" => "hands_today#update"
+    resources :photos, only: %i[new create]
+    resources :looks, only: %i[index show], param: :key do
+      post :tweak, on: :member
+    end
+    resource :routine, only: %i[show create] do
+      get "steps/:n" => "routines#step", as: :step, constraints: { n: /\d+/ }
+    end
+    resource :signature, only: %i[show create]
+    resource :shopping, only: :show, controller: :shopping
+    resources :shares, only: %i[index create destroy], param: :share_token
+  end
+
+  # What a helper sees: read only, scoped, expiring, revocable.
+  get "s/:token" => "public_shares#show", as: :public_share
+
+  # Example people (Rosa, June, Amara): stored results, never a provider call.
+  resources :examples, only: %i[index show], param: :key, constraints: { key: /rosa|june|amara/ } do
+    post :start, on: :member
+  end
+
+  namespace :api do
+    get "ease_tags" => "ease_tags#index"
+  end
+
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 end
