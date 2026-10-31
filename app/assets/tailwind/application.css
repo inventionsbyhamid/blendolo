@@ -291,7 +291,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .trust b { display: block; font-size: 1.2rem; margin-bottom: 2px; }
 
   /* FAQ: native details, so it works with keyboards, screen readers and voice control. */
-  .faq details { background: var(--surface); border-radius: 18px; padding: 0 22px; margin-top: 14px; border: 1px solid var(--line); }
+  .faq details { background: var(--surface); border-radius: 18px; padding: 0 22px; margin-top: var(--gap); border: 1px solid var(--line); }
   .faq summary {
     display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: var(--landing-tap); padding: 14px 0;
     cursor: pointer; font-weight: 800; font-size: 1.2rem; line-height: 1.35; list-style: none;
@@ -308,6 +308,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .foot { padding: 48px 0 64px; color: var(--muted); font-size: 1.125rem; }
   .foot__row { display: grid; gap: 8px; }
   .foot p { margin: 0; }
+  .foot__row nav { margin-top: 16px; }
   .foot__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--gap); margin: 0 0 16px; padding: 0; }
   .foot__links a {
     display: inline-flex; align-items: center; min-height: var(--landing-tap); padding: 0 4px;

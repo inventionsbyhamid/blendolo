@@ -23,5 +23,6 @@
     <%= render "components/button", label: "Agree, keep it for 30 days", url: kit_consent_path(@kit), params: { retention_days: 30 }, variant: :primary %>
     <%= render "components/button", label: "Agree, keep it for 7 days", url: kit_consent_path(@kit), params: { retention_days: 7 }, variant: :secondary %>
   </div>
-  <p class="muted m-0">Days count from your last visit. <%= link_to "Read our privacy page", privacy_path %>.</p>
+  <p class="muted m-0">Days count from your last visit.</p>
+  <%= render "components/button", label: "Read our privacy page", href: privacy_path, variant: :quiet %>
 </div>

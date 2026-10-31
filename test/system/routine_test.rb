@@ -36,7 +36,7 @@ class RoutineTest < ApplicationSystemTestCase
       window.spoken = []
       window.speechSynthesis.speak = (utterance) => { window.spoken.push({ text: utterance.text, rate: utterance.rate }) }
     JS
-    click_on "Read it to me"
+    execute_script "const b = [...document.querySelectorAll('button')].find((el) => el.textContent.includes('Read it to me')); b.click(); b.click()"
 
     spoken = evaluate_script("window.spoken")
     assert_equal 1, spoken.size
@@ -72,6 +72,7 @@ class RoutineTest < ApplicationSystemTestCase
     visit step_kit_routine_path(@kit, number)
 
     assert_selector ".step-zoom--lips img.step-zoom__image"
+    assert_selector ".honest", text: "Preview, not a promise"
     assert_selector "canvas.step-zoom__glow", visible: true, wait: 10
     glowing = evaluate_script(<<~JS)
       (() => {

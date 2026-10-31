@@ -87,6 +87,15 @@ class KitFlowTest < ApplicationSystemTestCase
     assert_current_path kit_looks_path(kit)
   end
 
+  test "a double tap on the menu leaves it open" do
+    kit = make_kit
+    visit kit_path(kit)
+    execute_script "const menu = document.querySelector('details.menu > summary'); menu.click(); menu.click()"
+
+    assert_selector "details.menu[open]"
+    within("details.menu") { assert_selector "button", text: "Very shaky or stiff" }
+  end
+
   test "delete everything confirms and 404s after" do
     kit = make_kit
     visit kit_path(kit)

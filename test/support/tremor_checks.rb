@@ -23,11 +23,32 @@ module TremorChecks
     assert_empty violations, -> { violations.flat_map { |rule| [ "#{rule.id} (#{rule.impact}): #{rule.help}", *rule.nodes.map { |node| "  #{node.html}" } ] }.join("\n") }
   end
 
-  def assert_targets_at_least(size)
+  # Pairs of targets closer than gap px (neither inside the other): a shaky second touch lands on the neighbour.
+  GAPS_SCRIPT = <<~JS.freeze
+    const gap = arguments[0]
+    const targets = Array.from(document.querySelectorAll("a[href], button, summary, input:not([type=hidden]), select, textarea, [role=button]"))
+      .filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden")
+      .filter((el) => getComputedStyle(el).display !== "inline")
+    const label = (el) => (el.innerText || el.getAttribute("aria-label") || el.tagName).trim().slice(0, 40)
+    const close = []
+    targets.forEach((a, i) => targets.slice(i + 1).forEach((b) => {
+      if (a.contains(b) || b.contains(a)) return
+      const r = a.getBoundingClientRect(), s = b.getBoundingClientRect()
+      const dx = Math.max(0, s.left - r.right, r.left - s.right)
+      const dy = Math.max(0, s.top - r.bottom, r.top - s.bottom)
+      const distance = Math.max(dx, dy)
+      if (distance < gap - 0.5) close.push(`${label(a)} / ${label(b)}: ${Math.round(distance)} px`)
+    }))
+    return close
+  JS
+
+  def assert_targets_at_least(size, gap: 24)
     targets = page.evaluate_script("(function() { #{TARGETS_SCRIPT} })()")
     assert_not_empty targets
     small = targets.reject { |target| target["height"] >= size && target["width"] >= size }
     assert_empty small, "Targets under #{size} px on #{page.current_path}: #{small.inspect}"
+    close = page.evaluate_script("(function() { #{GAPS_SCRIPT} })(#{gap})")
+    assert_empty close, "Targets closer than #{gap} px on #{page.current_path}: #{close.inspect}"
   end
 
   def on_a_phone
