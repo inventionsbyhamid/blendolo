@@ -64,7 +64,7 @@ class ProductEase
   end
 
   def initialize(format:, closure:, grip:, step: nil)
-    @format = check(format, FORMATS, "format")
+    @format = check(format, FORMATS, "product_format")
     @closure = check(closure, CLOSURES.keys, "closure")
     @grip = check(grip, GRIPS, "grip")
     @step = step.presence && Ease::StepCatalogue.fetch(step)
@@ -116,7 +116,7 @@ class ProductEase
   # What GET /api/ease_tags answers.
   def as_api_json
     {
-      product: { format:, closure:, grip:, step: step&.id },
+      product: { product_format: format, closure:, grip:, step: step&.id },
       tags: tags.map { |tag| { key: tag, label: Ease::Words.tag(tag) } },
       ease: ease_by_profile,
       note: "Ease is Blendolo's own guide from 0 (hard) to 100 (easy), not a clinical measure."

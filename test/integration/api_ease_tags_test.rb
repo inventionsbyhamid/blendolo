@@ -2,12 +2,12 @@ require "test_helper"
 
 class ApiEaseTagsTest < ActionDispatch::IntegrationTest
   test "ease tags api returns tags and ease" do
-    get "/api/ease_tags", params: { format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm" }
+    get "/api/ease_tags", params: { product_format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm" }
 
     assert_response :success
     assert_equal "application/json", response.media_type
     body = response.parsed_body
-    assert_equal({ "format" => "stick", "closure" => "pull_cap", "grip" => "chunky", "step" => "tinted_balm" }, body["product"])
+    assert_equal({ "product_format" => "stick", "closure" => "pull_cap", "grip" => "chunky", "step" => "tinted_balm" }, body["product"])
     keys = body["tags"].map { |tag| tag["key"] }
     assert_includes keys, "chunky"
     assert_includes keys, "easy_cap"
@@ -17,18 +17,19 @@ class ApiEaseTagsTest < ActionDispatch::IntegrationTest
   end
 
   test "a twist cap and a slim grip are harder for sore hands than a pump" do
-    get "/api/ease_tags", params: { format: "cream", closure: "twist_cap", grip: "slim" }
+    get "/api/ease_tags", params: { product_format: "cream", closure: "twist_cap", grip: "slim" }
     twist = response.parsed_body["ease"]["pinch_grip"]["score"]
-    get "/api/ease_tags", params: { format: "pump", closure: "pump", grip: "standard" }
+    get "/api/ease_tags", params: { product_format: "pump", closure: "pump", grip: "standard" }
     pump = response.parsed_body["ease"]["pinch_grip"]["score"]
 
     assert_operator pump, :>, twist
   end
 
   test "values we don't know are refused with the ones we do" do
-    get "/api/ease_tags", params: { format: "stick", closure: "zip", grip: "chunky" }
+    get "/api/ease_tags", params: { product_format: "stick", closure: "zip", grip: "chunky" }
 
     assert_response :unprocessable_content
     assert_includes response.parsed_body["allowed"]["closure"], "pump"
+    assert_includes response.parsed_body["allowed"]["step"], "tinted_balm"
   end
 end

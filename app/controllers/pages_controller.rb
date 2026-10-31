@@ -35,8 +35,8 @@ class PagesController < ApplicationController
 
   # For brands and shops: the ease tags API, with a live example.
   def brands
-    @example_query = { format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm" }
-    @example = ProductEase.new(**@example_query).as_api_json
+    @example_query = { product_format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm" }
+    @example = ProductEase.new(format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm").as_api_json
   end
 
   def guide

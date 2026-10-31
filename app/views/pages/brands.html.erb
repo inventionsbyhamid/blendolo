@@ -13,7 +13,7 @@
   <h2>The request</h2>
   <pre class="code"><code>GET <%= SeoHelper::SITE_URL %>/api/ease_tags?<%= @example_query.to_query %></code></pre>
   <ul>
-    <li><strong>format:</strong> <%= ProductEase::FORMATS.join(", ") %></li>
+    <li><strong>product_format:</strong> <%= ProductEase::FORMATS.join(", ") %></li>
     <li><strong>closure:</strong> <%= ProductEase::CLOSURES.keys.join(", ") %></li>
     <li><strong>grip:</strong> <%= ProductEase::GRIPS.join(", ") %></li>
     <li><strong>step</strong> (optional): the routine step the product is for, such as tinted_balm or smudged_pencil_liner.</li>
