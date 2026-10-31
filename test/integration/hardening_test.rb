@@ -52,6 +52,15 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_match(/^\s*LOG_REQUESTS="false"$/, Rails.root.join("Dockerfile").read)
   end
 
+  test "thruster refuses request bodies over 15 MB" do
+    assert_match(/MAX_REQUEST_BODY="15728640"/, Rails.root.join("Dockerfile").read)
+  end
+
+  test "libvips opens only its trusted loaders" do
+    assert Vips.respond_to?(:block_untrusted)
+    assert_path_exists Rails.root.join("config/initializers/vips.rb")
+  end
+
   test "storage links expire after five minutes and our proxy links after an hour" do
     assert_equal 5.minutes, ActiveStorage.service_urls_expire_in
     assert_equal 1.hour, ActiveStorage.urls_expire_in

@@ -26,11 +26,13 @@ RUN apt-get update -qq && \
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
 # LOG_REQUESTS=false: Thruster's own request log prints raw paths, and kit and share paths carry their token. Rails
 # logs every request with the token filtered.
+# MAX_REQUEST_BODY: Thruster refuses bodies over 15 MB before Rails reads them (photos are at most 12 MB).
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    MAX_REQUEST_BODY="15728640" \
     LOG_REQUESTS="false"
 
 # Throw-away build stage to reduce size of final image

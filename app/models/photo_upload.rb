@@ -5,6 +5,8 @@ class PhotoUpload
   include ActiveModel::Model
 
   TYPES = %w[image/jpeg image/png image/webp image/heic image/heif].freeze
+  # The libvips loaders those types use. Anything else (a file that only claims to be a photo) is refused.
+  LOADERS = %w[jpegload pngload webpload heifload].freeze
   MAX_BYTES = 12.megabytes
   LONG_SIDE = 1600
 
@@ -15,9 +17,10 @@ class PhotoUpload
 
   def save
     return false unless valid?
+    return false unless read_by_a_photo_loader?
 
     processed = ImageProcessing::Vips.source(file.tempfile.path).autorot.resize_to_limit(LONG_SIDE, LONG_SIDE)
-      .convert("jpeg").saver(strip: true, quality: 88).call
+      .custom { |image| in_srgb(image) }.convert("jpeg").saver(strip: true, quality: 88).call
     bytes = File.binread(processed.path)
     sha256 = Digest::SHA256.hexdigest(bytes)
 
@@ -33,6 +36,27 @@ class PhotoUpload
   attr_reader :photo
 
   private
+    # Colours as they look: a photo with its own colour profile (Display P3 from an iPhone) is converted to sRGB
+    # before the profile is stripped, so lip and skin colours don't shift.
+    def in_srgb(image)
+      if image.get_typeof("icc-profile-data").positive?
+        image.icc_transform("srgb", embedded: true, intent: :perceptual)
+      else
+        image.colourspace(:srgb)
+      end
+    end
+
+    def read_by_a_photo_loader?
+      loader = Vips::Image.new_from_file(file.tempfile.path, access: :sequential).get("vips-loader").to_s
+      return true if LOADERS.any? { |name| loader.start_with?(name) }
+
+      errors.add(:file, "isn't a JPEG, PNG, WebP or HEIC photo")
+      false
+    rescue Vips::Error
+      errors.add(:file, "couldn't be read as a photo")
+      false
+    end
+
     def create_photo(bytes, sha256, path)
       image = Vips::Image.new_from_file(path)
       kit.photos.create!(kind:, sha256:, width: image.width, height: image.height, sampled: clean_sampled,
