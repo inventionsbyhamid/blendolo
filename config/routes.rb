@@ -44,7 +44,9 @@ Rails.application.routes.draw do
     end
     resource :signature, only: %i[show create]
     resource :shopping, only: :show, controller: :shopping
-    resources :shares, only: %i[index create destroy], param: :share_token
+    resources :shares, only: %i[index create destroy], param: :share_token do
+      post :restore, on: :member
+    end
   end
 
   # What a helper sees: read only, scoped, expiring, revocable.

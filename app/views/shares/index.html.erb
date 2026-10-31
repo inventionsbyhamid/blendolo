@@ -1,5 +1,5 @@
 <div class="page stack">
-  <% made = @shares.find { |share| share.token == params[:made] } if params[:made].present? %>
+  <% made = @made %>
   <% audience = params[:audience].presence_in(SharesHelper::AUDIENCES.keys) %>
 
   <% if made %>
@@ -37,5 +37,8 @@
         </div>
       <% end %>
     </section>
+  <% end %>
+  <% if @switched_off %>
+    <%= render "components/undo_bar", message: "That link is switched off.", url: restore_kit_share_path(@kit, @switched_off.token) %>
   <% end %>
 </div>

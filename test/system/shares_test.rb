@@ -41,10 +41,22 @@ class SharesSystemTest < ApplicationSystemTestCase
     visit kit_shares_path(@kit)
     click_on "Switch this link off"
 
-    assert_selector ".flash", text: "That link is switched off."
+    assert_selector ".undo-bar", text: "That link is switched off."
     assert share.reload.revoked_at?
     showing_public_error_pages { visit public_share_path(share.token) }
     assert_text "This page has wandered off."
+  end
+
+  test "undo switches the link back on" do
+    share = @kit.shares.create!(audience: :helper, scope: :routine_only)
+    visit kit_shares_path(@kit)
+    click_on "Switch this link off"
+    within(".undo-bar") { click_on "Undo" }
+
+    assert_selector ".flash", text: "That link works again."
+    assert_nil share.reload.revoked_at
+    visit public_share_path(share.token)
+    assert_selector "h1", text: "A makeup routine, shared with you"
   end
 
   test "brands page renders example" do
@@ -52,7 +64,7 @@ class SharesSystemTest < ApplicationSystemTestCase
     visit brands_path
 
     assert_selector "h1", text: "Ease tags for your products"
-    assert_selector "pre.code", text: "/api/ease_tags?closure=pull_cap"
+    assert_selector "pre.code", text: "/api/ease_tags?closure=pull_cap&grip=chunky&product_format=stick"
     assert_selector "pre.code", text: "\"pinch_grip\""
     assert_selector "pre.code", text: "\"label\": \"No pinch grip\""
     shot "brands"
