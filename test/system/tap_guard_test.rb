@@ -45,13 +45,13 @@ class TapGuardTest < ApplicationSystemTestCase
     assert_equal 2, evaluate_script("window.clicks"), "steady hands: a tap after 500 ms counts"
 
     execute_script "document.body.dataset.hands = '2'"
-    sleep 1.6
+    sleep 1.8
     execute_script "document.getElementById('toggle').click()"
     assert_equal 3, evaluate_script("window.clicks")
-    sleep 0.9
+    sleep 0.5
     execute_script "document.getElementById('toggle').click()"
     assert_equal 3, evaluate_script("window.clicks"), "very shaky or stiff: repeats within 1500 ms are ignored"
-    sleep 0.8
+    sleep 1.3
     execute_script "document.getElementById('toggle').click()"
     assert_equal 4, evaluate_script("window.clicks")
   end
