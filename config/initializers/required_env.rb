@@ -6,4 +6,5 @@ require_relative "../../lib/required_env"
 # only SECRET_KEY_BASE_DUMMY set, so that boot is let through.
 if Rails.env.production? && ENV["SECRET_KEY_BASE_DUMMY"].blank?
   RequiredEnv.check!(RequiredEnv.production)
+  RequiredEnv.check_values!
 end

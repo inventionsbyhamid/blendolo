@@ -45,6 +45,25 @@ class RequiredEnvTest < ActiveSupport::TestCase
     assert_includes error.message, "RAILS_MASTER_KEY or SECRET_KEY_BASE"
   end
 
+  test "values outside the allowed set fail, naming the choices but not the value" do
+    error = assert_raises(RequiredEnv::Invalid) do
+      RequiredEnv.check_values!(env: { "APPEARANCE_PROVIDER" => "YouCam-typo", "BLENDOLO_PROCESS" => "web" })
+    end
+    assert_includes error.message, "APPEARANCE_PROVIDER must be youcam or fake"
+    assert_not_includes error.message, "YouCam-typo"
+
+    error = assert_raises(RequiredEnv::Invalid) { RequiredEnv.check_values!(env: { "BLENDOLO_PROCESS" => "worker" }) }
+    assert_includes error.message, "BLENDOLO_PROCESS must be web or jobs"
+  end
+
+  test "allowed values and blanks pass the value check" do
+    assert_nothing_raised do
+      RequiredEnv.check_values!(env: { "APPEARANCE_PROVIDER" => " youcam ", "BLENDOLO_PROCESS" => "jobs" })
+      RequiredEnv.check_values!(env: { "APPEARANCE_PROVIDER" => "fake" })
+      RequiredEnv.check_values!(env: {})
+    end
+  end
+
   test "production needs the youcam variables only with the youcam provider" do
     fake = RequiredEnv.production("APPEARANCE_PROVIDER" => "fake").flatten
     youcam = RequiredEnv.production("APPEARANCE_PROVIDER" => "youcam").flatten
