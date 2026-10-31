@@ -27,7 +27,7 @@ module Previews
 
   # A stand-in shown while a render hasn't been asked for: "Getting your photo ready".
   def waiting(kit, kind)
-    kit.renders.build(kind: kind.to_s, status: :pending)
+    Render.new(kit:, kind: kind.to_s, status: :pending)
   end
 
   def attributes(photo, look_key, kind, effects, reference_photo)
@@ -44,6 +44,6 @@ module Previews
   def stored(kit, attributes)
     scope = kit.renders.done.where(kind: attributes[:kind])
     scope = scope.where(look_key: attributes[:look_key]) unless attributes[:kind] == "transfer"
-    scope.order(:id).last || kit.renders.build(attributes.merge(status: :failed, failure_reason: "example"))
+    scope.order(:id).last || Render.new(attributes.merge(kit:, status: :failed, failure_reason: "example"))
   end
 end
