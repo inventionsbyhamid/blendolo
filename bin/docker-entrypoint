@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
-# The worker runs this same image with BLENDOLO_PROCESS=jobs: Solid Queue instead of the web server.
-if [ "${BLENDOLO_PROCESS}" == "jobs" ]; then
+# The worker runs this same image with BLENDOLO_PROCESS=jobs: Solid Queue instead of the web server. Only the image's
+# default command is swapped, so a one-off command (a console, a rake task) runs as given even with the jobs env.
+if [ "${BLENDOLO_PROCESS}" == "jobs" ] && [ "$*" == "./bin/thrust ./bin/rails server" ]; then
   set -- ./bin/jobs
 fi
 
