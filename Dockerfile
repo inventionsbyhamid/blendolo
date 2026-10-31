@@ -24,11 +24,14 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# LOG_REQUESTS=false: Thruster's own request log prints raw paths, and kit and share paths carry their token. Rails
+# logs every request with the token filtered.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    LOG_REQUESTS="false"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
