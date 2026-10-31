@@ -1,6 +1,8 @@
 # Starts the provider task for a render that ProviderTracked#request! queued, then schedules the first poll.
 class ProviderStartJob < ApplicationJob
   queue_as :youcam
+  # The kit was deleted meanwhile.
+  discard_on ActiveJob::DeserializationError
 
   def perform(render)
     return unless render.pending?

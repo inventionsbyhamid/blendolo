@@ -20,8 +20,12 @@ module ProviderTracked
     call = provider_call
 
     if call&.done? && (source = earlier_result)
-      copy_result_from!(source)
-      return :cached
+      begin
+        copy_result_from!(source)
+        return :cached
+      rescue ActiveStorage::FileNotFoundError
+        # The stored copy is gone: call again, within the caps.
+      end
     end
     return :waiting if call && (call.pending? || call.running?) && call.updated_at > STALE_AFTER.ago
 

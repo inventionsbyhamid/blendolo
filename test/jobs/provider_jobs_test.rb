@@ -104,6 +104,23 @@ class ProviderJobsTest < ActiveJob::TestCase
     assert_equal 2.0, ProviderCall.sole.units.to_f
   end
 
+  test "a cached result whose file is missing counts as a miss" do
+    first = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(first)
+    ProviderPollJob.perform_now(first.reload)
+    ActiveStorage::Blob.service.delete(first.result.key)
+
+    assert_equal :queued, makeup_render.request!
+  end
+
+  test "jobs for a kit deleted mid-flight are dropped" do
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    @kit.destroy_everything!
+
+    assert_nothing_raised { perform_enqueued_jobs(only: [ ProviderStartJob, ProviderPollJob ]) }
+  end
+
   test "keeps polling while the task runs" do
     Appearance.provider = Appearance::FakeProvider.new(ready_after: 60)
     render = makeup_render.tap(&:request!)

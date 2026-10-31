@@ -3,6 +3,8 @@
 # links expire). The webhook runs it once more with reschedule: false, so a webhook never starts a second chain.
 class ProviderPollJob < ApplicationJob
   queue_as :youcam
+  # The kit was deleted meanwhile.
+  discard_on ActiveJob::DeserializationError
 
   SCHEDULE = [ 3, 5, 8, 13, 21 ].freeze
   EVERY = 20
