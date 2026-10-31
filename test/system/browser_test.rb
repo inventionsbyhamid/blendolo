@@ -5,6 +5,13 @@ class BrowserTest < ApplicationSystemTestCase
   test "browser loads the health check" do
     visit "/up"
 
-    assert_equal "rgb(0, 128, 0)", evaluate_script("getComputedStyle(document.body).backgroundColor")
+    assert_equal "complete", evaluate_script("document.readyState")
+  end
+
+  test "the browser enforces the content security policy" do
+    visit "/up"
+
+    # The health page paints its body green with an inline style attribute, which the policy blocks.
+    assert_equal "rgba(0, 0, 0, 0)", evaluate_script("getComputedStyle(document.body).backgroundColor")
   end
 end
