@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# The remote half of bin/ci-remote, run on the CI host from the copied tree: script/ci/run <lane>.
+#
+# Waits while the host is busy, builds the tressolo-ci image when its recipe changed, then runs bin/ci in it with a
+# throwaway Postgres 18 on a private network. Everything it starts is named tressolo-ci-*, capped, and removed at the
+# end. Different lanes can run at once; one lane runs one at a time.
+set -euo pipefail
+
+lane="$1"
+root="$HOME/tressolo-ci"
+dir="$root/$lane"
+image="tressolo-ci:latest"
+pin="keep-tressolo-ci"
+network="tressolo-ci-$lane"
+postgres="tressolo-ci-pg-$lane"
+installer="tressolo-ci-install-$lane"
+runner="tressolo-ci-run-$lane"
+ruby_version="$(tr -d '[:space:]' < "$dir/.ruby-version")"
+bundle_volume="tressolo-ci-bundle-$ruby_version"
+
+exec 9>"$root/.lane-$lane.lock"
+if ! flock -n 9; then
+  echo "Another bin/ci-remote run for lane $lane is still going." >&2
+  exit 75
+fi
+
+# The host is shared: wait while it's busy.
+for attempt in $(seq 1 60); do
+  load_average="$(cut -d ' ' -f 1 /proc/loadavg)"
+  if awk -v current="$load_average" 'BEGIN { exit !(current + 0 <= 25) }'; then
+    break
+  elif [ "$attempt" = 60 ]; then
+    echo "Load stayed above 25 for an hour; giving up." >&2
+    exit 75
+  fi
+  echo "Load is $load_average (over 25); waiting a minute."
+  sleep 60
+done
+uptime
+
+cleanup() {
+  docker rm -f "$runner" "$installer" "$postgres" >/dev/null 2>&1 || true
+  docker network rm "$network" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
+cleanup # leftovers from an interrupted run
+rm -f "$dir/log/test.log"
+
+# Build the image when its recipe (script/ci/Dockerfile and the Ruby version) changed, and pin it with a stopped
+# container: the host's nightly cleanup deletes images no container uses. Lanes take turns here.
+recipe="$( (cat "$dir/script/ci/Dockerfile"; echo "$ruby_version") | sha256sum | cut -c 1-16)"
+(
+  flock 8
+  if [ "$(docker image inspect -f '{{ index .Config.Labels "tressolo.ci.recipe" }}' "$image" 2>/dev/null)" != "$recipe" ]; then
+    echo "Building $image"
+    docker build --pull --build-arg RUBY_VERSION="$ruby_version" --label tressolo.ci.recipe="$recipe" -t "$image" - \
+      < "$dir/script/ci/Dockerfile"
+  fi
+  if [ "$(docker inspect -f '{{ .Image }}' "$pin" 2>/dev/null)" != "$(docker image inspect -f '{{ .Id }}' "$image")" ]; then
+    docker rm "$pin" >/dev/null 2>&1 || true
+    docker create --name "$pin" --label purpose=pin-image --network none "$image" true >/dev/null
+  fi
+) 8>"$root/.image.lock"
+
+# Gems live in a volume every lane shares; installs take turns.
+flock "$root/.bundle.lock" \
+  docker run --rm --name "$installer" --cpus 8 --memory 8g -v "$dir:/app" -v "$bundle_volume:/usr/local/bundle" \
+    "$image" bash -c 'bundle check >/dev/null || bundle install --jobs 8 --quiet'
+
+docker network create "$network" >/dev/null
+password="$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+docker run -d --rm --name "$postgres" --network "$network" --cpus 4 --memory 2g --tmpfs /var/lib/postgresql \
+  -e POSTGRES_PASSWORD="$password" postgres:18-alpine \
+  -c fsync=off -c synchronous_commit=off -c full_page_writes=off >/dev/null
+for attempt in $(seq 1 60); do
+  if docker exec "$postgres" pg_isready -q -h 127.0.0.1 -U postgres; then
+    break
+  elif [ "$attempt" = 60 ]; then
+    echo "Postgres didn't start." >&2
+    docker logs "$postgres" >&2
+    exit 1
+  fi
+  sleep 1
+done
+
+# Eight test workers to match the CPU cap. The timeout stops a hung run from holding the host.
+status=0
+docker run --rm --name "$runner" --network "$network" --cpus 8 --memory 8g \
+  -v "$dir:/app" -v "$bundle_volume:/usr/local/bundle" \
+  -e CI=1 -e PARALLEL_WORKERS=8 -e DATABASE_URL="postgres://postgres:$password@$postgres:5432/tressolo_test" \
+  "$image" timeout 30m bin/ci || status=$?
+if [ "$status" = 124 ]; then
+  echo "bin/ci ran for 30 minutes and was stopped." >&2
+fi
+exit "$status"

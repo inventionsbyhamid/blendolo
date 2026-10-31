@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Runs bin/ci for this working tree in Docker on a remote host, so the full suite, system tests included, doesn't
+# load this machine:
+#
+#   TRESSOLO_CI_HOST=<ssh host> bin/ci-remote <lane>
+#
+# Copies the tree, uncommitted changes included, to ~/tressolo-ci/<lane>/ on the host and runs script/ci/run there.
+# The host needs Docker, flock and rsync. Give each worktree its own lane; lanes run side by side.
+set -euo pipefail
+
+lane="${1:-}"
+host="${TRESSOLO_CI_HOST:-}"
+
+if [[ ! "$lane" =~ ^[a-z0-9][a-z0-9-]{0,39}$ ]]; then
+  echo "Usage: TRESSOLO_CI_HOST=<ssh host> bin/ci-remote <lane>" >&2
+  echo "The lane is lowercase letters, digits and dashes, such as main or models." >&2
+  exit 64
+fi
+if [ -z "$host" ]; then
+  echo "Set TRESSOLO_CI_HOST to the ssh host that runs CI (a ~/.ssh/config alias works)." >&2
+  exit 64
+fi
+
+cd "$(dirname "$0")/.."
+ssh_options="-o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=4"
+
+# shellcheck disable=SC2086 # ssh_options is a list of options.
+ssh -n $ssh_options "$host" "mkdir -p tressolo-ci/$lane"
+rsync -az --delete -e "ssh $ssh_options" \
+  --include /.env.example \
+  --exclude /.git --exclude /.superpowers --exclude /node_modules --exclude /tmp --exclude /log --exclude /storage \
+  --exclude /public/assets --exclude '/.env*' --exclude /config/master.key --exclude '/config/credentials/*.key' \
+  --exclude .DS_Store \
+  ./ "$host:tressolo-ci/$lane/"
+
+# shellcheck disable=SC2086
+exec ssh -n $ssh_options "$host" "bash tressolo-ci/$lane/script/ci/run $lane"
