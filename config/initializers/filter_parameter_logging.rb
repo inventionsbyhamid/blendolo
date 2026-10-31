@@ -9,7 +9,9 @@ Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
   :image, :reference, :sampled, :signed_id, :signed_blob_id, :encoded_key, :encoded_token,
   # Google's answer to a sign in: the one-time code and the state that guards it.
-  :code, :state
+  :code, :state,
+  # Where to go back after signing in: often a kit's own address, with its token.
+  :origin
 ]
 
 # Redirects to a kit, a share page or a stored file would print their key: log them as [FILTERED].

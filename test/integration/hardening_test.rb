@@ -42,6 +42,13 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert Rails.application.config.filter_redirect.any? { it.match?("https://blendolo.dijmo.com/rails/active_storage/blobs/proxy/x/a.jpg") }
   end
 
+  test "a kit token in the sign in origin is filtered from logs" do
+    log = capture_log { get "/sign_in?origin=/k/secret-kit-token-456/looks/red_lip" }
+
+    assert_includes log, %(Started GET "/sign_in?origin=[FILTERED]")
+    assert_no_match(/secret-kit-token/, log)
+  end
+
   test "stored file links are filtered from logs" do
     log = capture_log { get "/rails/active_storage/blobs/proxy/secret-signed-id--abc/today.jpg" }
 
