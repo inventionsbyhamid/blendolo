@@ -8,10 +8,16 @@ module KitScoped
   TOUCH_EVERY = 1.minute
 
   included do
+    before_action :skip_prefetch
     before_action :set_kit
   end
 
   private
+    # Turbo prefetches links on hover. Kit pages are private and some start work, so a prefetch gets nothing.
+    def skip_prefetch
+      head :no_content if request.get? && request.headers["X-Sec-Purpose"] == "prefetch"
+    end
+
     def set_kit
       @kit = Kit.find_by(token: params[:kit_token] || params[:token])
       raise ActiveRecord::RecordNotFound, "No such kit" unless @kit && @kit.purge_after.future?

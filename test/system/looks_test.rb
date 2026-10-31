@@ -22,6 +22,9 @@ class LooksSystemTest < ApplicationSystemTestCase
 
   test "look page shows classic and easy" do
     visit kit_look_path(@kit, "red_lip")
+    # The page asks for its previews itself, once (a POST), and shows them while they're made.
+    assert_selector "[id^=render_]", count: 2, wait: 10
+    assert_no_selector "form[data-controller=autostart]"
     classic, easy = @kit.renders.order(:id).to_a
     assert_equal %w[classic easy], [ classic.kind, easy.kind ]
     assert_selector "##{dom_id(classic)}", text: "This takes about a minute"

@@ -1,11 +1,12 @@
 # Finds or makes the render of some effects (or a transfer) on a photo, so a look viewed twice, or a button tapped
 # twice, never asks the provider twice. A new render goes through Render#request! (cache, unit guard, jobs).
-# Example kits only ever show their stored previews: they never call the provider and are never written to.
+# Only POSTs make renders (Previews.for); pages only look them up (Previews.find), so a GET (or a prefetch) never
+# spends units. Example kits only ever show their stored previews: they never call the provider.
 module Previews
   module_function
 
   def for(kit, photo, look_key, kind, effects, reference_photo: nil)
-    attributes = { photo:, look_key: look_key.to_s, kind: kind.to_s, reference_photo:, effects: effects.as_json }
+    attributes = attributes(photo, look_key, kind, effects, reference_photo)
     return stored(kit, attributes) if kit.example?
 
     created = false
@@ -14,6 +15,23 @@ module Previews
     end
     render.request! if created
     render
+  end
+
+  # The existing render, or nil when it hasn't been asked for yet (an example's missing one says it isn't stored).
+  def find(kit, photo, look_key, kind, effects, reference_photo: nil)
+    attributes = attributes(photo, look_key, kind, effects, reference_photo)
+    return stored(kit, attributes) if kit.example?
+
+    matching(kit.renders, attributes).order(:id).last
+  end
+
+  # A stand-in shown while a render hasn't been asked for: "Getting your photo ready".
+  def waiting(kit, kind)
+    kit.renders.build(kind: kind.to_s, status: :pending)
+  end
+
+  def attributes(photo, look_key, kind, effects, reference_photo)
+    { photo:, look_key: look_key.to_s, kind: kind.to_s, reference_photo:, effects: effects.as_json }
   end
 
   # Renders with these attributes. effects is compared as JSON (jsonb equality ignores key order).

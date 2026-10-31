@@ -1,4 +1,4 @@
-<% if @transfer && @easy %>
+<% if @kit.example? || @signature %>
   <%= turbo_stream_from @kit %>
   <div class="page page--wide stack">
     <header class="stack">
@@ -14,14 +14,18 @@
         <figcaption class="compare__caption">The old photo</figcaption>
       </figure>
       <figure class="three-up__item">
-        <%= render @transfer %>
+        <%= render @transfer || Previews.waiting(@kit, :transfer) %>
         <figcaption class="compare__caption">Today, with the look</figcaption>
       </figure>
       <figure class="three-up__item">
-        <%= render @easy %>
+        <%= render @easy || Previews.waiting(@kit, :easy) %>
         <figcaption class="compare__caption">Today, easy version</figcaption>
       </figure>
     </div>
+    <% if @waiting %>
+      <%= render "components/button", label: "Show it on my face", url: kit_signature_path(@kit),
+            params: { liner: @signature.liner, lips: @signature.lips }, variant: :primary %>
+    <% end %>
     <%= render "components/honest_label" %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}s" %><% end %>
 

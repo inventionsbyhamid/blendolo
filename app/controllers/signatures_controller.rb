@@ -17,8 +17,10 @@ class SignaturesController < ApplicationController
     @signature = SignatureLook.build(@kit, @reference, liner: @liner, lips: params[:lips])
     return unless @signature
 
-    @transfer = Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
-    @easy = Previews.for(@kit, today_photo, "signature", :easy, @signature.easy_effects(today_photo))
+    # Only POST makes renders: a results page opened from history shows a button instead.
+    @transfer = Previews.find(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
+    @easy = Previews.find(@kit, today_photo, "signature", :easy, @signature.easy_effects(today_photo))
+    @waiting = @transfer.nil? || @easy.nil?
   end
 
   # The two answers for the old photo already chosen. Sending them twice finds the same renders.
@@ -35,7 +37,7 @@ class SignaturesController < ApplicationController
   private
     # An example person's stored signature look: their transfer and its easy version.
     def show_example
-      @transfer = Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
-      @easy = Previews.for(@kit, today_photo, "signature", :easy, [])
+      @transfer = Previews.find(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
+      @easy = Previews.find(@kit, today_photo, "signature", :easy, [])
     end
 end

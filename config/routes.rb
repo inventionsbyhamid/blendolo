@@ -32,6 +32,7 @@ Rails.application.routes.draw do
     patch "hands_today" => "hands_today#update"
     resources :photos, only: %i[new create]
     resources :looks, only: %i[index show], param: :key do
+      post :previews, on: :member
       post :tweak, on: :member
     end
     resources :renders, only: [] do

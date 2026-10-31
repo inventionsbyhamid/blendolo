@@ -10,6 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Blendolo">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# No hover prefetch: some kit pages start work, and private pages shouldn't load before a tap. %>
+    <meta name="turbo-prefetch" content="false">
     <%= seo_tags %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>

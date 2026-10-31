@@ -36,4 +36,16 @@ class SignatureFlowTest < ActionDispatch::IntegrationTest
     get kit_signature_path(kit)
     assert_select "a[href=?]", new_kit_photo_path(kit, kind: "reference"), text: /Choose an old photo/
   end
+
+  test "the results page from history makes no renders" do
+    assert_no_difference -> { Render.count } do
+      get kit_signature_path(@kit, liner: "winged", lips: "matte")
+    end
+    assert_select ".three-up figure", 3
+    assert_select "form[action=?] button", kit_signature_path(@kit), text: /Show it on my face/
+    assert_select "form[data-controller=autostart]", count: 0
+
+    get kit_signature_path(@kit, liner: "winged", lips: "matte"), headers: { "X-Sec-Purpose" => "prefetch" }
+    assert_response :no_content
+  end
 end

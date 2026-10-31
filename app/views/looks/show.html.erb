@@ -6,7 +6,13 @@
     <p class="lead m-0"><%= @look.blurb %></p>
   </header>
 
-  <%= render "components/compare", classic: render(@classic), easy: render(@tweak || @easy) %>
+  <%= render "components/compare", classic: render(@classic || Previews.waiting(@kit, :classic)),
+        easy: render((@level.zero? ? @easy : @tweak) || Previews.waiting(@kit, :easy)) %>
+  <% if @waiting %>
+    <%# Asked for once, by the page itself (autostart), never by a GET; the button is there if that didn't happen. %>
+    <%= render "components/button", label: "Show it on my face", url: previews_kit_look_path(@kit, @look.key),
+          params: { level: (@level unless @level.zero?) }.compact, variant: :primary, form: { data: { controller: "autostart" } } %>
+  <% end %>
   <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
 
   <section class="card stack" aria-labelledby="ease-title">

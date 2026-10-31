@@ -7,7 +7,7 @@ class StorageProxyTest < ActionDispatch::IntegrationTest
 
   test "a render's image url is same origin" do
     kit = make_kit(tremor: 2)
-    get kit_look_path(kit, "red_lip")
+    post previews_kit_look_path(kit, "red_lip")
     render = kit.renders.classic.sole
     render.result.attach(io: file_fixture("face.jpg").open, filename: "classic.jpg", content_type: "image/jpeg")
     render.update!(status: :done)
