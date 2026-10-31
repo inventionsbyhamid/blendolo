@@ -8,7 +8,7 @@
 everyday_fresh:
   name: Everyday fresh
   blurb: Even skin, warm cheeks, soft brows and a rosy lip. Ready in minutes.
-  thumbnail: looks/everyday_fresh.jpg
+  thumbnail: looks/everyday_fresh.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: powder_blush_brush, colour: "#E59A7A", intensity: 40 }
@@ -19,7 +19,7 @@ everyday_fresh:
 red_lip:
   name: The red lip
   blurb: A classic red lip with a winged liner. Bold, and still yours.
-  thumbnail: looks/red_lip.jpg
+  thumbnail: looks/red_lip.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: brow_pencil, colour: "#3B2A20", intensity: 60 }
@@ -31,7 +31,7 @@ red_lip:
 soft_smoky_evening:
   name: Soft smoky evening
   blurb: Smoky brown eyes, a warm glow and a soft nude lip for a night out.
-  thumbnail: looks/soft_smoky_evening.jpg
+  thumbnail: looks/soft_smoky_evening.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: bronzer_big_brush, colour: "#A86B4A", intensity: 40 }
@@ -43,7 +43,7 @@ soft_smoky_evening:
 rosy_glow:
   name: Rosy glow
   blurb: Rosy cheeks, a little shine on the cheekbones and a glossy pink lip.
-  thumbnail: looks/rosy_glow.jpg
+  thumbnail: looks/rosy_glow.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: powder_blush_brush, colour: "#C96B7A", intensity: 50 }
@@ -54,7 +54,7 @@ rosy_glow:
 bold_berry:
   name: Bold berry
   blurb: A deep berry lip with a clean line of liner. Made for being noticed.
-  thumbnail: looks/bold_berry.jpg
+  thumbnail: looks/bold_berry.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: powder_blush_brush, colour: "#A8455A", intensity: 40 }
@@ -66,7 +66,7 @@ bold_berry:
 brows_and_mascara:
   name: Brows and mascara
   blurb: Just brows and lashes. The smallest routine that still frames your face.
-  thumbnail: looks/brows_and_mascara.jpg
+  thumbnail: looks/brows_and_mascara.webp
   steps:
     - { step: eyelash_curler, optional: true }
     - { step: brow_pencil, colour: "#3B2A20", intensity: 55 }
@@ -76,7 +76,7 @@ brows_and_mascara:
 wedding_guest:
   name: Wedding guest
   blurb: The full works for a big day, from glowing skin to fluttery lashes.
-  thumbnail: looks/wedding_guest.jpg
+  thumbnail: looks/wedding_guest.webp
   steps:
     - { step: liquid_foundation_brush }
     - { step: concealer_wand }
@@ -93,7 +93,7 @@ wedding_guest:
 barely_there:
   name: Barely there
   blurb: A little cover, a touch of warmth, tidy brows and tinted lips. Nothing more.
-  thumbnail: looks/barely_there.jpg
+  thumbnail: looks/barely_there.webp
   steps:
     - { step: concealer_wand }
     - { step: bronzer_big_brush, colour: "#A86B4A", intensity: 30 }
