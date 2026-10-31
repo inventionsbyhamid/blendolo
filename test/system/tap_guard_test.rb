@@ -78,7 +78,7 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
     page.document.synchronize(5) do
       ready = evaluate_script(<<~JS)
         document.readyState === "complete" && !!window.Turbo &&
-          !!window.Stimulus.getControllerForElementAndIdentifier(document.querySelectorAll("ul.tiles button.tile")[2], "tap-guard")
+          !!window.Stimulus.getControllerForElementAndIdentifier(document.querySelectorAll("ul[aria-labelledby=question] button.tile")[2], "tap-guard")
       JS
       raise Capybara::ExpectationNotMet, "the page's scripts aren't ready" unless ready
     end
@@ -86,7 +86,7 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
     # soon as it shows with its guard.
     execute_script <<~JS
       window.repeatAfter = null
-      const third = () => document.querySelectorAll("ul.tiles button.tile")[2]
+      const third = () => document.querySelectorAll("ul[aria-labelledby=question] button.tile")[2]
       const tapAgain = () => {
         const tile = third()
         const next = document.querySelector(".step-header__count")?.textContent.includes("Step 3 of 7")
@@ -108,7 +108,7 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
     assert_equal 2, kit.tremor
     assert_nil kit.pinch, "the repeat tap answered nothing"
 
-    all("ul.tiles button.tile")[2].click
+    all("ul[aria-labelledby=question] button.tile")[2].click
     assert_selector ".step-header__count", text: "Step 4 of 7"
     assert_equal 2, kit.reload.pinch, "a tap after the window counts"
   end
