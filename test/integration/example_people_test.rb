@@ -89,4 +89,27 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
   ensure
     HandsController.remove_method(:keep_example_kits_as_they_are)
   end
+
+  test "rosa's red lip is some care in its easy version, with mascara as an optional step" do
+    kit = Examples.kit_for("rosa")
+    get kit_look_path(kit, "red_lip")
+
+    assert_select ".ease-change", text: /Hard.*Some care/m
+    assert_select ".meter", text: /Easy version\s*Some care/
+    assert_select ".optional-step", text: /Mascara on the upper lashes: Hard for her hands|Mascara on the upper lashes: Hard for your hands/
+    assert_select ".optional-step", text: /Optional\. Skip it on shaky days\./
+  end
+
+  test "an optional step's card says it is optional" do
+    kit = Examples.kit_for("rosa")
+    entries = RoutinePlan.entries(kit)
+    number = entries.index { |entry| entry["step"] == "mascara_upper" } + 1
+    assert entries[number - 1]["optional"]
+
+    get step_kit_routine_path(kit, number)
+    assert_select ".chip", "Optional"
+    assert_select "p", "Optional. Skip it on shaky days."
+    get kit_routine_path(kit)
+    assert_select ".linklist small", text: /optional/
+  end
 end
