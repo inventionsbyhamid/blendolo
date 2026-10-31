@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  date:
+    formats:
+      # British: "1 November 2026"
+      long: "%-d %B %Y"
