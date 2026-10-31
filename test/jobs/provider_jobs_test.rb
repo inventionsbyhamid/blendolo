@@ -61,7 +61,8 @@ class ProviderJobsTest < ActiveJob::TestCase
     render.reload
     assert render.done?
     assert_equal "image/png", render.result.content_type
-    assert_equal file_fixture("youcam/makeup/m02_easy_look.png").binread, render.result.download
+    stored = Vips::Image.new_from_buffer(render.result.download, "")
+    assert_equal [ 800, 998 ], [ stored.width, stored.height ], "the result less its top 2 rows (Appearance::EdgeTrim)"
     call = render.provider_call
     assert call.done?
     assert_equal({ "content_type" => "image/png" }, call.response)
@@ -201,6 +202,7 @@ class ProviderJobsTest < ActiveJob::TestCase
     ProviderStartJob.perform_now(render)
     ProviderPollJob.perform_now(render.reload)
     assert_equal "image/jpeg", render.reload.result.content_type
+    assert_equal file_fixture("youcam/makeup/m03_mu_transfer.jpg").binread, render.result.download, "stored as it came"
   end
 
   test "an unexpected error in the start job fails the render and keeps the units" do

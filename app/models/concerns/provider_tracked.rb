@@ -78,9 +78,11 @@ module ProviderTracked
   end
 
   # Downloads a done outcome (outside any transaction), then stores it once even if two polls race, and finishes
-  # the renders that waited. A failed download raises, so the poll job can ask again for a fresh link.
+  # the renders that waited. A failed download raises, so the poll job can ask again for a fresh link. Makeup results
+  # lose the dark row along their top edge (Appearance::EdgeTrim).
   def finish_from!(outcome, provider)
     image = provider.download(outcome)
+    image = Appearance::EdgeTrim.call(image) if operation == :makeup
     finished = with_lock do
       next false unless running?
 
