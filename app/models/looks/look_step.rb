@@ -14,7 +14,7 @@ module Looks
     def self.wrap(value)
       case value
       when LookStep then value
-      when Ease::Step then new(step_id: value.id)
+      when Ease::Step then new(step_id: value.id, optional: value.optional?)
       when String, Symbol then new(step_id: value)
       when Hash
         attributes = value.symbolize_keys

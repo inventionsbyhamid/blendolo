@@ -47,6 +47,7 @@
         <div class="card stack optional-step">
           <p class="m-0"><strong><%= optional[:step].name %></strong>: <%= optional[:words] %> for <%= you_or_they(@kit, "your", "their") %> hands.</p>
           <p class="m-0"><%= optional[:step].optional_why %></p>
+          <% if @look.no_easier_swap?(optional[:step]) %><p class="m-0"><%= optional[:step].no_swap_why %></p><% end %>
         </div>
       <% end %>
     </section>

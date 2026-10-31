@@ -19,9 +19,9 @@ module LooksHelper
       "aria-hidden": "true", focusable: "false")
   end
 
-  # "Hardest step: winged liquid liner"
+  # "Hardest step you need: winged liquid liner" (optional steps never count, so the hardest one is a step you need)
   def hardest_step_words(ease)
     step = ease[:hardest_step]
-    "Hardest step: #{step.name.downcase_first}" if step
+    "Hardest step you need: #{step.name.downcase_first}" if step
   end
 end

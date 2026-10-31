@@ -45,6 +45,11 @@ class LookForKit
   # The easy version's optional steps: [{ step:, ease:, words: }], each with its own ease, never the look's grade.
   def optional_steps = easy_ease[:optional]
 
+  # True when this step stays hard because nothing easier exists (mascara), optional or not.
+  def no_easier_swap?(step)
+    plan[:unswappable].any? { |hard| hard.id == step.id }
+  end
+
   def easy_steps
     @easy_steps ||= look.easy_steps(profile)
   end

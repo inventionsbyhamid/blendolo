@@ -98,6 +98,7 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     assert_select ".meter", text: /Easy version\s*Some care/
     assert_select ".optional-step", text: /Mascara on the upper lashes: Hard for her hands|Mascara on the upper lashes: Hard for your hands/
     assert_select ".optional-step", text: /Optional\. Skip it on shaky days\./
+    assert_select ".optional-step", text: /#{Regexp.escape(Ease::StepCatalogue.fetch("mascara_upper").no_swap_why)}/
   end
 
   test "an optional step's card says it is optional" do

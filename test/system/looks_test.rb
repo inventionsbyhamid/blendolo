@@ -16,7 +16,7 @@ class LooksSystemTest < ApplicationSystemTestCase
     assert_equal expected.map(&:classic_words), all(".tiles--looks .tile__badge").map(&:text)
     eases = expected.map { |look| look.classic_ease[:ease] }
     assert_equal eases.sort.reverse, eases
-    assert_selector ".tiles--looks .tile__hint", text: "Hardest step:", minimum: 1
+    assert_selector ".tiles--looks .tile__hint", text: "Hardest step you need:", minimum: 1
     shot "looks"
   end
 
