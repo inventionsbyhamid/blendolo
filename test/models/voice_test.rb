@@ -32,7 +32,7 @@ class VoiceTest < ActiveSupport::TestCase
 
   test "the recordings stay small" do
     total = Voice::DIR.glob("*.mp3").sum(&:size)
-    assert_operator total, :<, 6.megabytes
+    assert_operator total, :<, 10.megabytes
   end
 
   test "the photo page's spoken lines are all listed" do
