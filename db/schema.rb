@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_080300) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_080400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -77,6 +77,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080300) do
     t.index ["kit_id"], name: "index_photos_on_kit_id"
   end
 
+  create_table "provider_calls", force: :cascade do |t|
+    t.bigint "kit_id"
+    t.string "operation", null: false
+    t.string "input_hash", null: false
+    t.decimal "units", precision: 8, scale: 2, default: "0.0", null: false
+    t.integer "status", default: 0, null: false
+    t.jsonb "response", default: {}, null: false
+    t.date "day", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["day"], name: "index_provider_calls_on_day"
+    t.index ["kit_id"], name: "index_provider_calls_on_kit_id"
+    t.index ["operation", "input_hash"], name: "index_provider_calls_on_operation_and_input_hash", unique: true
+  end
+
   create_table "renders", force: :cascade do |t|
     t.bigint "kit_id", null: false
     t.bigint "photo_id", null: false
@@ -112,6 +127,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080300) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "photos", "kits"
+  add_foreign_key "provider_calls", "kits", on_delete: :nullify
   add_foreign_key "renders", "kits"
   add_foreign_key "renders", "photos"
   add_foreign_key "renders", "photos", column: "reference_photo_id"

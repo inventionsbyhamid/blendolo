@@ -13,6 +13,8 @@ class Kit < ApplicationRecord
   has_many :renders, dependent: :destroy
   has_many :photos, dependent: :destroy
   has_many :shares, dependent: :delete_all
+  # Calls stay for the daily unit count; the database clears their kit_id.
+  has_many :provider_calls, dependent: nil
 
   enum :path, { self_use: 0, helper: 1, example: 2 }, validate: true
 
