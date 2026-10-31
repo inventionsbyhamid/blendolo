@@ -123,6 +123,37 @@ class Looks::EffectsBuilderTest < ActiveSupport::TestCase
     assert_equal steps, stored.map { Looks::LookStep.wrap(it) }
   end
 
+  def test_signature_from_samples_and_answers
+    sampled = { "lips" => "#9A2A35", "lids" => "#7A5444", "cheeks" => "#D08C78", "skin" => "#C08A6A" }
+
+    steps = Looks::EffectsBuilder.signature(sampled:, liner: "winged", lips: "matte")
+
+    assert_equal [ [ "powder_blush_brush", "#E59A7A" ], [ "one_colour_lid_wash", "#6B4632" ],
+                   [ "liquid_liner_wing", nil ], [ "liquid_matte_lipstick", "#8E1F2F" ] ],
+                 steps.map { [ it.step_id, it.colour ] }
+
+    effects = by_category(Looks::EffectsBuilder.build(steps))
+    assert_equal [ "matte", "#8E1F2F" ], effects["lip_color"].values_at(:texture, :colour)
+    assert_equal "OpenWings2", effects["eye_liner"][:pattern]
+
+    easy = by_category(Looks::EffectsBuilder.build(Looks::Look.easy_steps(steps, @default)))
+    assert_equal [ "sheer", "#8E1F2F" ], easy["lip_color"].values_at(:texture, :colour)
+    assert_equal "Smoke4", easy["eye_liner"][:pattern]
+  end
+
+  def test_signature_answers_choose_the_steps
+    sampled = { lips: "#C9787A" }
+
+    assert_equal %w[smudged_pencil_liner doe_foot_gloss],
+                 Looks::EffectsBuilder.signature(sampled:, liner: :smudged, lips: :shiny).map(&:step_id)
+    assert_equal %w[liquid_liner_thin tinted_balm],
+                 Looks::EffectsBuilder.signature(sampled:, liner: "thin", lips: "sheer").map(&:step_id)
+    assert_equal %w[tinted_balm], Looks::EffectsBuilder.signature(sampled:, liner: "none", lips: "sheer").map(&:step_id)
+    assert_empty Looks::EffectsBuilder.signature(sampled: {}, liner: "none", lips: "matte"), "nothing sampled, nothing guessed"
+    assert_raises(ArgumentError) { Looks::EffectsBuilder.signature(sampled:, liner: "cat eye", lips: "matte") }
+    assert_raises(ArgumentError) { Looks::EffectsBuilder.signature(sampled:, liner: "none", lips: "glitter") }
+  end
+
   private
     def by_category(effects) = effects.index_by { it[:category] }
 end

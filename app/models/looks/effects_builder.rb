@@ -2,6 +2,11 @@ module Looks
   # Turns look steps into effects in our own vocabulary (Looks::Vocabulary, docs/effects-vocabulary.md), ready for
   # the appearance provider.
   module EffectsBuilder
+    # Signature look answers: "Did you wear eyeliner?" and "Lips?"
+    LINER_STEPS = { "winged" => "liquid_liner_wing", "thin" => "liquid_liner_thin",
+                    "smudged" => "smudged_pencil_liner", "none" => nil }.freeze
+    LIP_STEPS = { "matte" => "liquid_matte_lipstick", "shiny" => "doe_foot_gloss", "sheer" => "tinted_balm" }.freeze
+
     module_function
 
     # steps: look steps (or anything Looks::LookStep.wrap reads). skin: "#RRGGBB" for foundation and concealer.
@@ -13,6 +18,23 @@ module Looks
       steps.map { |step| LookStep.wrap(step) }
         .filter_map { |look_step| effect_for(look_step, skin: skin&.upcase) }
         .uniq { |effect| effect[:category] }
+    end
+
+    # The classic steps of a signature look, from colours sampled on the old photo ({ lips:, lids:, cheeks:, skin: },
+    # string or symbol keys, any of them missing) and the two answers (liner: winged, thin, smudged or none;
+    # lips: matte, shiny or sheer). Sampled colours snap to the nearest shade we render well. A region that
+    # wasn't sampled is left out rather than guessed.
+    def signature(sampled:, liner:, lips:)
+      colours = ColourSamplerMapping.map(sampled)
+      liner_step = LINER_STEPS.fetch(liner.to_s) { raise ArgumentError, "Unknown liner answer #{liner.inspect}" }
+      lip_step = LIP_STEPS.fetch(lips.to_s) { raise ArgumentError, "Unknown lips answer #{lips.inspect}" }
+
+      [
+        ([ "powder_blush_brush", colours[:cheeks] ] if colours[:cheeks]),
+        ([ "one_colour_lid_wash", colours[:lids] ] if colours[:lids]),
+        ([ liner_step, nil ] if liner_step),
+        ([ lip_step, colours[:lips] ] if colours[:lips])
+      ].compact.map { |step_id, colour| LookStep.new(step_id:, colour:) }
     end
 
     def effect_for(look_step, skin: nil)
