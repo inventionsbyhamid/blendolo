@@ -116,7 +116,7 @@ function player() {
 // visit loads the shared element, so spoken help that starts on its own later (the photo page's, after its camera
 // starts) can play. Loading without a source plays nothing and doesn't stop the person's music.
 function unlock() {
-  if (current) return // A line is starting; its own play() counts.
+  if (current) return // Loading now would cut off the line being read: the next tap tries again.
   player().load()
   for (const type of UNLOCK_EVENTS) document.removeEventListener(type, unlock, true)
 }
