@@ -40,7 +40,7 @@ class LooksSystemTest < ApplicationSystemTestCase
       assert_selector ".compare__stage[data-show=easy]"
       assert_no_selector "##{dom_id(classic)} img", visible: true
     end
-    assert_selector ".ease-change", text: /\A\S.*→.*\S\z/
+    assert_selector ".ease-change", text: "\u2192"
     shot "look"
   end
 
