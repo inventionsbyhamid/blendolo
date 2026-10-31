@@ -122,6 +122,7 @@ export class WorkerChecks {
         const armedAt = Date.now()
         const limit = this.replyWait()
         timer = setTimeout(() => {
+          if (this.broken) return reject(this.broken) // Closed meanwhile.
           const slept = changes !== visibilityChanges || document.hidden || Date.now() - armedAt > limit + 1000
           if (slept) return wait()
           this.hung()
