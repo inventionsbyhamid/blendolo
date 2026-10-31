@@ -10,14 +10,14 @@ module ProviderThrottle
 
   def wait!(interval: INTERVAL, cache: Rails.cache, clock: -> { Time.now.to_f }, sleeper: ->(seconds) { sleep(seconds) })
     ActiveRecord::Base.with_connection do |connection|
-      connection.select_value("SELECT pg_advisory_lock(#{LOCK_ID})")
+      connection.execute("SELECT pg_advisory_lock(#{LOCK_ID})")
       begin
         last = cache.read(KEY)
         gap = last && last + interval - clock.call
         sleeper.call(gap) if gap&.positive?
         cache.write(KEY, clock.call, expires_in: 1.minute)
       ensure
-        connection.select_value("SELECT pg_advisory_unlock(#{LOCK_ID})")
+        connection.execute("SELECT pg_advisory_unlock(#{LOCK_ID})")
       end
     end
   end
