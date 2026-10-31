@@ -2,7 +2,7 @@
 # and Billing::Event only; the vendor adapter (Billing::Dodo) is the one place that names a vendor, so another provider
 # is one more adapter. Plans, prices and credits are ours (config/blendolo/plans.yml); the provider sells a product
 # id per paid plan and tells us, by signed webhook, what was paid. Credits are granted only from a verified webhook,
-# never from the page the buyer comes back to.
+# never from the page the buyer comes back to. In local development without a Dodo key, Billing::LocalTest stands in.
 module Billing
   class Error < StandardError; end
   # A webhook whose signature or signature headers don't check out.
@@ -18,7 +18,7 @@ module Billing
     attr_writer :provider
 
     def provider
-      @provider ||= Dodo.new
+      @provider ||= Rails.configuration.x.local_billing ? LocalTest.new : Dodo.new
     end
 
     # Whether payments take test cards (Dodo test mode). Pages say so.

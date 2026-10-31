@@ -1,0 +1,17 @@
+<% page_title "Test checkout" %>
+<div class="page stack">
+  <%= render "pages/page_header", chip: "Local test", title: "Test checkout",
+        lead: "This page runs only on your own computer, while no payment keys are set. Nothing is charged." %>
+
+  <section class="card stack" aria-labelledby="plan-title">
+    <h2 id="plan-title" class="m-0"><%= @plan.name %></h2>
+    <p class="m-0 instruction">
+      <%= @plan.price %> <%= plan_period_words(@plan) %>: <%= pluralize(@plan.credits, "credit") %><%= " every month" if @plan.subscription? %>.
+    </p>
+  </section>
+
+  <p class="m-0">Paying here adds the credits through the same code as a real payment's webhook.</p>
+  <%= render "components/button", label: "Pay #{@plan.price} (test)", url: local_checkout_path,
+        params: { plan: @plan.key, success_url: @success_url }, variant: :primary, form: { data: { turbo: false } } %>
+  <%= render "components/button", label: "Cancel", href: @cancel_url, variant: :secondary %>
+</div>

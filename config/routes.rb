@@ -37,10 +37,16 @@ Rails.application.routes.draw do
   get "clinic" => "clinics#show", as: :clinic
   post "clinic/kits" => "clinics#create_kit", as: :clinic_kits
 
-  # Local development without keys only (config/environments/development.rb): sign in as a test person. Never drawn
-  # in production or tests.
+  # Local development without keys only (config/environments/development.rb): sign in as a test person, and a test
+  # checkout and portal that pay through the same code as a verified webhook. Never drawn in production or tests.
   namespace :local do
     post "sign_in" => "sessions#create" if Rails.configuration.x.local_sign_in
+    if Rails.configuration.x.local_billing
+      get "checkout" => "billing#checkout"
+      post "checkout" => "billing#pay"
+      get "portal" => "billing#portal"
+      post "portal" => "billing#cancel"
+    end
   end
 
   get "privacy" => "pages#privacy"
