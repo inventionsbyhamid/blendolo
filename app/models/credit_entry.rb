@@ -4,7 +4,8 @@
 class CreditEntry < ApplicationRecord
   belongs_to :user
 
-  enum :reason, { signup_grant: 0, pack_purchase: 1, clinic_grant: 2, render: 3, transfer: 4, refund: 5, admin: 6 },
+  enum :reason, { signup_grant: 0, pack_purchase: 1, clinic_grant: 2, render: 3, transfer: 4, refund: 5, admin: 6,
+    clawback: 7 },
     validate: true, scopes: false, instance_methods: false
 
   # Render and transfer debits repeat when a render is asked for again; every other reason happens once per source

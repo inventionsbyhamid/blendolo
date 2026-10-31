@@ -6,6 +6,7 @@
 #   Credits.grant!(user, amount, reason:, source:)    adds credits (signup_grant, pack_purchase, clinic_grant, admin)
 #   Credits.debit!(user, amount, reason:, source:)    takes credits (render, transfer, admin), or raises Insufficient
 #   Credits.refund!(user, amount, source:)            gives credits back (reason refund)
+#   Credits.claw_back!(user, amount, source:)         takes back up to amount when the money went back (clawback)
 #
 # Grants and refunds are safe to repeat: the same reason and source again returns the first entry and changes
 # nothing. Render and transfer debits repeat on purpose, one per paid try.
@@ -39,6 +40,22 @@ module Credits
 
   def refund!(user, amount, source:)
     grant!(user, amount, reason: :refund, source:)
+  end
+
+  # Takes back up to amount credits when the money for them went back (a refund or a chargeback): what is left, never
+  # below zero, once per source. The entry, or nil when nothing was left to take.
+  def claw_back!(user, amount, source:)
+    raise ArgumentError, "a claw back takes credits" unless amount.is_a?(Integer) && amount.positive?
+
+    user.with_lock(requires_new: true) do
+      earlier = user.credit_entries.find_by(reason: "clawback", source: source.to_s)
+      next earlier if earlier
+
+      take = [ balance(user), amount ].min
+      next nil unless take.positive?
+
+      user.credit_entries.create!(delta: -take, reason: "clawback", source: source.to_s, balance_after: balance(user) - take)
+    end
   end
 
   def cost(operation)
@@ -95,8 +112,9 @@ module Credits
   def record!(user, delta, reason:, source:)
     reason = reason.to_s
     source = source&.to_s
-    user.with_lock do
-      earlier = CreditEntry.find_by(reason:, source:) if source && CreditEntry.once_per_source?(reason)
+    # A savepoint of its own, so a unique clash rolls back only this entry, even inside a caller's transaction.
+    user.with_lock(requires_new: true) do
+      earlier = user.credit_entries.find_by(reason:, source:) if source && CreditEntry.once_per_source?(reason)
       next earlier if earlier
 
       after = balance(user) + delta
@@ -105,8 +123,10 @@ module Credits
       user.credit_entries.create!(delta:, reason:, source:, balance_after: after)
     end
   rescue ActiveRecord::RecordNotUnique
-    # The same grant for another user's row at the same moment (the index is per reason and source).
-    CreditEntry.find_by!(reason:, source:)
+    # The index is per reason and source across every account, so sources must be unique across accounts. Another
+    # account already holding this one is a bug in the caller: this raises RecordNotFound rather than hand back
+    # someone else's entry.
+    user.credit_entries.find_by!(reason:, source:)
   end
   private_class_method :record!
 end
