@@ -58,14 +58,11 @@ class RoutineTest < ApplicationSystemTestCase
     shot "print-cards"
   end
 
-  test "a step card glows where the step goes when both previews exist" do
+  test "a step card shows the easy preview zoomed to the step, labelled" do
     photo = @kit.photos.today.sole
     effects = LookForKit.find(@kit, "red_lip").easy_effects(photo).as_json
-    lips = effects.find { |effect| effect["category"] == "lip_color" }
-    easy = @kit.renders.create!(photo:, look_key: "red_lip", kind: :easy, effects:, status: :done,
-      result: { io: file_fixture("face_lips.jpg").open, filename: "easy.jpg", content_type: "image/jpeg" })
-    @kit.renders.create!(photo:, look_key: "red_lip", kind: :step, effects: effects - [ lips ], status: :done,
-      result: { io: file_fixture("face.jpg").open, filename: "step.jpg", content_type: "image/jpeg" })
+    @kit.renders.create!(photo:, look_key: "red_lip", kind: :easy, effects:, status: :done,
+      result: { io: file_fixture("face.jpg").open, filename: "easy.jpg", content_type: "image/jpeg" })
     number = @steps.index { |step| step.category == "lip_color" } + 1
 
     page.current_window.resize_to(390, 844)
@@ -73,18 +70,6 @@ class RoutineTest < ApplicationSystemTestCase
 
     assert_selector ".step-zoom--lips img.step-zoom__image"
     assert_selector ".honest", text: "Preview, not a promise"
-    assert_selector "canvas.step-zoom__glow", visible: true, wait: 10
-    glowing = evaluate_script(<<~JS)
-      (() => {
-        const canvas = document.querySelector("canvas.step-zoom__glow")
-        const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data
-        let lit = 0
-        for (let i = 3; i < data.length; i += 4) if (data[i] > 100) lit++
-        return lit
-      })()
-    JS
-    assert_operator glowing, :>, 0
-    assert easy.persisted?
-    shot "step-card-glow"
+    shot "step-card-zoom"
   end
 end

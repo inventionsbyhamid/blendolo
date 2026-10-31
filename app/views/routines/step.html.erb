@@ -5,11 +5,8 @@
   <h1 class="sr-only"><%= @step.name %></h1>
 
   <% if picture&.attached? && @step.area != "finish" %>
-    <figure class="step-zoom step-zoom--<%= @step.area %> m-0" data-controller="glow"
-            data-glow-with-value="<%= (proxied_image_path(@with.result, 900) if @without) %>"
-            data-glow-without-value="<%= (proxied_image_path(@without.result, 900) if @without) %>">
+    <figure class="step-zoom step-zoom--<%= @step.area %> m-0">
       <%= image_tag proxied_image_path(picture, 900), alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image" %>
-      <canvas class="step-zoom__glow" data-glow-target="canvas" hidden aria-hidden="true"></canvas>
     </figure>
     <% if @with %><%= render "components/honest_label" %><% end %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>

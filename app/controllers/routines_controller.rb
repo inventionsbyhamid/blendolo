@@ -17,8 +17,7 @@ class RoutinesController < ApplicationController
     @steps = RoutinePlan.steps(@kit)
   end
 
-  # One step card: the step on the easy preview, zoomed to its part of the face, with a glow where it goes when a
-  # preview without that step exists too.
+  # One step card: the step on the easy preview (or today's photo), zoomed to its part of the face.
   def step
     @steps = RoutinePlan.steps(@kit)
     @number = params[:n].to_i
@@ -26,7 +25,6 @@ class RoutinesController < ApplicationController
     raise ActiveRecord::RecordNotFound, "No such step" unless @step
 
     @with = StepPreview.with(@kit)
-    @without = StepPreview.without(@kit, @with, @step)
     @photo = today_photo
 
     @entry = RoutinePlan.entries(@kit)[@number - 1]
