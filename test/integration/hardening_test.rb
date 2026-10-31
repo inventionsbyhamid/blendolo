@@ -26,14 +26,30 @@ class HardeningTest < ActionDispatch::IntegrationTest
 
   test "tokens filtered from logs" do
     log = capture_log { get "/k/secret-kit-token-123/consent?token=secret-query-token&image=x" }
+    started = log.lines.grep(/Started/).join
 
-    assert_includes log, %(Started GET "/k/[FILTERED]/consent?token=[FILTERED]&image=[FILTERED]")
-    assert_no_match(/secret-kit-token|secret-query-token/, log)
+    assert_includes started, %(Started GET "/k/[FILTERED]/consent?token=[FILTERED]&image=[FILTERED]")
+    assert_no_match(/secret-kit-token|secret-query-token/, started)
 
     filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
-    filtered = filter.filter("token" => "a", "kit_token" => "b", "image" => "c", "reference" => "d", "sampled" => "e")
+    filtered = filter.filter("token" => "a", "kit_token" => "b", "image" => "c", "reference" => "d", "sampled" => "e",
+      "signed_id" => "f", "signed_blob_id" => "g", "encoded_key" => "h")
     assert filtered.values.all?("[FILTERED]"), filtered.inspect
     assert Rails.application.config.filter_redirect.any? { it.match?("https://blendolo.dijmo.com/s/abc") }
+    assert Rails.application.config.filter_redirect.any? { it.match?("https://blendolo.dijmo.com/rails/active_storage/blobs/proxy/x/a.jpg") }
+  end
+
+  test "stored file links are filtered from logs" do
+    log = capture_log { get "/rails/active_storage/blobs/proxy/secret-signed-id--abc/today.jpg" }
+
+    assert_includes log, %(Started GET "/rails/active_storage/blobs/proxy/[FILTERED]")
+    assert_no_match(/secret-signed-id/, log)
+  end
+
+  test "production keeps rescued errors and thruster's request log out of the logs" do
+    assert_match(/^\s*config\.action_dispatch\.log_rescued_responses = false$/,
+      Rails.root.join("config/environments/production.rb").read)
+    assert_match(/^\s*LOG_REQUESTS="false"$/, Rails.root.join("Dockerfile").read)
   end
 
   test "file links expire after five minutes" do

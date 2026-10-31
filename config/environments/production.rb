@@ -80,4 +80,8 @@ Rails.application.configure do
   # Enable DNS rebinding protection and other `Host` header attacks: answer only the site's own name. The health
   # check answers any host (config.host_authorization in config/application.rb).
   config.hosts = [ config.x.canonical_host ]
+
+  # Rescued errors (no route, record not found, bad request) are answered with their status but not logged: their
+  # messages repeat the raw path, and a kit or share path carries its token.
+  config.action_dispatch.log_rescued_responses = false
 end
