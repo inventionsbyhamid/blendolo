@@ -16,6 +16,9 @@ const BURST_GAP_MS = 150
 // checks never take more than half the time (a third when the page runs them itself, without a worker).
 const CHECK_GAP_MS = { worker: 200, page: 300 }
 const CHECK_SHARE = { worker: 2, page: 3 }
+// Plus up to this much at random, so checks don't fall in step with a head tremor (4 to 6 a second) and catch it at
+// the same point of each shake, where it would look still.
+const CHECK_JITTER_MS = 80
 // After this many checks in a row that fail or get an empty frame, the checks give way: the worker to the page's own
 // checks, those to the shutter and timers alone (giveWay).
 const MISSES_TO_GIVE_WAY = 10
@@ -190,7 +193,8 @@ export default class extends Controller {
     if (this.misses >= MISSES_TO_GIVE_WAY) return this.giveWay(gate)
     if (summary) this.check(summary, started)
     const took = performance.now() - started
-    this.watch(Math.max(CHECK_GAP_MS[gate.kind], CHECK_SHARE[gate.kind] * took) - took)
+    const gap = CHECK_GAP_MS[gate.kind] + Math.random() * CHECK_JITTER_MS
+    this.watch(Math.max(gap, CHECK_SHARE[gate.kind] * took) - took)
   }
 
   // One frame's checks: say what to change, or take the photo after a second of stillness.
