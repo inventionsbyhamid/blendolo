@@ -25,6 +25,7 @@ class BillingSystemTest < ApplicationSystemTestCase
       end
 
       visit pricing_path
+      shot("pricing-phone")
       heights = evaluate_script("Array.from(document.querySelectorAll('.plan .btn--primary')).map((b) => b.getBoundingClientRect().height)")
       assert_equal 2, heights.size
       heights.each { |height| assert_operator height, :>=, 88 }
@@ -33,6 +34,7 @@ class BillingSystemTest < ApplicationSystemTestCase
 
   test "pricing shows three plans side by side on a wide screen" do
     visit pricing_path
+    shot("pricing-wide")
 
     tops = evaluate_script("Array.from(document.querySelectorAll('.plans > li')).map((plan) => Math.round(plan.getBoundingClientRect().top))")
     assert_equal 1, tops.uniq.size, "one row: #{tops.inspect}"
@@ -52,6 +54,7 @@ class BillingSystemTest < ApplicationSystemTestCase
       BillingEvent.receive!(dodo_provider.parse(body, id: "msg_pack"), provider: "dodo")
 
       using_wait_time(12) { assert_selector "[role=status]", text: "16 credits added. You have 18 credits." }
+      shot("billing-success")
       assert_selector "h1", count: 1
       assert_axe_clean
       assert_targets_at_least 64
@@ -77,6 +80,7 @@ class BillingSystemTest < ApplicationSystemTestCase
       visit clinic_path
       assert_selector "h1", text: "Your clients"
       assert_selector ".clients h3", text: "Mrs Patel"
+      shot("clinic-clients")
       assert_axe_clean
       assert_targets_at_least 64
 
