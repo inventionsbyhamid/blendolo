@@ -37,6 +37,10 @@ module Blendolo
     config.action_dispatch.default_headers["Permissions-Policy"] =
       "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()"
 
+    # Rescued errors (no route, record not found, bad request) are answered with their status but not logged: their
+    # messages repeat the raw path, and a kit or share path carries its token.
+    config.action_dispatch.log_rescued_responses = false
+
     # Links to stored photos and previews work for 5 minutes, both our signed redirect links and the storage URLs.
     config.active_storage.urls_expire_in = 5.minutes
     config.active_storage.service_urls_expire_in = 5.minutes
