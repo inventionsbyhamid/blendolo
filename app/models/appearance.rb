@@ -19,7 +19,7 @@ module Appearance
     # APPEARANCE_PROVIDER=youcam calls the live API; anything else (development, tests) replays recorded results.
     def build_provider(env = ENV)
       if env["APPEARANCE_PROVIDER"].to_s.strip == "youcam"
-        Youcam::Provider.from_env(env)
+        Youcam::Provider.from_env(env, before_request: -> { ProviderThrottle.wait! })
       else
         FakeProvider.new
       end
