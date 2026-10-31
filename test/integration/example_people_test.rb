@@ -42,9 +42,29 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     assert Kit.exists?(kit.id)
     assert_equal answers, kit.reload.hand_answers
     assert_empty kit.routine
-    assert_empty kit.shares
+    assert_equal 1, kit.shares.count, "only the example's own demo link"
     follow_redirect!
     assert_select ".flash", /June's example kit, so it stays as it is/
+  end
+
+  test "an example kit shows what a helper sees, read only" do
+    kit = Examples.rebuild!(:rosa)
+    share = kit.shares.sole
+    assert share.routine_and_photos?
+    assert_equal kit.purge_after, share.expires_at
+
+    get kit_path(kit)
+    assert_select "a[href=?]", public_share_path(share.token), text: /See what a helper sees/
+
+    get public_share_path(share.token)
+    assert_response :success
+    assert_select "h1", "A makeup routine, shared with you"
+    assert_select ".honest", /Example person/
+    assert_select "img.render__image", 2
+    assert_select "ol li.card", RoutinePlan.steps(kit).size
+
+    delete kit_share_path(kit, share.token)
+    assert share.reload.live?, "nobody can switch the example's link off"
   end
 
   test "an example person's routine follows their chosen look" do

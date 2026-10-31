@@ -4,7 +4,8 @@
 # Examples.kit_for(key) returns the newest living kit built from the current version of that example (its yml entry
 # and the files it names, see #digest), or builds a new one from the stored photos and finished previews. So new
 # example photos or previews show up on the next visit after a deploy; older kits expire on their own. Example kits
-# never call the provider (UnitGuard refuses them). bin/rails examples:rebuild builds fresh kits for everyone.
+# never call the provider (UnitGuard refuses them). Each has a share link, to show what a helper sees.
+# bin/rails examples:rebuild builds fresh kits for everyone.
 module Examples
   PATH = Rails.root.join("config/blendolo/examples.yml")
 
@@ -56,6 +57,8 @@ module Examples
               photo: photos.fetch("today"), reference_photo: (photos.fetch("reference") if render["kind"] == "transfer"),
               result: attachable(render.fetch("file")))
           end
+          # "See what a helper sees": a read-only link with the routine and photos, for as long as the kit lives.
+          kit.shares.create!(audience: :helper, scope: :routine_and_photos, expires_at: kit.purge_after)
           kit.building_example = false
           kit
         end
