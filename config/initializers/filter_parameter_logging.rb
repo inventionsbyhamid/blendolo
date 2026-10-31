@@ -15,14 +15,16 @@ Rails.application.config.filter_redirect.push(%r{/[ks]/}, %r{/rails/active_stora
 
 # The "Started GET" line prints the path in full, and some paths carry a key:
 #   /k/<token>/...  /s/<token>/...                     kits and shares
+#   /k/<token>/shares/<token>/...                      a kit's share links (switch off, undo)
 #   /rails/active_storage/<blobs|representations>/<redirect|proxy>/<signed id>/...   stored photos and previews
 #   /rails/active_storage/disk/<encoded key>/...       files on local disk
 module TokenPathFilter
   TOKEN_PATH = %r{\A/([ks])/[^/?]+}
+  SHARE_PATH = %r{/shares/[^/?]+}
   STORAGE_PATH = %r{\A(/rails/active_storage/(?:(?:blobs|representations)/(?:redirect|proxy)|disk))/[^?]+}
 
   def filtered_path
-    super.sub(TOKEN_PATH, '/\1/[FILTERED]').sub(STORAGE_PATH, '\1/[FILTERED]')
+    super.sub(TOKEN_PATH, '/\1/[FILTERED]').sub(SHARE_PATH, "/shares/[FILTERED]").sub(STORAGE_PATH, '\1/[FILTERED]')
   end
 end
 
