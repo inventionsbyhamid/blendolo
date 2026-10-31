@@ -25,8 +25,10 @@ module ProviderTracked
     # A running render is left alone, unless its start went quiet: a worker that died between claiming it and
     # starting the task leaves it running with nothing to finish it, so it can be requested again.
     return :waiting if running? && started_at.present? && started_at > ProviderCall::STALE_AFTER.ago
+    # Back to pending only if it isn't running (or went stale) at this moment: a second request that loaded the render
+    # before the first one's job moved it to running must not move it back, or the paid task's result never lands.
+    return :waiting unless reset_to_pending!
 
-    update!(input_hash: compute_input_hash, status: :pending, failure_reason: nil)
     call = provider_call
 
     if call&.done? && (source = earlier_result)
@@ -62,6 +64,12 @@ module ProviderTracked
     fail!(:no_credits)
     :no_credits
   rescue ActiveRecord::RecordNotUnique
+    :waiting
+  rescue ActiveRecord::RecordInvalid => error
+    # Another request made the call row between our lookup and our insert (its uniqueness check saw it): the same
+    # race as RecordNotUnique, so this render waits for that call.
+    raise unless error.record.is_a?(ProviderCall) && error.record.errors.of_kind?(:input_hash, :taken)
+
     :waiting
   end
 
@@ -114,11 +122,17 @@ module ProviderTracked
   # Fails this render, its call and the renders that waited for it. refund: the provider gave the units back or
   # never took them (engine errors, definite refusals), so the credits go back too; anything else may have been
   # charged and keeps its units and credits. Renders that waited paid nothing.
+  # The render, its call, the refund and the waiting renders change in one transaction, so a refund is never lost to
+  # an error half way: either all of it happens, or none and the job's retry or the next poll tries again.
   def fail_call!(reason, refund:)
-    fail!(reason)
-    provider_call&.update!(status: :failed, **(refund ? { units: 0 } : {}))
-    Credits.refund_render!(self) if refund
-    waiting_renders.each { |render| render.fail!(reason) }
+    waiting = []
+    transaction do
+      update!(status: :failed, failure_reason: reason.to_s)
+      provider_call&.update!(status: :failed, **(refund ? { units: 0 } : {}))
+      Credits.refund_render!(self) if refund
+      waiting = waiting_renders.to_a.each { |render| render.update!(status: :failed, failure_reason: reason.to_s) }
+    end
+    [ self, *waiting ].each(&:broadcast_render)
   end
 
   def fail!(reason)
@@ -133,7 +147,21 @@ module ProviderTracked
     broadcast_render
   end
 
+  def broadcast_render
+    broadcast_replace_later_to kit
+  end
+
   private
+    def reset_to_pending!
+      running = Render.statuses[:running]
+      moved = Render.where(id:)
+        .where("status <> ? OR started_at IS NULL OR started_at <= ?", running, ProviderCall::STALE_AFTER.ago)
+        .update_all(input_hash: compute_input_hash, status: Render.statuses[:pending], failure_reason: nil,
+          updated_at: Time.current)
+      reload
+      moved == 1
+    end
+
     def compute_input_hash
       subject = transfer? ? reference_photo.content_sha256! : canonical_json(effects)
       Digest::SHA256.hexdigest([ operation, photo.content_sha256!, subject ].join("\n"))
@@ -161,9 +189,5 @@ module ProviderTracked
     # Units the call counts today: what it already holds (0 when refunded) if it was made today, plus this call.
     def units_after(call, cost)
       (call.day == Date.current ? call.units : 0) + cost
-    end
-
-    def broadcast_render
-      broadcast_replace_later_to kit
     end
 end
