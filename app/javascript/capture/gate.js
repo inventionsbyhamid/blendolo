@@ -119,6 +119,28 @@ export async function loadLandmarker(packageUrl, modelUrl, { module = false } = 
   }
 }
 
+// True when a frame has no picture in it, all one colour: the black or empty frames a camera or browser can hand over
+// when it fails. No face can be found there, and it isn't the person's doing. source: an image, bitmap or canvas.
+export function blankFrame(source) {
+  const size = 16
+  const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(size, size) : document.createElement("canvas")
+  canvas.width = canvas.height = size
+  const context = canvas.getContext("2d", { willReadFrequently: true })
+  context.drawImage(source, 0, 0, size, size)
+  const { data } = context.getImageData(0, 0, size, size)
+  let darkest = Infinity
+  let lightest = -Infinity
+  for (let i = 0; i < data.length; i += 4) {
+    const value = data[i] + data[i + 1] + data[i + 2]
+    darkest = Math.min(darkest, value)
+    lightest = Math.max(lightest, value)
+  }
+  return lightest - darkest < BLANK_RANGE
+}
+
+// A frame whose 16 x 16 copy varies less than this (red + green + blue, 0 to 765) has no picture in it.
+const BLANK_RANGE = 12
+
 // Runs the landmarker once on a blank frame, so its slow first run (setting up the model) happens while it loads, not
 // on the first frame of the camera it checks. Returns the timestamp it used (video mode needs later ones after it).
 export function warm(landmarker) {

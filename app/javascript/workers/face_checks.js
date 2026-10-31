@@ -3,7 +3,8 @@
 // the import map (workers can't use one), so the page sends the URLs it needs. Messages, answered one at a time:
 //
 //   { type: "load", packageUrl, modelUrl, gateUrl }      -> { type: "ready" }, or { type: "unavailable", error }
-//   { type: "video", id, frame: ImageBitmap, timestamp } -> { type: "video", id, summary, ms }
+//   { type: "video", id, frame: ImageBitmap, timestamp } -> { type: "video", id, summary, ms } (summary.blank: true
+//                                                           when no face was found because the frame was empty)
 //   { type: "still", id, image: ImageBitmap }            -> { type: "still", id, faces: [[{ x, y }]] }
 //   a request that fails                                 -> { type: "failed", id, error }
 
@@ -40,8 +41,10 @@ function video({ id, frame, timestamp }) {
   const started = performance.now()
   // In video mode each frame's timestamp must be later than the last one's.
   lastTimestamp = Math.max(timestamp, lastTimestamp + 1)
-  const result = landmarker.detectForVideo(frame, lastTimestamp)
-  self.postMessage({ type: "video", id, summary: gate.summarize(result), ms: performance.now() - started })
+  const summary = gate.summarize(landmarker.detectForVideo(frame, lastTimestamp))
+  // No face in a frame with no picture: the camera or the browser handed over an empty frame.
+  if (summary.faces === 0) summary.blank = gate.blankFrame(frame)
+  self.postMessage({ type: "video", id, summary, ms: performance.now() - started })
 }
 
 async function still({ id, image }) {

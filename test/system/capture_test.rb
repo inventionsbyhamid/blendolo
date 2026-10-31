@@ -30,6 +30,63 @@ class CaptureTest < ApplicationSystemTestCase
     assert_operator photo.height, :<, 1080
   end
 
+  test "checks that keep failing give way: the worker to the page's checks, those to the shutter" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    # A worker whose frames come out empty (no face, no picture), and page checks that fail on every frame.
+    execute_script <<~JS
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const worker = fakeChecks("worker", async () => ({ ...noFace, blank: true }))
+      const page = fakeChecks("page", async () => { throw new Error("lost") })
+      capture.loadGates = async (options) => {
+        log.push(`load page checks: ${!options.worker}`)
+        capture.gate = page
+        capture.watch()
+      }
+      capture.show("Look straight at the phone")
+      capture.gate = worker
+      capture.watch()
+    JS
+
+    assert_selector "[data-capture-target=message]", text: "Tap Take the photo when you're ready", wait: 15
+    assert_equal [ "worker closed", "load page checks: true", "page closed" ], evaluate_script("window.log")
+    assert evaluate_script("captureController().gate === null")
+    click_on "Take the photo"
+    assert_selector "[data-capture-state=review]", wait: 10
+  end
+
+  test "a worker that stops after starting gives way at once, and no face in view isn't a failure" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    execute_script <<~JS
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const page = fakeChecks("page", async () => noFace)
+      capture.loadGates = async () => {
+        log.push("load page checks")
+        capture.gate = page
+        capture.watch()
+      }
+      const worker = fakeChecks("worker", async () => {
+        worker.broken = new Error("The face checks stopped")
+        throw worker.broken
+      })
+      capture.gate = worker
+      capture.watch()
+    JS
+
+    page.document.synchronize(3) do
+      raise Capybara::ExpectationNotMet, "worker still in use" unless evaluate_script("window.log.length") == 2
+    end
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    sleep 4 # well past ten checks of the page's, each finding no face in a real picture
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    assert_equal "page", evaluate_script("captureController().gate.kind")
+  end
+
   test "camera denied shows choose photo" do
     page.driver.browser # start the browser before talking to it
     script = page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: <<~JS)
@@ -223,6 +280,15 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal 0, sampled["size"]["width"] % 8
     assert_operator sampled["size"]["height"], :<, 1080
   end
+
+  # Stand-ins for capture/checks.js, put on the page by the tests above.
+  FAKE_CHECKS = <<~JS.freeze
+    window.captureController = () =>
+      window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
+    window.noFace = { faces: 0, width: 0, angles: null, points: null,
+      scores: { eyeBlinkLeft: 0, eyeBlinkRight: 0, eyeSquintLeft: 0, eyeSquintRight: 0, jawOpen: 0 } }
+    window.fakeChecks = (kind, video) => ({ kind, video, still: async () => [], close: () => log.push(`${kind} closed`) })
+  JS
 
   private
     def wait_for_guard

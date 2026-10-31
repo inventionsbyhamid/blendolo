@@ -16,6 +16,10 @@ const BURST_GAP_MS = 150
 // checks never take more than half the time (a third when the page runs them itself, without a worker).
 const CHECK_GAP_MS = { worker: 200, page: 300 }
 const CHECK_SHARE = { worker: 2, page: 3 }
+// After this many checks in a row that fail or get an empty frame, the checks give way: the worker to the page's own
+// checks, those to the shutter and timers alone (giveWay).
+const MISSES_TO_GIVE_WAY = 10
+const NO_CHECKS = "Tap Take the photo when you're ready"
 const SAY_AGAIN_AFTER_MS = 4000
 // A new check message shows (and is spoken) only after it has held this long, so a head near a limit doesn't make
 // the words flicker between two messages.
@@ -103,8 +107,9 @@ export default class extends Controller {
       this.videoTarget.classList.toggle("capture__video--mirror", this.facing === "user")
       await this.videoTarget.play()
       this.state = "live"
-      this.say(this.gate ? MESSAGES.straight : "Tap Take the photo when you're ready")
+      this.say(this.gate ? MESSAGES.straight : NO_CHECKS)
       this.lastPoints = null
+      this.misses = 0
       this.watch()
     } catch {
       if (attempt === this.attempt) this.noCamera()
@@ -123,11 +128,12 @@ export default class extends Controller {
     this.show("We can't use the camera here. Choose a photo instead.")
   }
 
-  // Starts loading the face checks as the page opens, so they're ready by the time the camera shows.
-  async loadGates() {
+  // Starts loading the face checks as the page opens, so they're ready by the time the camera shows. worker: false
+  // loads the page's own checks, after the worker gave way.
+  async loadGates({ worker = true } = {}) {
     if (!this.packageUrlValue || !this.modelUrlValue) return
     const loading = startChecks({ packageUrl: this.packageUrlValue, modelUrl: this.modelUrlValue,
-      workerUrl: this.workerUrlValue, gateUrl: this.gateUrlValue })
+      workerUrl: worker ? this.workerUrlValue : "", gateUrl: this.gateUrlValue })
     this.gatesLoading = loading
     let gate = null
     try {
@@ -137,7 +143,20 @@ export default class extends Controller {
     }
     if (this.gatesLoading !== loading) return gate?.close() // The page was left meanwhile.
     this.gate = gate
-    this.watch()
+    if (gate) this.watch()
+    else if (!worker && this.state === "live") this.say(NO_CHECKS)
+  }
+
+  // The checks failed for good (a worker that stopped), or kept failing or getting empty frames (a camera or browser
+  // fault): close them. The worker gives way to the page's own checks; when those fail too, the checks stop and the
+  // page says to use the shutter.
+  giveWay(gate) {
+    gate.close()
+    this.gate = null
+    this.misses = 0
+    if (gate.kind === "worker") return this.loadGates({ worker: false })
+    this.gatesLoading = null
+    if (this.state === "live") this.say(NO_CHECKS)
   }
 
   // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
@@ -158,12 +177,17 @@ export default class extends Controller {
     const attempt = this.attempt
     const started = performance.now()
     let summary = null
+    let failed = false
     try {
       summary = await gate.video(this.videoTarget, started)
     } catch {
-      // This frame couldn't be checked; the next one may be.
+      failed = true // This frame couldn't be checked; the next one may be.
     }
     if (attempt !== this.attempt || gate !== this.gate || !this.watching) return
+    if (gate.broken) return this.giveWay(gate)
+    if (failed || summary?.blank) this.misses += 1
+    else if (summary) this.misses = 0
+    if (this.misses >= MISSES_TO_GIVE_WAY) return this.giveWay(gate)
     if (summary) this.check(summary, started)
     const took = performance.now() - started
     this.watch(Math.max(CHECK_GAP_MS[gate.kind], CHECK_SHARE[gate.kind] * took) - took)

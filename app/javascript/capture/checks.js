@@ -1,14 +1,16 @@
-import { loadLandmarker, summarize, warm } from "capture/gate"
+import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
 
 // The face checks' landmarker, kept off the page's main thread where the browser allows it, so the page stays quick
 // to answer taps while the camera shows. A module worker (workers/face_checks.js) runs MediaPipe on small copies of
 // camera frames and sends back summaries (capture/gate.js summarize). Where module workers, OffscreenCanvas or
 // ImageBitmap are missing (older Safari), or the worker can't start, the page runs it itself: the same small frames,
-// checked less often.
+// drawn on a canvas, checked less often. The page also takes over when a running worker fails (capture_controller.js).
 //
 // startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) -> checks, once the landmarker is ready:
 //   kind          "worker" or "page"
-//   video(video, timestamp)  the summary of the camera's current frame; null while another frame is being checked
+//   broken        set once the worker has failed for good
+//   video(video, timestamp)  the summary of the camera's current frame (blank: true when no face was found because
+//                            the frame was empty); null while another frame is being checked; fails once broken
 //   still(source)            the face landmarks ([{x, y}] per face) of a photo, image or canvas
 //   close()                  stops the worker or frees the landmarker
 
@@ -56,7 +58,8 @@ class WorkerChecks {
   }
 
   async video(video, timestamp) {
-    if (this.busy || this.broken) return null
+    if (this.broken) throw this.broken
+    if (this.busy) return null
     this.busy = true
     try {
       const frame = await smallBitmap(video)
@@ -123,21 +126,21 @@ class PageChecks {
   constructor(landmarker) {
     this.landmarker = landmarker
     this.lastTimestamp = warm(landmarker)
+    this.canvas = document.createElement("canvas")
   }
 
+  // Draws the frame small on a canvas rather than making a bitmap: drawing a video is the most dependable way to get
+  // its picture, and the page is where the checks end up when the worker's bitmaps came out empty.
   async video(video, timestamp) {
-    if (this.busy) return null
-    this.busy = true
-    let frame
-    try {
-      frame = await smallFrame(video)
-      // In video mode each frame's timestamp must be later than the last one's.
-      this.lastTimestamp = Math.max(timestamp, this.lastTimestamp + 1)
-      return summarize(this.landmarker.detectForVideo(frame, this.lastTimestamp))
-    } finally {
-      frame?.close?.()
-      this.busy = false
-    }
+    const { resizeWidth: width, resizeHeight: height } = smallSize(video)
+    this.canvas.width = width
+    this.canvas.height = height
+    this.canvas.getContext("2d").drawImage(video, 0, 0, width, height)
+    // In video mode each frame's timestamp must be later than the last one's.
+    this.lastTimestamp = Math.max(timestamp, this.lastTimestamp + 1)
+    const summary = summarize(this.landmarker.detectForVideo(this.canvas, this.lastTimestamp))
+    if (summary.faces === 0) summary.blank = blankFrame(this.canvas)
+    return summary
   }
 
   async still(source) {
@@ -171,21 +174,4 @@ async function smallBitmap(video) {
     canvas.getContext("2d").drawImage(video, 0, 0, size.resizeWidth, size.resizeHeight)
     return canvas.transferToImageBitmap()
   }
-}
-
-// A small copy of the camera's current frame: an ImageBitmap where the browser can make one, otherwise a canvas.
-async function smallFrame(video) {
-  const { resizeWidth: width, resizeHeight: height } = smallSize(video)
-  if (typeof createImageBitmap === "function") {
-    try {
-      return await createImageBitmap(video, { resizeWidth: width, resizeHeight: height, resizeQuality: "low" })
-    } catch {
-      // Drawn on a canvas below.
-    }
-  }
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
-  canvas.getContext("2d").drawImage(video, 0, 0, width, height)
-  return canvas
 }
