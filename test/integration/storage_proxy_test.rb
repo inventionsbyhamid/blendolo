@@ -1,11 +1,14 @@
 require "test_helper"
 require "support/kit_helpers"
+require "support/account_helpers"
 
 # Photos and previews come from our own origin, through Active Storage's proxy, never from the bucket directly.
 class StorageProxyTest < ActionDispatch::IntegrationTest
   include KitHelpers
+  include AccountHelpers
 
   test "a render's image url is same origin" do
+    sign_in_as(make_user)
     kit = make_kit(tremor: 2)
     post previews_kit_look_path(kit, "red_lip")
     render = kit.renders.classic.sole

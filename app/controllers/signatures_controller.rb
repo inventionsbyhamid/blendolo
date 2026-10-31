@@ -7,6 +7,7 @@ class SignaturesController < ApplicationController
   before_action :keep_example_kits_as_they_are, only: :create
   before_action :require_consent
   before_action :require_today_photo
+  before_action :require_kit_owner, only: :create
   rate_limit to: 10, within: 1.minute, only: :create, with: -> { too_many_requests }
 
   def show
@@ -18,12 +19,19 @@ class SignaturesController < ApplicationController
     return unless @signature
 
     # Only POST makes renders: a results page opened from history shows a button instead.
+    # A preview refused for want of a sign in or credits shows as not made yet: the price below asks again.
     @transfer = Previews.find(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
+    @transfer = nil if @transfer&.awaiting_payment?
     @easy = Previews.find(@kit, today_photo, "signature", :easy, @signature.easy_effects(today_photo))
-    @waiting = @transfer.nil? || @easy.nil?
+    @easy = nil if @easy&.awaiting_payment?
+    needed = { transfer: @transfer, makeup: @easy }.select { |_, render| render.nil? }.keys
+    @waiting = needed.any?
+    # Shown before spending: "Uses 3 credits. You have 14."
+    @cost = needed.sum { |operation| Credits.cost(operation) }
   end
 
-  # The two answers for the old photo already chosen. Sending them twice finds the same renders.
+  # "Show it on my face", with the two answers for the old photo already chosen, paid with the account's credits.
+  # Sending them twice finds the same renders.
   def create
     reference = @kit.photos.reference.order(:created_at).last
     signature = SignatureLook.build(@kit, reference, liner: params[:liner], lips: params[:lips])

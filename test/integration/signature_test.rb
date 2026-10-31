@@ -1,10 +1,14 @@
 require "test_helper"
 require "support/kit_helpers"
+require "support/account_helpers"
 
 class SignatureFlowTest < ActionDispatch::IntegrationTest
   include KitHelpers
+  include AccountHelpers
 
   setup do
+    @user = make_user(credits: 10)
+    sign_in_as(@user)
     @kit = make_kit(tremor: 2)
     add_photo(@kit, kind: :reference, sampled: { "lips" => "#A84452", "lids" => "#9C8577", "cheeks" => "#E59A7A" })
   end
@@ -14,6 +18,10 @@ class SignatureFlowTest < ActionDispatch::IntegrationTest
     assert_select "h1", /Did you wear eyeliner/
     get kit_signature_path(@kit, liner: "winged")
     assert_select "h1", "Lips?"
+    # Answering goes to the results page, which shows the price before anything is spent.
+    assert_select "a[href=?]", kit_signature_path(@kit, liner: "winged", lips: "matte"), text: /Matte/
+    get kit_signature_path(@kit, liner: "winged", lips: "matte")
+    assert_select ".spend__words", "Uses 3 credits. You have 12."
 
     assert_difference -> { @kit.renders.count }, 2 do
       2.times { post kit_signature_path(@kit), params: { liner: "winged", lips: "matte" } }
@@ -23,6 +31,7 @@ class SignatureFlowTest < ActionDispatch::IntegrationTest
 
     follow_redirect!
     assert_select ".three-up figure", 3
+    assert_equal 9, Credits.balance(@user)
   end
 
   test "answers we don't offer go back to the start" do

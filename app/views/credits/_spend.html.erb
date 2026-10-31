@@ -1,0 +1,27 @@
+<%#
+  Where a preview on the person's own face is paid for, shown before anything is spent. Signed out: sign in (free
+  for the first look). Signed in, with enough credits: the price and "Show it on my face". Short of credits: a way
+  to get more. Someone else's kit: a word about it.
+  cost: the credits this takes; url, params: the POST that makes the previews
+%>
+<% if !signed_in? %>
+  <div class="card stack spend">
+    <p class="m-0 spend__words"><%= CreditsHelper::SIGN_IN %></p>
+    <%= render "sessions/google_button", origin: request.fullpath %>
+  </div>
+<% elsif @kit.user_id && !@kit.owned_by?(current_user) %>
+  <p class="card m-0"><%= CreditsHelper::OTHER_ACCOUNT %></p>
+<% else %>
+  <% balance = Credits.balance(current_user) %>
+  <% if balance >= cost %>
+    <div class="stack spend">
+      <p class="m-0 spend__words"><%= credits_cost_words(cost, balance) %></p>
+      <%= render "components/button", label: "Show it on my face", url:, params: local_assigns.fetch(:params, {}), variant: :primary %>
+    </div>
+  <% else %>
+    <div class="card stack spend">
+      <p class="m-0 spend__words"><%= credits_short_words(cost, balance) %></p>
+      <%= render "components/button", label: "Get credits", href: Credits::PRICING_PATH, variant: :primary %>
+    </div>
+  <% end %>
+<% end %>

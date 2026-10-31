@@ -6,6 +6,7 @@ class LooksController < ApplicationController
   before_action :require_consent
   before_action :require_today_photo, only: %i[show previews tweak]
   before_action :set_look, only: %i[show previews tweak]
+  before_action :require_kit_owner, only: %i[previews tweak]
   rate_limit to: 10, within: 1.minute, only: :previews, name: "previews", with: -> { too_many_requests }
   rate_limit to: 10, within: 1.minute, only: :tweak, name: "tweak", with: -> { too_many_requests }
 
@@ -16,14 +17,18 @@ class LooksController < ApplicationController
   # Shows the renders that exist. Nothing is made here: the page asks for them with a POST (previews).
   def show
     @level = level_param
-    @classic = Previews.find(@kit, today_photo, @look.key, :classic, @look.classic_effects(today_photo))
-    @easy = Previews.find(@kit, today_photo, @look.key, :easy, @look.easy_effects(today_photo))
-    @tweak = Previews.find(@kit, today_photo, @look.key, :tweak, @look.easy_effects(today_photo, level: @level)) unless @level.zero?
-    needed = @level.zero? ? [ @classic, @easy ] : [ @classic, @easy, @tweak ]
-    @waiting = needed.include?(nil) && !@kit.example?
+    # A preview refused for want of a sign in or credits shows as not made yet: the price below asks again.
+    @classic = unpaid_as_nil(Previews.find(@kit, today_photo, @look.key, :classic, @look.classic_effects(today_photo)))
+    @easy = unpaid_as_nil(Previews.find(@kit, today_photo, @look.key, :easy, @look.easy_effects(today_photo)))
+    @tweak = unpaid_as_nil(Previews.find(@kit, today_photo, @look.key, :tweak, @look.easy_effects(today_photo, level: @level))) unless @level.zero?
+    needed = (@level.zero? ? [ @classic, @easy ] : [ @classic, @easy, @tweak ]).count(nil)
+    @waiting = needed.positive? && !@kit.example?
+    # Shown before spending: "Uses 2 credits. You have 14."
+    @cost = needed * Credits.cost(:makeup)
   end
 
-  # "Show it on my face": makes the classic and easy renders (and the tweak at this level), once. Safe to repeat.
+  # "Show it on my face": makes the classic and easy renders (and the tweak at this level), once, paid with the
+  # account's credits. Safe to repeat.
   def previews
     level = level_param
     Previews.for(@kit, today_photo, @look.key, :classic, @look.classic_effects(today_photo))
@@ -45,6 +50,10 @@ class LooksController < ApplicationController
       @look = LookForKit.find(@kit, params[:key])
     rescue KeyError
       raise ActiveRecord::RecordNotFound, "No such look"
+    end
+
+    def unpaid_as_nil(render)
+      render unless render&.awaiting_payment?
     end
 
     def level_param
