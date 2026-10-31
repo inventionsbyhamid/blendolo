@@ -40,6 +40,14 @@ class CopyLintTest < ActionDispatch::IntegrationTest
       end
       assert reference.persisted?
     end
+
+    example = Examples.kit_for("rosa")
+    [ kit_path(example), kit_looks_path(example), kit_look_path(example, "red_lip"), kit_signature_path(example),
+      kit_routine_path(example) ].each do |page|
+      get page
+      assert_response :success, page
+      assert_empty CopyRules.problems(response.body), "Copy problems on #{page}"
+    end
   end
 
   test "every preview failure message passes the copy rules" do
