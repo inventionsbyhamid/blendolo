@@ -7,7 +7,7 @@ module CopyRules
   BANNED = [ "cure", "heal", "treat", "treatment for", "diagnose", "guarantee", "perfect", "fix your face",
              "suffering", "sufferer", "victim", "despite", "the shakes", "fight", "battle", "warrior", "journey",
              "flawless" ].freeze
-  DASHES = /[–—]/
+  DASHES = /[\u2013\u2014]/
   BANNED_PATTERN = /\b(?:#{BANNED.map { |word| Regexp.escape(word).gsub("\\ ", "\\s+") }.join("|")})\b/i
   # Proper names that contain a banned word.
   ALLOWED_NAMES = [ "Perfect Corp" ].freeze
