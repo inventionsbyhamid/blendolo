@@ -6,7 +6,7 @@ module SeoHelper
   SITE_NAME = "Blendolo".freeze
   DEFAULT_TITLE = "Blendolo: makeup made easy for hands that shake".freeze
   DEFAULT_DESCRIPTION = "For people with Parkinson's, tremor or stiff hands. See your favourite look on your own " \
-    "face, then do it in easy steps. Big buttons. Free.".freeze
+    "face, then do it in easy steps. Big buttons. Free to try.".freeze
   DEFAULT_IMAGE_ALT = "Blendolo: makeup made easy for hands that shake. A smiling woman at her kitchen table next " \
     "to a card that swaps liquid lipstick for a tinted balm.".freeze
 
