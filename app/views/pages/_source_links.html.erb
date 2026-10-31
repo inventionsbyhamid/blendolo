@@ -1,0 +1,6 @@
+<%# sources: [[title, url, note], ...] as full-width link cards, so each is a big target. %>
+<ul class="linklist">
+  <% sources.each do |title, url, note| %>
+    <li><%= link_to url do %><%= title %><% if note %><small><%= note %></small><% end %><% end %></li>
+  <% end %>
+</ul>

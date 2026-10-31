@@ -1,0 +1,6 @@
+<%# The top of a long read: a chip, the one h1, and a lead that answers the question. %>
+<header class="grid gap-3">
+  <% if local_assigns[:chip] %><p class="chip chip--rose m-0 justify-self-start"><%= chip %></p><% end %>
+  <h1 class="m-0"><%= title %></h1>
+  <% if local_assigns[:lead] %><p class="lead"><%= lead %></p><% end %>
+</header>

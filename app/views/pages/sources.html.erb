@@ -1,0 +1,39 @@
+<% seo title: "Sources", description: "Where Blendolo's numbers, tips and design rules come from." %>
+<div class="page prose">
+  <%= render "pages/page_header", chip: "Sources", title: "Where our facts come from",
+        lead: "Every number on this site, and every swap and tip, comes from a source below. Ease scores are our own guide, not a clinical measure." %>
+
+  <h2>How many people this is for</h2>
+  <%= render "pages/source_links", sources: [
+        [ "Gupta et al. 2021, essential tremor survey", "https://pmc.ncbi.nlm.nih.gov/articles/PMC8710410", "More than 1 in 4 of 2,864 people with essential tremor say it affects putting on makeup." ],
+        [ "Global Burden of Disease 2021, Frontiers in Aging Neuroscience 2025", "https://www.frontiersin.org/journals/aging-neuroscience/articles/10.3389/fnagi.2024.1498756/full", "11.77 million people with Parkinson's in 2021, 5.33 million of them women." ],
+        [ "Wei et al., Frontiers in Medicine 2025", "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12350485/", "194.3 million people with hand osteoarthritis in 2021, twice as many women as men." ],
+        [ "Louis and McCreary 2021", "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8269764/", "Essential tremor in 5.79% of people aged 65 and over." ],
+        [ "Global Burden of Disease, Lancet Rheumatology 2023", "https://healthdata.org/research-analysis/library/global-regional-and-national-burden-rheumatoid-arthritis-1990-2020-and", "17.6 million people with rheumatoid arthritis in 2020." ]
+      ] %>
+
+  <h2>Makeup tips and easier swaps</h2>
+  <%= render "pages/source_links", sources: [
+        [ "Parkinson's UK: applying makeup when you have Parkinson's", "https://www.parkinsons.org.uk/magazine/tips/applying-makeup-when-you-have-parkinsons", "Eye makeup first, rest your elbow, short strokes, creams, tidy up last." ],
+        [ "Parkinson's Foundation: dressing and grooming", "https://www.parkinson.org/living-with-parkinsons/management/activities-daily-living/dressing", "Foam grips, and getting ready when your medicines are working well." ],
+        [ "Parkinson's NSW: applying makeup", "https://www.parkinsonsnsw.org.au/applying-makeup-when-you-have-parkinsons/", "Sit down, fixed mirror, rest your arm." ],
+        [ "Mass General: arthritis at the base of the thumb", "https://www.massgeneral.org/orthopaedics/hand/conditions-and-treatments/arthritis-at-the-base-of-the-thumb", "Pinching makes thumb arthritis pain worse." ],
+        [ "Arthritis Foundation: Ease of Use certification", "https://arthritis.org/partnership/ease-of-use-certification", "Products tested for people with arthritis." ]
+      ] %>
+
+  <h2>In their own words</h2>
+  <%= render "pages/source_links", sources: [
+        [ "Terri Bryant, makeup artist with Parkinson's (The List, 2020)", "https://www.thelist.com/301301/heres-why-shaky-hands-dont-have-to-ruin-your-makeup", nil ],
+        [ "Anita Williams on makeup with MS (MultipleSclerosis.net)", "https://multiplesclerosis.net/living-with-ms/makeup-adaptations", nil ],
+        [ "Eyeliner for a shaky hand (Mumsnet, 2025)", "https://www.mumsnet.com/talk/style_and_beauty/5345373-eye-liner-for-a-68-year-old-shaky-hand", nil ],
+        [ "Eileen Davidson on her beauty routine with RA (CreakyJoints, 2024)", "https://creakyjoints.org/about-arthritis/rheumatoid-arthritis/ra-patient-perspectives/navigating-beauty-routine", nil ]
+      ] %>
+
+  <h2>How we design for tremor</h2>
+  <%= render "pages/source_links", sources: [
+        [ "Nunes et al. 2016: touch targets for people with Parkinson's", "https://link.springer.com/content/pdf/10.1007/s10209-015-0440-1.pdf", "Taps were most accurate on targets about 14 mm wide, around 88 pixels on a phone." ],
+        [ "WCAG 2.2: Target Size (Minimum)", "https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html", nil ],
+        [ "WCAG 2.2: Dragging Movements", "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html", nil ],
+        [ "WCAG 2.2: Pointer Cancellation", "https://www.w3.org/WAI/WCAG22/Understanding/pointer-cancellation.html", nil ]
+      ] %>
+</div>
