@@ -16,7 +16,8 @@ module KitScoped
       @kit = Kit.find_by(token: params[:kit_token] || params[:token])
       raise ActiveRecord::RecordNotFound, "No such kit" unless @kit && @kit.purge_after.future?
 
-      @kit.touch_activity! if @kit.last_active_at.before?(TOUCH_EVERY.ago)
+      # Example kits are shared and never written to; they are rebuilt when they expire.
+      @kit.touch_activity! if !@kit.example? && @kit.last_active_at.before?(TOUCH_EVERY.ago)
       remember_kit(@kit) unless @kit.example?
       response.set_header("X-Robots-Tag", "noindex, nofollow")
     end
