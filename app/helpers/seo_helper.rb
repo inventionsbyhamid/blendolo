@@ -4,11 +4,11 @@
 module SeoHelper
   SITE_URL = "https://blendolo.dijmo.com".freeze
   SITE_NAME = "Blendolo".freeze
-  DEFAULT_TITLE = "Blendolo: your favourite makeup look, in easier steps".freeze
-  DEFAULT_DESCRIPTION = "See your favourite look on your own photo, then get it with steps made for hands that " \
-    "shake, tire or hurt. Big buttons. Works with Voice Control. Free.".freeze
-  DEFAULT_IMAGE_ALT = "Blendolo: the same red lip, in easier steps. A smiling woman at her kitchen table next to a " \
-    "card that swaps liquid lipstick for a tinted balm.".freeze
+  DEFAULT_TITLE = "Blendolo: makeup made easy for hands that shake".freeze
+  DEFAULT_DESCRIPTION = "For people with Parkinson's, tremor or stiff hands. See your favourite look on your own " \
+    "face, then do it in easy steps. Big buttons. Free.".freeze
+  DEFAULT_IMAGE_ALT = "Blendolo: makeup made easy for hands that shake. A smiling woman at her kitchen table next " \
+    "to a card that swaps liquid lipstick for a tinted balm.".freeze
 
   # social_description and x_description are the shorter lines for link previews (Open Graph and X); they default to
   # the description.

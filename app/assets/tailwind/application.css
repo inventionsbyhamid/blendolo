@@ -234,6 +234,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     .float--hands { right: 12px; top: 18px; }
     .float--swap { position: relative; left: auto; top: auto; width: min(400px, calc(100% - 24px)); margin: -84px auto 0; }
   }
+  /* "hands that shake." is wider than screens under 360 px, so the highlight may wrap there. Em, so it scales with text size. */
+  @media (max-width: 22.25em) { .hero mark { white-space: normal; -webkit-box-decoration-break: clone; box-decoration-break: clone; } }
 
   /* Facts */
   .facts { padding: 0 0 48px; }

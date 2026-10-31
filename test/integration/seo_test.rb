@@ -5,8 +5,8 @@ class SeoTest < ActionDispatch::IntegrationTest
     get "/"
 
     assert_response :success
-    assert_select "title", "Blendolo: your favourite makeup look, in easier steps"
-    assert_select "meta[name=description][content^='See your favourite look on your own photo']"
+    assert_select "title", "Blendolo: makeup made easy for hands that shake"
+    assert_select "meta[name=description][content^=\"For people with Parkinson's, tremor or stiff hands.\"]"
     assert_select "link[rel=canonical][href='https://blendolo.dijmo.com/']"
     assert_select "meta[property='og:image'][content^='https://blendolo.dijmo.com/assets/og']"
     assert_select "meta[name='twitter:card'][content=summary_large_image]"
@@ -18,8 +18,8 @@ class SeoTest < ActionDispatch::IntegrationTest
   test "home has the landing page's own link preview lines" do
     get "/"
 
-    assert_select "meta[property='og:description'][content^='The same red lip, without eleven tries.']"
-    assert_select "meta[name='twitter:description'][content^='Makeup for hands that shake, tire or hurt.']"
+    assert_select "meta[property='og:description'][content^=\"For Parkinson's, tremor and stiff hands. Blendolo shows\"]"
+    assert_select "meta[name='twitter:description'][content^=\"For Parkinson's, tremor and stiff hands. See your look\"]"
   end
 
   test "the eyeliner guide quotes the ease engine" do

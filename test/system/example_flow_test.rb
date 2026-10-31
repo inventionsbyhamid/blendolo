@@ -10,7 +10,7 @@ class ExampleFlowTest < ApplicationSystemTestCase
     calls = ProviderCall.count
 
     visit root_path
-    assert_selector "h1", text: "same red lip"
+    assert_selector "h1", text: "hands that shake"
     shot "integration-home"
 
     click_on "Start"

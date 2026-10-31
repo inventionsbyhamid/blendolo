@@ -8,7 +8,7 @@ class SeoHelperTest < ActionView::TestCase
 
     assert_includes tags, '<meta name="robots" content="noindex, nofollow">'
     assert_not_includes tags, "canonical"
-    assert_equal "Blendolo: your favourite makeup look, in easier steps", seo_title
+    assert_equal "Blendolo: makeup made easy for hands that shake", seo_title
   end
 
   test "seo with noindex keeps the page out of search" do

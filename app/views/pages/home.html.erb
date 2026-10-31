@@ -1,6 +1,6 @@
 <% seo title: SeoHelper::DEFAULT_TITLE, description: SeoHelper::DEFAULT_DESCRIPTION,
-       social_description: "The same red lip, without eleven tries. Blendolo swaps the hard steps for easy ones and shows the easy version on your own face first.",
-       x_description: "Makeup for hands that shake, tire or hurt. See the easy version of your look on your own face first." %>
+       social_description: "For Parkinson's, tremor and stiff hands. Blendolo shows your favourite look on your own face, then swaps the hard steps for easy ones.",
+       x_description: "For Parkinson's, tremor and stiff hands. See your look on your own face, then do it in easy steps." %>
 <% content_for :body_class, "landing" %>
 <% content_for :head do %>
   <%= tag.link rel: "preload", as: "image", type: "image/webp", fetchpriority: "high",
@@ -22,9 +22,9 @@
 <section class="hero" aria-labelledby="hero-title">
   <div class="wrap hero__grid">
     <div class="hero__copy">
-      <p class="chip chip--rose">Makeup for hands that shake, tire or hurt</p>
-      <h1 id="hero-title">The <mark>same red lip.</mark> Two mirrors. One of them takes eleven tries.</h1>
-      <p class="lede">A tinted balm and a fingertip get you there in one. Blendolo keeps your look, swaps the hard steps for easy ones, and shows you the easy version on your own face first.</p>
+      <p class="chip chip--rose">For Parkinson's, tremor and stiff hands</p>
+      <h1 id="hero-title">Makeup made easy for <mark>hands that shake.</mark></h1>
+      <p class="lede">See your favourite look on your own face, then do it in easy steps. The same red lip, without eleven tries.</p>
       <div class="cta">
         <%= link_to "Start", start_path, class: "button button--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } %>
         <a class="button button--ghost" href="#how">See how it works</a>
