@@ -71,7 +71,7 @@ Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active
 2. **Looks** → **The red lip**: classic and easy side by side, what changes and why, the ease before and after.
 3. **Make this my routine** → **Start with step 1** → "Read it to me".
 4. **Shopping list**, then "Ease tags for brands and shops".
-5. **Bring back your signature look**, then **See what a helper sees**.
+5. **Bring back your signature look**, then back on Rosa's kit, **See what a helper sees**.
 6. In the **Menu**, set "My hands today" to "Very shaky or stiff" and watch every button grow.
 
 ## Honest limits
@@ -116,7 +116,7 @@ bin/ci                  # everything CI checks
 
 `bin/ci` runs RuboCop (Rails omakase style), Brakeman, the tests, the system tests and the seeds. The steps live in `config/ci.rb`.
 
-At the last CI run there were 304 unit and integration tests and 41 system tests in headless Chrome, all passing.
+At the last CI run there were 315 unit and integration tests and 41 system tests in headless Chrome, all passing.
 
 `bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine over ssh, so the full suite doesn't load your laptop. It copies the working tree, builds a CI image with Chromium (`script/ci/Dockerfile`), starts a throwaway Postgres 18 beside it and cleans up afterwards. Set `BLENDOLO_CI_HOST` to the ssh host, which needs Docker, rsync and flock. Lanes let several worktrees run at once:
 
