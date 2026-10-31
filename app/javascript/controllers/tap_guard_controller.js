@@ -7,6 +7,11 @@ import { Controller } from "@hotwired/stimulus"
 const WINDOWS = { 0: 500, 1: 800, 2: 1500 }
 const DEFAULT_WINDOW = 800
 
+// The last commit tap anywhere in the document. Inside the window after it, every guarded control ignores a tap:
+// a bounce onto the neighbouring button, or onto the control in the same place on the next page. It lives in the
+// module, so it outlives Turbo visits; a full page load starts afresh.
+let lastCommitAt = -Infinity
+
 export default class extends Controller {
   static values = { commit: { type: Boolean, default: true } }
 
@@ -27,13 +32,15 @@ export default class extends Controller {
 
   guard(event) {
     const now = performance.now()
-    if (this.held || now - this.lastAt < this.window) {
+    if (this.held || now - this.lastAt < this.window || now - lastCommitAt < this.window) {
       event.preventDefault()
       event.stopImmediatePropagation()
       return
     }
     this.lastAt = now
-    if (this.commitValue && (!this.form || this.form.checkValidity())) this.hold()
+    if (!this.commitValue) return
+    lastCommitAt = now
+    if (!this.form || this.form.checkValidity()) this.hold()
   }
 
   hold() {

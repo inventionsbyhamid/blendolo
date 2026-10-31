@@ -1,4 +1,5 @@
 require "application_system_test_case"
+require "support/kit_helpers"
 
 # The repeat-tap guard on its own, on a form added to a real page: no server in the way, only the browser.
 class TapGuardTest < ApplicationSystemTestCase
@@ -63,4 +64,65 @@ class TapGuardTest < ApplicationSystemTestCase
         raise Capybara::ExpectationNotMet, "tap-guard not connected on #{selector}" unless connected
       end
     end
+end
+
+# After a commit tap, every guarded control waits out the window: the neighbouring button, and the control in the
+# same place on the next page Turbo shows.
+class TapGuardAcrossControlsTest < ApplicationSystemTestCase
+  include KitHelpers
+
+  test "a repeat tap on the next page's tile is ignored" do
+    kit = make_kit(photo: false)
+    visit kit_hand_path(kit, 1)
+    assert_selector ".step-header__count", text: "Step 2 of 7"
+    # "A lot" (very shaky: a 1500 ms window from here on), then the tile in the same place on the next question as
+    # soon as its guard is there.
+    execute_script <<~JS
+      window.repeatAfter = null
+      const third = () => document.querySelectorAll("ul.tiles button.tile")[2]
+      document.addEventListener("turbo:load", () => {
+        const tapAgain = () => {
+          const tile = third()
+          if (!tile || !window.Stimulus.getControllerForElementAndIdentifier(tile, "tap-guard")) return setTimeout(tapAgain, 10)
+          window.repeatAfter = performance.now() - window.firstAt
+          tile.click()
+        }
+        tapAgain()
+      }, { once: true })
+      window.firstAt = performance.now()
+      third().click()
+    JS
+
+    assert_selector ".step-header__count", text: "Step 3 of 7"
+    page.document.synchronize(5) { raise Capybara::ExpectationNotMet, "no repeat tap yet" unless evaluate_script("window.repeatAfter") }
+    assert_operator evaluate_script("window.repeatAfter"), :<, 1500, "the repeat came inside the window"
+    sleep 1.6
+    assert_selector ".step-header__count", text: "Step 3 of 7"
+    kit.reload
+    assert_equal 2, kit.tremor
+    assert_nil kit.pinch, "the repeat tap answered nothing"
+
+    all("ul.tiles button.tile")[2].click
+    assert_selector ".step-header__count", text: "Step 4 of 7"
+    assert_equal 2, kit.reload.pinch, "a tap after the window counts"
+  end
+
+  test "softer then bolder inside the window sends one change" do
+    kit = make_kit(tremor: 2, hands_today: 2)
+    visit kit_look_path(kit, "red_lip")
+    # The page asks for its previews itself first.
+    assert_selector "[id^=render_]", count: 2, wait: 10
+    assert_selector "h2", text: "Strength of the easy version: Medium"
+
+    execute_script <<~JS
+      const button = (label) => [...document.querySelectorAll("button")].find((el) => el.textContent.trim().startsWith(label))
+      button("Softer").click()
+      button("Bolder").click()
+    JS
+
+    assert_selector "h2", text: "Strength of the easy version: Softer"
+    sleep 1
+    assert_selector "h2", text: "Strength of the easy version: Softer"
+    assert_equal 1, kit.renders.tweak.count, "one tweak, so one unit"
+  end
 end
