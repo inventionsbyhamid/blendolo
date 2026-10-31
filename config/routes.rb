@@ -28,6 +28,9 @@ Rails.application.routes.draw do
     resources :looks, only: %i[index show], param: :key do
       post :tweak, on: :member
     end
+    resources :renders, only: [] do
+      post :try_again, on: :member
+    end
     resource :routine, only: %i[show create] do
       get "steps/:n" => "routines#step", as: :step, constraints: { n: /\d+/ }
     end

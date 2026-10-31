@@ -6,7 +6,9 @@
   <% elsif render.failed? %>
     <div class="render__message" role="status">
       <p><%= render_failure_message(render) %></p>
-      <% if render.failure_reason == "example" %>
+      <% if RendersHelper::TRY_AGAIN.include?(render.failure_reason) && render.persisted? %>
+        <%= render(partial: "components/button", locals: { label: "Try again", url: try_again_kit_render_path(render.kit, render), variant: :secondary }) %>
+      <% elsif render.failure_reason == "example" %>
         <%= render(partial: "components/button", locals: { label: "Start your own kit", href: start_path, variant: :secondary }) %>
       <% elsif render_failure_needs_photo?(render) %>
         <%= render(partial: "components/button", locals: { label: "Take it again", href: new_kit_photo_path(render.kit, kind: (render.transfer? ? "reference" : "today")), variant: :secondary }) %>

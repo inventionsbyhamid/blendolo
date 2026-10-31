@@ -18,6 +18,8 @@ module RendersHelper
     "example" => "This preview isn't stored for the example person. Start your own kit to see it on you."
   }.freeze
   PHOTO_REASONS = %w[no_face many_faces face_too_small eyes_closed bad_pose bad_image too_large].freeze
+  # Failures on our side or the provider's that another go can fix.
+  TRY_AGAIN = %w[timeout provider_error rate_limited].freeze
 
   def render_failure_message(render)
     FAILURES.fetch(render.failure_reason.to_s, FAILURES["provider_error"])
