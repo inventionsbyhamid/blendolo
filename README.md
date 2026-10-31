@@ -37,7 +37,7 @@ The app follows its own advice: targets 64 to 104 px by "My hands today", main b
 flowchart LR
   subgraph Phone["Phone browser"]
     UI["Hotwire pages<br/>big targets, tap guard"]
-    FC["Face checks<br/>MediaPipe, in the browser"]
+    FC["Face checks<br/>MediaPipe, in a Web Worker"]
     TTS["Read aloud<br/>Web Speech"]
   end
 
@@ -102,7 +102,7 @@ sequenceDiagram
 
 - **Every swap is a parameter change** in one Makeup VTO call. Mapping: [docs/effects-vocabulary.md](docs/effects-vocabulary.md).
 - **Never pays twice**: one render per photo and effect list, under a row lock. A repeat view or a double tap is free.
-- **Never runs dry**: every live preview is paid with credits. The app stops at a daily unit cap (`YOUCAM_DAILY_UNIT_CAP`, 60 by default) or before the balance drops below a floor (`YOUCAM_UNIT_FLOOR`, 150). Example people never call the API.
+- **Never runs dry**: every live preview is paid with credits. The app stops at a daily unit cap (`YOUCAM_DAILY_UNIT_CAP`, 40 on the live site) or before the balance drops below a floor (`YOUCAM_UNIT_FLOOR`, 150). Example people never call the API.
 - **Stays under the rate limit**: 1.4 s between calls across web and worker, under YouCam's 250 requests per 5 minutes.
 - **Never hangs**: webhook plus polling, with a clear message after 3 minutes.
 - **Several keys**: `YOUCAM_API_KEYS` takes a comma separated list. A call uses the first key above the floor.
@@ -144,15 +144,15 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 
 | Path | What |
 |---|---|
-| `config/blendolo/*.yml` | Steps, looks, examples, products, plans, credits, caps. Data, not code |
+| `config/blendolo/*.yml` | Steps, looks, examples, products, plans, credits. Data, not code |
 | `app/models/ease/` | Ease engine: hand profiles, step and look scores, swaps, routine order |
 | `app/models/looks/` | Steps to effects in our own words; colour snapping |
 | `app/models/appearance/` | Provider interface, YouCam adapter, fake provider |
-| `app/models/billing/` | Billing interface, Dodo adapter, local test checkout, plans, margin check |
+| `app/models/billing/`, `billing_event.rb`, `checkout.rb`, `billing_subscription.rb` | Billing: provider interface, Dodo adapter, local test checkout, plans, margin check, webhook events, checkouts, subscriptions |
 | `app/controllers/local/` | Test person sign in and test checkout, development only |
-| `app/models/credits.rb`, `unit_guard.rb`, `provider_throttle.rb`, `previews.rb` | Credits ledger, unit caps, throttle, render cache |
+| `app/models/credits.rb`, `unit_guard.rb`, `provider_throttle.rb`, `previews.rb` | Credits ledger, daily cap and floor, throttle, render cache |
 | `app/jobs/provider_*` | Start and poll jobs |
-| `app/javascript/capture/` | Face checks and colour sampling in the browser |
+| `app/javascript/capture/`, `workers/` | Face checks (in a Web Worker) and colour sampling in the browser |
 
 ## Deploy
 
@@ -178,7 +178,7 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 - Google sign in gives us your name, email, Google id and picture link. Nothing else.
 - Photos go to our storage, and to YouCam only to make previews. YouCam deletes its copies within 30 days.
 - A kit is deleted 30 days after your last visit (or 7, your choice), or at once with "Delete everything".
-- "Delete my account" deletes the account, its kits and its credits. Dodo Payments handles cards; we never see them.
+- "Delete my account" deletes the account, its kits and its credits. Dodo Payments handles cards; we never see them. Payment records (ids and amounts, no name or email) stay for tax and accounting.
 
 ## License
 
