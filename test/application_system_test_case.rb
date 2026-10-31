@@ -25,9 +25,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   SCREENS = Rails.root.join("tmp/screenshots/screens")
 
-  # Saves a picture of the page for a person to look at (kept in tmp/screenshots/screens on the CI host).
+  # Saves a picture of the whole page for a person to look at (kept in tmp/screenshots/screens on the CI host).
   def shot(name)
     SCREENS.mkpath
-    page.save_screenshot(SCREENS.join("#{name}.png").to_s) # rubocop:disable Lint/Debugger
+    browser = page.driver.browser
+    size = browser.execute_cdp("Page.getLayoutMetrics")["cssContentSize"]
+    clip = { x: 0, y: 0, width: size["width"], height: [ size["height"], 6000 ].min, scale: 1 }
+    png = browser.execute_cdp("Page.captureScreenshot", format: "png", captureBeyondViewport: true, clip:)["data"]
+    SCREENS.join("#{name}.png").binwrite(png.unpack1("m"))
   end
 end

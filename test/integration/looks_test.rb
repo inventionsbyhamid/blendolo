@@ -78,4 +78,31 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".step-header__count", "Step 1 of #{kit.routine.size}"
   end
+
+  test "try again asks the provider again for a preview that took too long" do
+    kit = make_kit(tremor: 2)
+    get kit_look_path(kit, "red_lip")
+    render = kit.renders.classic.sole
+    render.update!(status: :failed, failure_reason: "timeout")
+    KitHelpers::CountRequests.count = 0
+
+    get kit_look_path(kit, "red_lip")
+    assert_select "##{ActionView::RecordIdentifier.dom_id(render)}", /That took too long on our side/
+    post try_again_kit_render_path(kit, render), headers: { "HTTP_REFERER" => kit_look_path(kit, "red_lip") }
+
+    assert_redirected_to kit_look_path(kit, "red_lip")
+    assert_equal 1, KitHelpers::CountRequests.count
+    assert render.reload.pending?
+  end
+
+  test "try again leaves a photo problem alone" do
+    kit = make_kit(tremor: 2)
+    get kit_look_path(kit, "red_lip")
+    render = kit.renders.classic.sole
+    render.update!(status: :failed, failure_reason: "eyes_closed")
+    KitHelpers::CountRequests.count = 0
+
+    post try_again_kit_render_path(kit, render)
+    assert_equal 0, KitHelpers::CountRequests.count
+  end
 end
