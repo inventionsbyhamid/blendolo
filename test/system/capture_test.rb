@@ -313,6 +313,75 @@ class CaptureTest < ApplicationSystemTestCase
     page.driver.browser.execute_cdp("Page.removeScriptToEvaluateOnNewDocument", identifier: script["identifier"]) if script
   end
 
+  test "spoken help plays recordings one at a time: the newest message waits, the countdown cuts in" do
+    visit new_kit_photo_path(@kit)
+    assert_selector "[data-capture-state=live]", wait: 10
+    result = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      #{FAKE_CHECKS}
+      const tick = () => new Promise((resolve) => setTimeout(resolve, 50))
+      import("voice/player").then(async (voice) => {
+        voice.stop() // whatever the page said as the camera started
+        const plays = [], spoken = []
+        let pauses = 0, audio = null
+        HTMLAudioElement.prototype.play = function () {
+          audio = this
+          plays.push(new URL(this.src).pathname)
+          return Promise.resolve()
+        }
+        HTMLAudioElement.prototype.pause = function () { pauses += 1 }
+        window.speechSynthesis.speak = (utterance) => { spoken.push(utterance.text) }
+        const capture = captureController()
+
+        capture.say("Hold still")
+        capture.say("Step back a little") // waits for "Hold still" to end
+        capture.say("Come a little closer") // newer: takes its place
+        await tick()
+        const whileSaying = { plays: [...plays], pauses }
+        audio.dispatchEvent(new Event("ended"))
+        await tick()
+        const afterEnd = plays.length
+        capture.say("3", { force: true }) // cuts "Come a little closer" off
+        await tick()
+        const afterCountdown = { plays: plays.length, pauses }
+        capture.toggleSpeech() // spoken help off: stops it
+        const off = capture.element.querySelector("[data-capture-target=speech]").getAttribute("aria-pressed")
+        capture.toggleSpeech() // and on again, as the next test expects
+        done({ plays, whileSaying, afterEnd, afterCountdown, pauses, spoken, off })
+      })
+    JS
+
+    path = ->(text) { "/voice/#{Voice.key(text)}.mp3" }
+    assert_equal({ "plays" => [ path.("Hold still") ], "pauses" => 0 }, result["whileSaying"])
+    assert_equal 2, result["afterEnd"], "the newest message is said when the line before ends"
+    assert_equal [ path.("Hold still"), path.("Come a little closer"), path.("3") ], result["plays"]
+    assert_equal({ "plays" => 3, "pauses" => 1 }, result["afterCountdown"])
+    assert_equal 2, result["pauses"], "switching spoken help off stops the countdown's line"
+    assert_empty result["spoken"], "every line had a recording"
+    assert_equal "false", result["off"]
+  end
+
+  test "spoken help uses the phone's own voice for a message without a recording" do
+    visit new_kit_photo_path(@kit)
+    assert_selector "[data-capture-state=live]", wait: 10
+    spoken = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      #{FAKE_CHECKS}
+      import("voice/player").then(async (voice) => {
+        voice.stop()
+        const spoken = []
+        HTMLAudioElement.prototype.play = () => Promise.reject(new Error("no recording should play"))
+        window.speechSynthesis.speak = (utterance) => { spoken.push({ text: utterance.text, rate: utterance.rate }) }
+        captureController().say("A message nobody recorded")
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        done(spoken)
+      })
+    JS
+
+    assert_equal [ "A message nobody recorded" ], spoken.map { |utterance| utterance["text"] }
+    assert_in_delta 0.9, spoken.first["rate"], 0.001
+  end
+
   test "a double tap on spoken help switches it once" do
     visit new_kit_photo_path(@kit)
     assert_selector "[data-capture-state=live]", wait: 10
