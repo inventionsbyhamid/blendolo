@@ -224,7 +224,7 @@ class CaptureTest < ApplicationSystemTestCase
     on_phone { visit new_kit_photo_path(@kit) }
     assert_selector "[data-capture-state=live]", wait: 10
     # The phone lies face down: the camera's picture is black, and so is every copy the worker gets.
-    execute_async_script <<~JS
+    evaluate_async_script <<~JS
       const done = arguments[arguments.length - 1]
       #{FAKE_CHECKS}
       window.log = []
