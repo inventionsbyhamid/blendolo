@@ -1,8 +1,10 @@
 require "application_system_test_case"
 require "support/tremor_checks"
+require "support/kit_helpers"
 
 class AccessibilityTest < ApplicationSystemTestCase
   include TremorChecks
+  include KitHelpers
 
   PUBLIC_PAGES = [ "/", "/privacy", "/accessibility", "/sources", "/guides/eyeliner-with-a-tremor" ].freeze
 
@@ -21,9 +23,19 @@ class AccessibilityTest < ApplicationSystemTestCase
     end
   end
 
+  test "kit pages pass axe" do
+    kit_pages.each do |path|
+      visit path
+      assert_selector "h1"
+      assert_axe_clean
+    end
+  end
+
+  # Five key pages of the app, and the public pages, on a phone. At the steady size every target is still 64 px.
   test "targets at least 64px" do
+    kit = make_kit(hands_today: 0)
     on_a_phone do
-      PUBLIC_PAGES.each do |path|
+      [ *PUBLIC_PAGES, *kit_pages(kit) ].each do |path|
         visit path
         assert_selector "h1"
         assert_operator evaluate_script("window.innerWidth"), :<=, 400
@@ -31,4 +43,9 @@ class AccessibilityTest < ApplicationSystemTestCase
       end
     end
   end
+
+  private
+    def kit_pages(kit = make_kit)
+      [ start_path, kit_consent_path(kit), kit_hand_path(kit, 1), kit_path(kit), delete_kit_path(kit) ]
+    end
 end
