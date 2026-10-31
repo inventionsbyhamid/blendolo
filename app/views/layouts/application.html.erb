@@ -30,6 +30,7 @@
     <%= render "shared/header" %>
 
     <main id="main">
+      <% if notice.present? %><p class="flash" role="status"><%= notice %></p><% end %>
       <%= yield %>
     </main>
 

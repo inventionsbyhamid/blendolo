@@ -1,0 +1,11 @@
+<% back = @number == 1 ? kit_consent_path(@kit) : kit_hand_path(@kit, @number - 1) %>
+<div class="page stack">
+  <%= render "components/step_header", step: @number + 1, of: KitsHelper::SETUP_STEPS, back: back, finish_later: kit_path(@kit) %>
+  <h1 class="instruction m-0" id="question"><%= hand_question(@kit, @question) %></h1>
+  <ul class="tiles" aria-labelledby="question">
+    <% hand_answers(@question).each_with_index do |answer, value| %>
+      <li><%= render "components/tile", label: answer, chosen: @kit.public_send(@question) == value,
+                url: kit_hand_path(@kit, @number), method: :patch, params: { answer: value } %></li>
+    <% end %>
+  </ul>
+</div>

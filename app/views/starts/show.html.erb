@@ -1,0 +1,17 @@
+<% seo title: "Start", description: "Start your Blendolo kit: for you, for someone you help, or with an example person." %>
+<div class="page stack">
+  <header class="stack">
+    <h1>Who is this for?</h1>
+    <p class="lead m-0">No account. Your kit gets its own private link.</p>
+  </header>
+
+  <% if @remembered_kit %>
+    <%= render "components/button", label: "Carry on with your kit", href: kit_path(@remembered_kit), variant: :primary, icon: :next %>
+  <% end %>
+
+  <ul class="tiles">
+    <li><%= render "components/tile", label: "For me", hint: "Your hands, your face, your looks.", url: start_path, method: :post, params: { path: "self_use" } %></li>
+    <li><%= render "components/tile", label: "I help someone", hint: "You can take the photo for them.", url: start_path, method: :post, params: { path: "helper" } %></li>
+    <li><%= render "components/tile", label: "Try with an example person", hint: "Rosa, June or Amara. No photo needed.", href: examples_path %></li>
+  </ul>
+</div>

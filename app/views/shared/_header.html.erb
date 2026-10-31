@@ -6,6 +6,8 @@
     <% end %>
     <% if content_for?(:header_nav) %>
       <%= yield :header_nav %>
+    <% elsif @kit&.persisted? %>
+      <%= render "kits/menu", kit: @kit %>
     <% end %>
   </div>
 </header>
