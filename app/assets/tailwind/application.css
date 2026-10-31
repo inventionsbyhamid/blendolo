@@ -594,9 +594,10 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .plans { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); grid-template-columns: 1fr; }
   @media (min-width: 960px) { .plans { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .plan { display: grid; gap: 16px; grid-template-rows: auto auto auto 1fr auto; scroll-margin-top: 24px; }
-  .plan > * { margin: 0; }
+  /* Two classes, so page heading margins and sizes (.page h2) don't reach into the cards. */
+  .plans .plan > * { margin: 0; }
   .plan--featured { border: 3px solid var(--ink); }
-  .plan__name { font-size: 1.75rem; }
+  .plans .plan__name { font-size: 1.75rem; }
   .plan__price { font-size: 2.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; }
   .plan__per { font-size: 1.25rem; font-weight: 800; color: var(--muted); letter-spacing: 0; }
   .plan__credits { font-size: 1.25rem; font-weight: 800; }
