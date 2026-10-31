@@ -30,6 +30,7 @@ Owner notes for payments:
 - **Disputes**: an opened, accepted or lost dispute takes the payment's credits back; a won one gives them back, once.
 - **Discount codes are off** at checkout (`allow_discount_code: false`). Don't create discount codes in the Dodo dashboard: a static `/buy` link would still accept them, and credits are granted whatever was paid (a different amount is only logged).
 - **Live test checklist**: `metadata.ref` arrives on `subscription.active` and `subscription.renewed` (the Clinic plan starts only with it), and the checkout and portal pages open (their hosts are in the content security policy's `form-action`: `test.checkout`, `checkout`, `test.customer` and `customer.dodopayments.com`).
+- `WEB_CONCURRENCY` (optional, web app): Puma processes. The image sets 2, one per CPU of the web container; under load that doubles the requests it answers (and adds about 100 MB). Set it to the container's CPU count if that differs.
 - `CAPTURE_WORKER` (optional, web app): `off` (or `false`, or `0`) makes the capture page run its face checks on the page instead of in a Web Worker. Pages get slower while the camera shows; use it only if a browser runs the worker badly.
 
 Production stops at boot and names the variable when a required one is blank (`lib/required_env.rb`). After changing a variable, redeploy or restart both apps.

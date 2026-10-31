@@ -18,7 +18,8 @@
 %>
   <% if local_assigns[:image] %>
     <span class="tile__media">
-      <%= image_tag image, alt: local_assigns.fetch(:image_alt, ""), class: "tile__image" %>
+      <%# Lazy: most tiles in a list start below the screen, so their pictures wait until they're scrolled near. %>
+      <%= image_tag image, alt: local_assigns.fetch(:image_alt, ""), class: "tile__image", loading: "lazy", decoding: "async" %>
       <% if local_assigns[:image_note] %><span class="tile__note"><%= image_note %></span><% end %>
     </span>
   <% elsif local_assigns[:art] %>

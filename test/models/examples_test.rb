@@ -33,7 +33,7 @@ class ExamplesTest < ActiveSupport::TestCase
     attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
     assert_equal 6, attachments.size
     attachments.product(Examples::VARIANT_SIZES).each do |attachment, size|
-      assert attachment.variant(resize_to_limit: [ size, size ]).send(:processed?), "#{attachment.filename} at #{size}"
+      assert ProxiedImage.variant(attachment, size).send(:processed?), "#{attachment.filename} at #{size}"
     end
   end
 

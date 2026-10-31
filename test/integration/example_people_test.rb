@@ -146,6 +146,17 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     assert_select ".optional-step", text: /#{Regexp.escape(Ease::StepCatalogue.fetch("mascara_upper").no_swap_why)}/
   end
 
+  test "step cards and the signature page keep the photo's place while it loads" do
+    kit = Examples.kit_for("rosa")
+    kit.photos.each { it.image.blob.analyze }
+    kit.renders.each { it.result.blob.analyze }
+
+    get step_kit_routine_path(kit, 1)
+    assert_select "img.step-zoom__image[width][height]"
+    get kit_signature_path(kit)
+    assert_select "img.three-up__photo[width][height]"
+  end
+
   test "an optional step's card says it is optional" do
     kit = Examples.kit_for("rosa")
     entries = RoutinePlan.entries(kit)

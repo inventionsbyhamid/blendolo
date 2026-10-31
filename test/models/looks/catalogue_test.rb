@@ -57,7 +57,7 @@ class Looks::CatalogueTest < ActiveSupport::TestCase
 
   def test_every_look_has_a_thumbnail_path_and_short_warm_copy
     Looks::Catalogue.all.each do |look|
-      assert_equal "looks/#{look.key}.jpg", look.thumbnail
+      assert_equal "looks/#{look.key}.webp", look.thumbnail
       [ look.name, look.blurb ].each { assert_copy_follows_house_rules it, look.key }
       assert_operator look.blurb.split.size, :<=, 20, look.key
     end

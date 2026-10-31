@@ -37,11 +37,34 @@ module RendersHelper
 
   # A resized copy (makeup results arrive as large PNGs), served from our own origin.
   def render_image(render, alt:)
-    image_tag proxied_image_path(render.result, 900), alt:, class: "render__image"
+    proxied_image_tag(render.result, 900, alt:, class: "render__image")
   end
+
+  # An <img> of proxied_image_path with the resized picture's width and height, once the original has been measured
+  # (Active Storage analyses it after upload), so the page keeps the picture's place while it loads instead of
+  # jumping down.
+  def proxied_image_tag(attachment, size, **options)
+    width, height = attachment.blob.metadata.values_at(:width, :height).map(&:to_i)
+    if width.positive? && height.positive?
+      scale = [ size.fdiv(width), size.fdiv(height), 1 ].min
+      options = { width: (width * scale).round, height: (height * scale).round, **options }
+    end
+    image_tag proxied_image_path(attachment, size), **options
+  end
+
+  # Image links stay the same for this long, so a picture seen again (the next step card, back to a look) comes from
+  # the browser's cache instead of the network. A link made at any moment still works for 50 to 60 minutes: never
+  # longer than the hour image links get (ActiveStorage.urls_expire_in).
+  IMAGE_LINK_STEP = 10.minutes
 
   # An attachment resized to fit size x size, as a same-origin path through the Active Storage proxy.
   def proxied_image_path(attachment, size)
-    rails_storage_proxy_path(attachment.variant(resize_to_limit: [ size, size ]))
+    rails_storage_proxy_path(ProxiedImage.variant(attachment, size), expires_at: image_link_expiry)
+  end
+
+  # When the image links made now stop working: the start of this IMAGE_LINK_STEP, plus the hour.
+  def image_link_expiry(now = Time.current)
+    step = IMAGE_LINK_STEP.to_i
+    Time.at(now.to_i - (now.to_i % step)).utc + ActiveStorage.urls_expire_in
   end
 end

@@ -35,7 +35,7 @@ module Examples
     def prepare_variants(kit)
       attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
       attachments.select(&:attached?).product(VARIANT_SIZES).each do |attachment, size|
-        attachment.variant(resize_to_limit: [ size, size ]).processed
+        ProxiedImage.variant(attachment, size).processed
       end
     end
 

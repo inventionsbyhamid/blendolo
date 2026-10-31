@@ -174,6 +174,14 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_includes badges, "Classic: Hard \u2192 , easy version: Some care"
   end
 
+  test "the look pictures load as they're scrolled near" do
+    get kit_looks_path(make_kit)
+
+    pictures = css_select(".tiles--looks img.tile__image")
+    assert_equal Looks::Catalogue.all.size, pictures.size
+    assert pictures.all? { it["loading"] == "lazy" && it["decoding"] == "async" && it["src"].end_with?(".webp") }
+  end
+
   test "softer and bolder make one tweak render per level" do
     kit = make_kit(tremor: 2)
 

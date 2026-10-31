@@ -8,15 +8,24 @@ self.addEventListener("install", (event) => {
   self.skipWaiting()
 })
 
+// Navigation preload: the browser asks for the page while this worker starts, instead of after, so a page opened
+// from a link or the home screen doesn't wait for the worker first.
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
+  event.waitUntil(Promise.all([
+    self.registration.navigationPreload?.enable(),
     caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
-  )
+  ]))
   self.clients.claim()
 })
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return
 
-  event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)))
+  event.respondWith((async () => {
+    try {
+      return (await event.preloadResponse) || (await fetch(event.request))
+    } catch {
+      return caches.match(OFFLINE_URL)
+    }
+  })())
 })
