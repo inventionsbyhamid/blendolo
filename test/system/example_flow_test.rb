@@ -8,7 +8,6 @@ class ExampleFlowTest < ApplicationSystemTestCase
   test "an example person end to end without the provider" do
     page.current_window.resize_to(390, 844)
     calls = ProviderCall.count
-    renders = Render.count
 
     visit root_path
     assert_selector "h1", text: "same red lip"
@@ -20,6 +19,8 @@ class ExampleFlowTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Rosa's kit"
     assert_text "AI generated photo"
     kit = Examples.kit_for("rosa")
+    # Opening the kit built it from the stored photos and previews; from here on nothing is added.
+    renders = Render.count
     shot "integration-kit"
 
     within("main") { click_on "Looks" }
