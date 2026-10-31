@@ -14,6 +14,16 @@ Rails.application.routes.draw do
   mount MissionControl::Jobs::Engine, at: "/jobs"
 
   root "pages#home"
+
+  # Google sign in (OmniAuth answers POST /auth/google_oauth2 itself), sign out, and the account.
+  get "sign_in" => "sessions#new", as: :sign_in
+  get "auth/:provider/callback" => "sessions#create", as: :auth_callback, constraints: { provider: "google_oauth2" }
+  get "auth/failure" => "sessions#failure", as: :auth_failure
+  delete "sign_out" => "sessions#destroy", as: :sign_out
+  resource :account, only: %i[show destroy] do
+    get :delete
+  end
+
   get "privacy" => "pages#privacy"
   get "accessibility" => "pages#accessibility"
   get "sources" => "pages#sources"

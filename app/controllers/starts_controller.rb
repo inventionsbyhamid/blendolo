@@ -1,4 +1,5 @@
-# Start: pick a path (for me, or for someone I help) and get a private kit. No account.
+# Start: pick a path (for me, or for someone I help) and get a private kit. No account needed; a signed-in person's
+# kit goes straight into their account.
 class StartsController < ApplicationController
   PATHS = %w[self_use helper].freeze
   # A second "Start" within this time from the same device carries on with the kit the first one made.
@@ -13,7 +14,7 @@ class StartsController < ApplicationController
 
   def create
     path = params[:path].presence_in(PATHS) or return redirect_to(start_path)
-    kit = repeat_of(path) || Kit.create!(path:)
+    kit = repeat_of(path) || Kit.create!(path:, user: current_user)
     remember_kit(kit)
     redirect_to kit_consent_path(kit)
   end

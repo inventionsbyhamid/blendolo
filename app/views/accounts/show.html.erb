@@ -1,0 +1,40 @@
+<% page_title "Your account" %>
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">Your account</h1>
+    <p class="lead m-0">Signed in with Google as <%= current_user.name.presence || current_user.first_name %>, <%= current_user.email %>.</p>
+  </header>
+
+  <section class="card stack" aria-labelledby="credits-title">
+    <h2 id="credits-title" class="m-0">Credits</h2>
+    <p class="m-0 instruction"><%= credits_balance_words(@credits) %></p>
+    <p class="m-0">The example people, step cards, shopping lists and share links are free.</p>
+    <%= render "components/button", label: "Get credits", href: Credits::PRICING_PATH, variant: :secondary %>
+  </section>
+
+  <section class="stack" aria-labelledby="kits-title">
+    <h2 id="kits-title" class="m-0">Your kits</h2>
+    <% if @kits.any? %>
+      <ul class="linklist">
+        <% @kits.each do |kit| %>
+          <li>
+            <%= link_to kit_path(kit), data: { controller: "tap-guard", action: "click->tap-guard#guard" } do %>
+              <%= kit_name(kit) %><small>Last used <%= l kit.last_active_at.to_date, format: :long %></small>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="m-0">No kits yet.</p>
+    <% end %>
+    <%= render "components/button", label: "Start a new kit", href: start_path, variant: :secondary %>
+  </section>
+
+  <%= render "components/button", label: "Sign out", url: sign_out_path, method: :delete, variant: :secondary %>
+
+  <section class="stack" aria-labelledby="delete-title">
+    <h2 id="delete-title" class="m-0">Delete my account</h2>
+    <p class="m-0">Deletes your account, your kits with their photos, and your credits now.</p>
+    <%= render "components/button", label: "Delete my account", href: delete_account_path, variant: :danger, icon: :trash %>
+  </section>
+</div>

@@ -4,10 +4,12 @@
 # Use this to limit dissemination of sensitive information.
 # See the ActiveSupport::ParameterFilter documentation for supported notations and behaviors.
 # Kit and share tokens are the keys to a person's kit; photos, references and sampled colours are about their face.
-# Active Storage's signed and encoded ids are short-lived keys to those photos.
+# Active Storage's signed and encoded ids are short-lived keys to those photos. Email is personal.
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
-  :image, :reference, :sampled, :signed_id, :signed_blob_id, :encoded_key, :encoded_token
+  :image, :reference, :sampled, :signed_id, :signed_blob_id, :encoded_key, :encoded_token,
+  # Google's answer to a sign in: the one-time code and the state that guards it.
+  :code, :state
 ]
 
 # Redirects to a kit, a share page or a stored file would print their key: log them as [FILTERED].

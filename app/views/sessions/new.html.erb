@@ -1,0 +1,16 @@
+<% seo title: "Sign in", description: "Sign in to Blendolo with Google to see looks on your own face. Your first look is free.", noindex: true %>
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">Sign in</h1>
+    <p class="lead m-0">Sign in to see looks on your own face. Your first look is free.</p>
+  </header>
+
+  <%= render "sessions/google_button", origin: @origin %>
+
+  <p class="m-0">We get your name, email and Google id from Google. No password, nothing else.</p>
+  <p class="m-0">No account needed to try the example people or to start a kit.</p>
+  <div class="button-row button-row--2">
+    <%= render "components/button", label: "Try an example person", href: examples_path, variant: :secondary %>
+    <%= render "components/button", label: "How we use your data", href: privacy_path, variant: :secondary %>
+  </div>
+</div>

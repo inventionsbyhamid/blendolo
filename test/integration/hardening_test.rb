@@ -16,6 +16,7 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_equal [ "'self'", "data:", "blob:" ], csp["img-src"]
     assert_equal [ "'none'" ], csp["object-src"]
     assert_equal [ "'none'" ], csp["frame-ancestors"]
+    assert_equal [ "'self'", "https://accounts.google.com" ], csp["form-action"]
     assert_no_match(/unsafe-inline|unsafe-eval'|\*/, response.headers["Content-Security-Policy"].gsub("'wasm-unsafe-eval'", ""))
 
     policy = response.headers["Permissions-Policy"]
@@ -33,7 +34,7 @@ class HardeningTest < ActionDispatch::IntegrationTest
 
     filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
     filtered = filter.filter("token" => "a", "kit_token" => "b", "image" => "c", "reference" => "d", "sampled" => "e",
-      "signed_id" => "f", "signed_blob_id" => "g", "encoded_key" => "h")
+      "signed_id" => "f", "signed_blob_id" => "g", "encoded_key" => "h", "code" => "i", "state" => "j", "email" => "k")
     assert filtered.values.all?("[FILTERED]"), filtered.inspect
     assert Rails.application.config.filter_redirect.any? { it.match?("https://blendolo.dijmo.com/s/abc") }
     assert Rails.application.config.filter_redirect.any? { it.match?("https://blendolo.dijmo.com/rails/active_storage/blobs/proxy/x/a.jpg") }

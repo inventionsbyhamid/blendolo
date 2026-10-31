@@ -1,4 +1,5 @@
-<%# The kit's header menu: "My hands today", the kit home, and delete. A details element: no script needed. %>
+<%# The kit's header menu: "My hands today", the kit home, delete, and the account ("Signed in as" the first name,
+    and sign out; or sign in). A details element: no script needed. %>
 <details class="menu">
   <summary data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">Menu</summary>
   <div class="menu__panel">
@@ -7,5 +8,7 @@
     <% unless kit.example? %>
       <%= render "components/button", label: "Delete everything", href: delete_kit_path(kit), variant: :danger %>
     <% end %>
+    <%# Example people's kits stay free of sign in prompts. %>
+    <% if signed_in? || !kit.example? %><%= render "accounts/menu_items" %><% end %>
   </div>
 </details>

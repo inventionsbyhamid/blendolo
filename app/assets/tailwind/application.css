@@ -353,6 +353,14 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .btn--quiet:hover { background: var(--surface); color: var(--ink); }
   .btn--danger { background: var(--surface); color: var(--rose-ink); border-color: var(--rose-ink); }
   .btn--danger:hover { background: var(--rose); color: var(--rose-ink); }
+  /* "Sign in with Google": Google's own light button colours (white, #747775 outline, #1F1F1F words, the four-colour G),
+     as their brand rules ask, at our primary size. */
+  .btn--google {
+    min-height: max(var(--tap-primary), var(--tap)); font-size: 1.375rem;
+    background: #FFFFFF; color: #1F1F1F; border-color: #747775; border-width: 2px;
+  }
+  .btn--google:hover { background: #F2F2F2; color: #1F1F1F; }
+  .btn__logo { width: 1.5em; height: 1.5em; flex: none; }
   .btn--inline { width: auto; display: inline-flex; }
   .btn__icon { width: 1.3em; height: 1.3em; flex: none; }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.75; cursor: progress; }
@@ -442,6 +450,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 24px; }
   .card > :last-child { margin-bottom: 0; }
+  /* The price of a preview, shown before it is spent: "Uses 2 credits. You have 14." */
+  .spend__words { font-size: 1.375rem; font-weight: 800; }
 
   /* Link cards: lists of links in prose become full-width targets. */
   .linklist { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: var(--gap); }

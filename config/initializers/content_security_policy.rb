@@ -1,6 +1,6 @@
 # Content Security Policy: everything comes from our own origin, with one exception. Hands-free capture runs MediaPipe
 # Tasks Vision in the browser, so its script and WebAssembly come from one pinned package on jsDelivr, and its face
-# model from one file (config.x.mediapipe). Inline scripts and styles need the per-request nonce (importmap and
+# model from one file (config.x.mediapipe); and the Google sign in form ends on Google's page. Inline scripts and styles need the per-request nonce (importmap and
 # Turbo's progress bar use it). Images may be data: or blob: (camera frames and previews).
 # See https://guides.rubyonrails.org/security.html#content-security-policy-header
 
@@ -10,7 +10,8 @@ Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src :self
     policy.base_uri :self
-    policy.form_action :self
+    # Sign in with Google is a form POST that redirects to Google's sign in page.
+    policy.form_action :self, "https://accounts.google.com"
     policy.frame_ancestors :none
     policy.object_src :none
     policy.font_src :self, :data

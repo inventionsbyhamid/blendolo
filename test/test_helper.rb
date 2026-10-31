@@ -7,6 +7,9 @@ require "webmock/minitest"
 # and browser driver for system tests stay reachable.
 WebMock.disable_net_connect!(allow_localhost: true)
 
+# Google sign in answers from OmniAuth's mock (test/support/account_helpers.rb), never from Google.
+OmniAuth.config.test_mode = true
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

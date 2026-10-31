@@ -20,16 +20,24 @@ module RequiredEnv
 
   # Variables that take one of a few words. A typo such as APPEARANCE_PROVIDER=YouCam would otherwise skip the YouCam
   # checks, or run neither process.
-  ALLOWED = { "APPEARANCE_PROVIDER" => %w[youcam fake], "BLENDOLO_PROCESS" => %w[web jobs] }.freeze
+  # AUTH_PROVIDER has one word so far; anything else is a typo that would skip the Google checks.
+  ALLOWED = { "APPEARANCE_PROVIDER" => %w[youcam fake], "BLENDOLO_PROCESS" => %w[web jobs],
+              "AUTH_PROVIDER" => %w[google] }.freeze
 
   # Needed only with the live provider (APPEARANCE_PROVIDER=youcam). YOUCAM_WEBHOOK_SECRET stays optional.
   YOUCAM = %w[YOUCAM_API_KEYS YOUCAM_DAILY_UNIT_CAP YOUCAM_UNIT_FLOOR].freeze
+
+  # Needed only with Google sign in (AUTH_PROVIDER=google, which is also what a blank AUTH_PROVIDER means).
+  GOOGLE = %w[GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET].freeze
 
   module_function
 
   # The entries production checks, given the environment it boots with.
   def production(env = ENV)
-    env["APPEARANCE_PROVIDER"].to_s.strip == "youcam" ? PRODUCTION + YOUCAM : PRODUCTION
+    names = PRODUCTION
+    names += YOUCAM if env["APPEARANCE_PROVIDER"].to_s.strip == "youcam"
+    names += GOOGLE if env["AUTH_PROVIDER"].to_s.strip.then { |provider| provider.empty? || provider == "google" }
+    names
   end
 
   # Raises Missing naming the first entry none of whose names has a value. It names variables, never values: the
