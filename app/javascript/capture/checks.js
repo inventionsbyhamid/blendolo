@@ -59,7 +59,7 @@ class WorkerChecks {
     if (this.busy || this.broken) return null
     this.busy = true
     try {
-      const frame = await createImageBitmap(video, { ...smallSize(video), resizeQuality: "low" })
+      const frame = await smallBitmap(video)
       return (await this.request({ type: "video", frame, timestamp }, [frame])).summary
     } finally {
       this.busy = false
@@ -158,6 +158,19 @@ class PageChecks {
 function smallSize(video) {
   const resizeWidth = Math.min(FRAME_WIDTH, video.videoWidth)
   return { resizeWidth, resizeHeight: Math.max(1, Math.round(video.videoHeight * resizeWidth / video.videoWidth)) }
+}
+
+// A small copy of the camera's current frame as an ImageBitmap, to send to the worker. A browser that can't scale a
+// bitmap as it makes one gets it drawn small first.
+async function smallBitmap(video) {
+  const size = smallSize(video)
+  try {
+    return await createImageBitmap(video, { ...size, resizeQuality: "low" })
+  } catch {
+    const canvas = new OffscreenCanvas(size.resizeWidth, size.resizeHeight)
+    canvas.getContext("2d").drawImage(video, 0, 0, size.resizeWidth, size.resizeHeight)
+    return canvas.transferToImageBitmap()
+  }
 }
 
 // A small copy of the camera's current frame: an ImageBitmap where the browser can make one, otherwise a canvas.
