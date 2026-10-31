@@ -40,6 +40,6 @@ module RendersHelper
 
   # An attachment resized to fit size x size, as a same-origin path through the Active Storage proxy.
   def proxied_image_path(attachment, size)
-    rails_storage_proxy_path(attachment.variant(resize_to_limit: [ size, size ]))
+    rails_storage_proxy_path(ProxiedImage.variant(attachment, size))
   end
 end

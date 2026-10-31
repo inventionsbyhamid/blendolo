@@ -18,7 +18,7 @@ class StorageProxyTest < ActionDispatch::IntegrationTest
 
     get src
     assert_response :success
-    assert_equal "image/jpeg", response.media_type
+    assert_equal "image/webp", response.media_type
     assert_equal "max-age=3600, private", response.headers["Cache-Control"]
   end
 
