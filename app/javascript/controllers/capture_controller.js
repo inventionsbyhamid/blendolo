@@ -31,8 +31,13 @@ export default class extends Controller {
     this.renderSpeech()
     this.loadGates()
     this.leave = () => this.stopCamera()
+    // Back from another site restores this page from the browser's cache with the camera off: start it again.
+    this.restore = (event) => {
+      if (event.persisted && this.cameraValue && this.state !== "review") this.startCamera()
+    }
     document.addEventListener("turbo:before-visit", this.leave)
     window.addEventListener("pagehide", this.leave)
+    window.addEventListener("pageshow", this.restore)
     this.fresh()
   }
 
@@ -41,6 +46,7 @@ export default class extends Controller {
     this.stopCamera()
     document.removeEventListener("turbo:before-visit", this.leave)
     window.removeEventListener("pagehide", this.leave)
+    window.removeEventListener("pageshow", this.restore)
     clearTimeout(this.countdownTimer)
     window.speechSynthesis?.cancel()
   }
