@@ -281,6 +281,15 @@ class ProviderJobsTest < ActiveJob::TestCase
     assert render.reload.running?
   end
 
+  test "claiming a start forgets the previous task id" do
+    render = makeup_render.tap(&:request!)
+    render.update_columns(external_id: "task-from-a-timed-out-attempt")
+
+    assert render.claim_start!
+    assert_nil render.reload.external_id
+    assert render.running?
+  end
+
   test "stale running render can be requested again" do
     render = makeup_render.tap(&:request!)
     assert render.claim_start! # the start job claimed it, then its worker died before the provider answered

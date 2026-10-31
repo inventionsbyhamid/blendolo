@@ -52,7 +52,8 @@ module ProviderTracked
   # Moves a pending render to running for exactly one caller: the one that starts the provider task.
   def claim_start!
     claimed = Render.where(id:, status: Render.statuses[:pending])
-      .update_all(status: Render.statuses[:running], started_at: Time.current, updated_at: Time.current) == 1
+      .update_all(status: Render.statuses[:running], started_at: Time.current, updated_at: Time.current,
+        external_id: nil) == 1
     return false unless claimed
 
     reload
