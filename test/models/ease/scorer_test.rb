@@ -64,7 +64,34 @@ class Ease::ScorerTest < ActiveSupport::TestCase
   end
 
   def test_empty_look_is_easy
-    assert_equal({ ease: 100, hardest_step: nil }, Ease::Scorer.look([], @default))
+    assert_equal({ ease: 100, hardest_step: nil, optional: [] }, Ease::Scorer.look([], @default))
+  end
+
+  def test_optional_steps_do_not_set_the_grade
+    mascara = Ease::StepCatalogue.fetch("mascara_upper").as_optional
+    required = steps(%w[tinted_moisturiser_fingers tinted_brow_gel tinted_balm])
+
+    result = Ease::Scorer.look(required + [ mascara ], @default)
+
+    assert_equal 83, result[:ease], "graded by the brow gel, not by mascara at 44"
+    assert_equal "tinted_brow_gel", result[:hardest_step].id
+    assert_equal [ { step: mascara, ease: 44, words: "Tricky" } ], result[:optional]
+    assert_equal 44, Ease::Scorer.look(required + steps(%w[mascara_upper]), @default)[:ease], "required mascara still counts"
+  end
+
+  def test_a_look_of_only_optional_steps_is_easy
+    result = Ease::Scorer.look([ Ease::StepCatalogue.fetch("mascara_upper").as_optional ], @default)
+
+    assert_equal 100, result[:ease]
+    assert_nil result[:hardest_step]
+  end
+
+  def test_fatigue_penalty_counts_required_steps_only
+    tired = Ease::HandProfile.new(fatigue: 2)
+    four = steps(%w[tinted_moisturiser_fingers cream_blush_fingers tinted_brow_gel tinted_balm])
+    optional = steps(%w[mascara_upper setting_spray]).map(&:as_optional)
+
+    assert_equal Ease::Scorer.look(four, tired)[:ease], Ease::Scorer.look(four + optional, tired)[:ease]
   end
 
   def test_fatigue_penalises_long_routines

@@ -53,6 +53,11 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
     assert_equal %w[tinted_balm], Ease::StepCatalogue.fetch("liquid_matte_lipstick").swap_ids
   end
 
+  def test_catalogue_steps_are_never_optional
+    assert @steps.none?(&:optional?)
+    assert_nil @steps.first.optional_why
+  end
+
   def test_every_step_has_a_layer_and_an_area
     @steps.each do |step|
       assert_includes Ease::Step::LAYERS, step.layer, step.id

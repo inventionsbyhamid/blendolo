@@ -7,9 +7,9 @@ module Looks
       Ease::SwapPlanner.new(profile).plan(look_steps.map { |step| LookStep.wrap(step).step })
     end
 
-    # The easy version as look steps. A swapped step keeps the look's colour and takes the easier step's own
-    # intensity (that is part of the swap: a smudged line needs a stronger colour, a sheer balm a lighter one).
-    # Skipped steps drop out.
+    # The easy version as look steps. A swapped step keeps the look's colour, stays optional when it was, and takes the
+    # easier step's own intensity (that is part of the swap: a smudged line needs a stronger colour, a sheer balm a
+    # lighter one). Skipped steps drop out.
     def self.easy_steps(look_steps, profile)
       look_steps = look_steps.map { |step| LookStep.wrap(step) }
       swaps = plan(look_steps, profile)[:swaps].index_by { |swap| swap[:from].id }
@@ -19,7 +19,7 @@ module Looks
         next look_step unless swap
         next unless swap[:to]
 
-        LookStep.new(step_id: swap[:to].id, colour: look_step.colour)
+        LookStep.new(step_id: swap[:to].id, colour: look_step.colour, optional: look_step.optional)
       end.uniq(&:step_id)
     end
 

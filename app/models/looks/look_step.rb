@@ -2,9 +2,11 @@ module Looks
   # One step of a look: which step, and the colour and intensity this look wants for it.
   # colour is "#RRGGBB" or a list for multi-colour patterns; nil uses the step's default.
   # intensity is 0..100; nil uses the step's default.
-  class LookStep < Data.define(:step_id, :colour, :intensity)
-    def initialize(step_id:, colour: nil, intensity: nil)
-      super(step_id: step_id.to_s, colour: normalise(colour), intensity:)
+  # optional is true for a step the look can do without (mascara, lashes, curler, setting spray): it never sets the
+  # look's grade.
+  class LookStep < Data.define(:step_id, :colour, :intensity, :optional)
+    def initialize(step_id:, colour: nil, intensity: nil, optional: false)
+      super(step_id: step_id.to_s, colour: normalise(colour), intensity:, optional: optional == true)
     end
 
     # Accepts a LookStep, an Ease::Step, a step id, or a Hash such as { "step" => "tinted_balm", "colour" => "#A84452" }
@@ -17,13 +19,15 @@ module Looks
       when Hash
         attributes = value.symbolize_keys
         new(step_id: attributes[:step_id] || attributes[:step] || attributes.fetch(:id),
-            colour: attributes[:colour], intensity: attributes[:intensity])
+            colour: attributes[:colour], intensity: attributes[:intensity], optional: attributes[:optional] == true)
       else raise ArgumentError, "Can't read a look step from #{value.inspect}"
       end
     end
 
+    # The catalogue step, marked optional when this look marks it so.
     def step
-      Ease::StepCatalogue.fetch(step_id)
+      step = Ease::StepCatalogue.fetch(step_id)
+      optional ? step.as_optional : step
     end
 
     private

@@ -1,6 +1,7 @@
 # The looks people can pick from, read by Looks::Catalogue. Each step names a step in steps.yml, in the order
 # you'd do it, with this look's colour (a list for multi-colour eyeshadow, main shade first) and intensity.
-# Leave either out to use the step's default. Foundation and concealer never carry a colour here: they take the
+# Leave either out to use the step's default. optional: true marks a step the look can do without (mascara, lashes,
+# curler, setting spray): it never sets the look's grade. Foundation and concealer never carry a colour here: they take the
 # person's own skin colour, or are left out of the preview.
 # thumbnail is the path of the picture of the look on a model.
 
@@ -23,7 +24,7 @@ red_lip:
     - { step: liquid_foundation_brush }
     - { step: brow_pencil, colour: "#3B2A20", intensity: 60 }
     - { step: liquid_liner_wing, intensity: 90 }
-    - { step: mascara_upper, intensity: 85 }
+    - { step: mascara_upper, intensity: 85, optional: true }
     - { step: lip_liner, colour: "#8E1424", intensity: 70 }
     - { step: liquid_matte_lipstick, colour: "#B0182A", intensity: 85 }
 
@@ -36,7 +37,7 @@ soft_smoky_evening:
     - { step: bronzer_big_brush, colour: "#A86B4A", intensity: 40 }
     - { step: two_tone_crease, colour: ["#9C8577", "#4A3029"], intensity: 60 }
     - { step: gel_liner_brush, intensity: 85 }
-    - { step: mascara_upper, intensity: 85 }
+    - { step: mascara_upper, intensity: 85, optional: true }
     - { step: bullet_lipstick, colour: "#A0605A", intensity: 70 }
 
 rosy_glow:
@@ -67,10 +68,10 @@ brows_and_mascara:
   blurb: Just brows and lashes. The smallest routine that still frames your face.
   thumbnail: looks/brows_and_mascara.jpg
   steps:
-    - { step: eyelash_curler }
+    - { step: eyelash_curler, optional: true }
     - { step: brow_pencil, colour: "#3B2A20", intensity: 55 }
-    - { step: mascara_upper, intensity: 85 }
-    - { step: mascara_lower }
+    - { step: mascara_upper, intensity: 85, optional: true }
+    - { step: mascara_lower, optional: true }
 
 wedding_guest:
   name: Wedding guest
@@ -85,9 +86,9 @@ wedding_guest:
     - { step: powder_blush_brush, colour: "#C96B7A", intensity: 40 }
     - { step: brow_powder_brush, colour: "#3B2A20", intensity: 50 }
     - { step: cut_crease, colour: ["#B8924A", "#D9B99B", "#4A3029"], intensity: 60 }
-    - { step: strip_lashes, intensity: 90 }
+    - { step: strip_lashes, intensity: 90, optional: true }
     - { step: bullet_lipstick, colour: "#B85C6B", intensity: 75 }
-    - { step: setting_spray }
+    - { step: setting_spray, optional: true }
 
 barely_there:
   name: Barely there

@@ -43,6 +43,18 @@ class Ease::SwapPlannerTest < ActiveSupport::TestCase
     end
   end
 
+  def test_optional_steps_are_kept_listed_and_stay_optional_after_a_swap
+    mascara = Ease::StepCatalogue.fetch("mascara_upper").as_optional
+    lashes = Ease::StepCatalogue.fetch("strip_lashes").as_optional
+
+    result = Ease::SwapPlanner.new(@default).plan([ lashes, mascara, Ease::StepCatalogue.fetch("tinted_balm") ])
+
+    assert_equal %w[mascara_upper tinted_balm], result[:steps].map(&:id)
+    assert_predicate result[:steps].first, :optional?, "strip lashes swapped for mascara stay optional"
+    assert_equal %w[mascara_upper], result[:optional].map(&:id)
+    assert_equal "Optional. Skip it on shaky days.", result[:optional].first.optional_why
+  end
+
   def test_mascara_is_unswappable_and_reported
     result = plan(%w[mascara_upper tinted_balm])
 

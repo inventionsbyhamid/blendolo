@@ -14,17 +14,25 @@ module Ease
       (100 * (1 - sum / max)).round
     end
 
-    # A look is as easy as its hardest step. Arms that tire lose points for each step beyond four
-    # (the fix-up step doesn't count). The first of equally hard steps is the hardest.
+    # A look is as easy as its hardest required step. Optional steps (Step#optional?) never set the grade; they come
+    # back under optional: with their own ease. Arms that tire lose points for each required step beyond four (the
+    # fix-up step doesn't count). The first of equally hard steps is the hardest.
+    #
+    # -> { ease: 0..100, hardest_step: Step or nil, optional: [{ step:, ease:, words: }] }
     def look(steps, profile)
-      return { ease: 100, hardest_step: nil } if steps.empty?
+      required, optional = steps.partition { |step| !step.optional? }
+      optional = optional.map do |step|
+        ease = step(step, profile)
+        { step:, ease:, words: Words.for(ease) }
+      end
+      return { ease: 100, hardest_step: nil, optional: } if required.empty?
 
-      hardest_step, ease = steps.map { |step| [ step, step(step, profile) ] }
+      hardest_step, ease = required.map { |step| [ step, step(step, profile) ] }
         .each_with_index.min_by { |(_step, score), index| [ score, index ] }.first
-      counted = steps.count { |step| !step.fixup? }
+      counted = required.count { |step| !step.fixup? }
       penalty = profile.fatigue_penalty * [ counted - HandProfile::PENALTY_FREE_STEPS, 0 ].max
 
-      { ease: (ease - penalty).clamp(0, 100), hardest_step: }
+      { ease: (ease - penalty).clamp(0, 100), hardest_step:, optional: }
     end
   end
 end
