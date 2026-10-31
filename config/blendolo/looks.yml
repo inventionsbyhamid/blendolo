@@ -24,8 +24,8 @@ red_lip:
     - { step: brow_pencil, colour: "#3B2A20", intensity: 60 }
     - { step: liquid_liner_wing, intensity: 90 }
     - { step: mascara_upper, intensity: 85 }
-    - { step: liquid_matte_lipstick, colour: "#B0182A", intensity: 85 }
     - { step: lip_liner, colour: "#8E1424", intensity: 70 }
+    - { step: liquid_matte_lipstick, colour: "#B0182A", intensity: 85 }
 
 soft_smoky_evening:
   name: Soft smoky evening
@@ -59,8 +59,8 @@ bold_berry:
     - { step: powder_blush_brush, colour: "#A8455A", intensity: 40 }
     - { step: brow_pencil, colour: "#2B1B14", intensity: 60 }
     - { step: liquid_liner_thin, intensity: 85 }
-    - { step: liquid_matte_lipstick, colour: "#8E1F2F", intensity: 85 }
     - { step: lip_liner, colour: "#6E1A26", intensity: 70 }
+    - { step: liquid_matte_lipstick, colour: "#8E1F2F", intensity: 85 }
 
 brows_and_mascara:
   name: Brows and mascara

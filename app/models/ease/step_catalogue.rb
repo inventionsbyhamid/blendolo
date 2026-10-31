@@ -34,11 +34,14 @@ module Ease
 
         def build(id, attributes)
           swap = attributes.fetch("swap")
+          layer = attributes.fetch("layer")
+          raise ArgumentError, "#{id}: unknown layer #{layer.inspect}" unless Step::LAYERS.include?(layer)
 
           Step.new(
             id: id,
             number: attributes["number"],
             name: attributes.fetch("name"),
+            layer: layer,
             instruction: attributes.fetch("instruction"),
             dims: attributes.fetch("dims").transform_keys(&:to_sym).freeze,
             swap: (swap unless swap == NO_SWAP),

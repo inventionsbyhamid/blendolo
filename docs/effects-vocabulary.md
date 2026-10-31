@@ -75,9 +75,9 @@ Classic (without a skin colour, so no foundation):
     shape: { curvature: 0, thickness: 10, definition: 55 } },
   { category: "eye_liner", colour: "#111111", intensity: 90, texture: "matte", pattern: "OpenWings2", mode: nil },
   { category: "eyelashes", colour: "#000000", intensity: 85, texture: nil, pattern: "Natural2", mode: nil },
-  { category: "lip_color", colour: "#B0182A", intensity: 85, texture: "matte", pattern: "original", mode: "full" },
   { category: "lip_liner", colour: "#8E1424", intensity: 70, texture: "matte", pattern: "Natural1", mode: nil,
-    shape: { thickness: 50, smoothness: 50 } }
+    shape: { thickness: 50, smoothness: 50 } },
+  { category: "lip_color", colour: "#B0182A", intensity: 85, texture: "matte", pattern: "original", mode: "full" }
 ]
 ```
 

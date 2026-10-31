@@ -12,6 +12,9 @@
 # packaging of each product type (see the comment on each line). Steps without a number are the easier
 # versions the table names as swaps.
 #
+# layer: where on the face the step goes, in the order layers go on: base, cheeks, brows, lid, liner, lashes,
+# lips, finish. Lid, liner and lashes are one area, the eyes.
+#
 # swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version.
 # effect: what renders the step in a preview (docs/effects-vocabulary.md). Steps that don't show in a
 # photo (powder, setting spray, tidying up) have no effect. Look colours replace the default colour.
@@ -23,6 +26,7 @@
 liquid_foundation_brush:
   number: 1
   name: Liquid foundation with a brush
+  layer: base
   instruction: Dot foundation on your face, then buff it in with a brush.
   dims: { P: 0, E: 0, G: 1, H: 1, T: 2, F: 0, O: 2 } # O: screw cap tube
   swap: tinted_moisturiser_fingers
@@ -37,6 +41,7 @@ liquid_foundation_brush:
 
 tinted_moisturiser_fingers:
   name: Tinted moisturiser with your fingers
+  layer: base
   instruction: Pump a little onto your fingers and smooth it over your face.
   dims: { P: 0, E: 0, G: 0, H: 0, T: 1, F: 0, O: 0 } # O: pump bottle
   swap: none
@@ -51,6 +56,7 @@ tinted_moisturiser_fingers:
 concealer_wand:
   number: 2
   name: Concealer with a wand under the eyes
+  layer: base
   instruction: Dab concealer under each eye with the wand, then blend.
   dims: { P: 1, E: 1, G: 2, H: 0, T: 1, F: 0, O: 2 } # O: small twist off wand
   swap: stick_concealer_finger
@@ -65,6 +71,7 @@ concealer_wand:
 
 stick_concealer_finger:
   name: Stick concealer, patted in with a finger
+  layer: base
   instruction: Dot the stick under each eye and pat it in.
   dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: cap pulls straight off
   swap: none
@@ -79,6 +86,7 @@ stick_concealer_finger:
 pressed_powder_compact:
   number: 3
   name: Pressed powder from a compact with a puff
+  layer: base
   instruction: Press the puff into the powder, then onto your face.
   dims: { P: 0, E: 0, G: 2, H: 2, T: 1, F: 0, O: 3 } # O: clasp compact
   swap: kabuki_powder
@@ -92,6 +100,7 @@ pressed_powder_compact:
 
 kabuki_powder:
   name: Loose powder with a big kabuki brush
+  layer: base
   instruction: Swirl the big brush in powder and buff over your face.
   dims: { P: 0, E: 0, G: 0, H: 1, T: 1, F: 0, O: 2 } # O: screw lid jar
   swap: none
@@ -108,6 +117,7 @@ kabuki_powder:
 powder_blush_brush:
   number: 4
   name: Powder blush with a small brush
+  layer: cheeks
   instruction: Tap the brush in blush and sweep it along your cheekbones.
   dims: { P: 1, E: 0, G: 2, H: 1, T: 1, F: 1, O: 2 } # O: compact with a clasp lid
   swap: cream_blush_fingers
@@ -122,6 +132,7 @@ powder_blush_brush:
 
 cream_blush_fingers:
   name: Cream blush with your fingers
+  layer: cheeks
   instruction: Dab blush on your cheeks with two fingers, then blend.
   dims: { P: 0, E: 0, G: 0, H: 1, T: 1, F: 0, O: 1 } # O: stick, cap pulls straight off
   swap: none
@@ -136,6 +147,7 @@ cream_blush_fingers:
 bronzer_big_brush:
   number: 5
   name: Bronzer with a big brush
+  layer: cheeks
   instruction: Sweep bronzer where the sun would hit your face.
   dims: { P: 0, E: 0, G: 1, H: 1, T: 1, F: 0, O: 2 } # O: compact
   swap: none
@@ -150,6 +162,7 @@ bronzer_big_brush:
 contour_line:
   number: 6
   name: Contour line under the cheekbones
+  layer: cheeks
   instruction: Draw a line under each cheekbone, then blend it upwards.
   dims: { P: 2, E: 0, G: 2, H: 0, T: 2, F: 1, O: 2 } # O: slim compact or pencil cap
   swap: bronzer_stick_sponge
@@ -162,6 +175,7 @@ contour_line:
 
 bronzer_stick_sponge:
   name: Bronzer stick, blended with a sponge
+  layer: cheeks
   instruction: Swipe the stick on your cheeks, then bounce a sponge over it.
   dims: { P: 0, E: 0, G: 1, H: 0, T: 1, F: 0, O: 1 } # O: stick, cap pulls straight off
   swap: none
@@ -176,6 +190,7 @@ bronzer_stick_sponge:
 highlighter_fan_brush:
   number: 7
   name: Highlighter with a fan brush
+  layer: cheeks
   instruction: Flick the fan brush along the top of your cheekbones.
   dims: { P: 1, E: 1, G: 2, H: 0, T: 1, F: 0, O: 2 } # O: compact
   swap: cream_highlighter_finger
@@ -189,6 +204,7 @@ highlighter_fan_brush:
 
 cream_highlighter_finger:
   name: Cream highlighter, tapped on with a finger
+  layer: cheeks
   instruction: Tap a little highlighter on top of each cheekbone.
   dims: { P: 1, E: 1, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: stick, cap pulls straight off
   swap: none
@@ -204,6 +220,7 @@ cream_highlighter_finger:
 brow_pencil:
   number: 8
   name: Brow pencil, hair by hair
+  layer: brows
   instruction: Draw small hair strokes along each brow with the pencil.
   dims: { P: 3, E: 1, G: 3, H: 0, T: 3, F: 1, O: 2 } # O: slim pencil with a small cap
   swap: tinted_brow_gel
@@ -225,6 +242,7 @@ brow_pencil:
 brow_powder_brush:
   number: 9
   name: Brow powder with an angled brush
+  layer: brows
   instruction: Press powder into each brow with the angled brush.
   dims: { P: 2, E: 1, G: 2, H: 1, T: 2, F: 1, O: 3 } # O: slim palette
   swap: tinted_brow_gel
@@ -245,6 +263,7 @@ brow_powder_brush:
 brow_stamp:
   number: 10
   name: Brow stamp
+  layer: brows
   instruction: Press the stamp on the front of each brow, then lift.
   dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 1, O: 1 } # O: stamp with a cap that pulls off
   swap: tinted_brow_gel
@@ -266,6 +285,7 @@ brow_stamp:
 
 tinted_brow_gel:
   name: Tinted brow gel with a big wand
+  layer: brows
   instruction: Brush the gel up through each brow in one sweep.
   dims: { P: 1, E: 1, G: 1, H: 0, T: 0, F: 0, O: 2 } # O: wand in a twist cap tube
   swap: none
@@ -282,13 +302,14 @@ tinted_brow_gel:
 one_colour_lid_wash:
   number: 11
   name: One colour on the lid
+  layer: lid
   instruction: Swipe the stick on your lid, then pat it in.
   dims: { P: 1, E: 1, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: cream stick, cap pulls straight off
   swap: none
   why_easier: One colour and one fingertip. Cream blends itself, so edges don't matter.
   tips:
     - Close your eye and press gently.
-    - Do your eyes first, while your hands are freshest.
+    - Rest your elbow on the table.
   product_type: Cream eyeshadow stick
   ease_tags: [chunky, finger_applied, forgiving, easy_cap]
   effect: { category: eye_shadow, colour: "#7A4E3A", intensity: 55, texture: matte, pattern: 1color6 }
@@ -296,6 +317,7 @@ one_colour_lid_wash:
 two_tone_crease:
   number: 12
   name: Two shades blended in the crease
+  layer: lid
   instruction: Light shade on the lid, deep shade blended into the crease.
   dims: { P: 2, E: 1, G: 2, H: 0, T: 2, F: 1, O: 3 } # O: slim palette
   swap: one_colour_lid_wash
@@ -309,6 +331,7 @@ two_tone_crease:
 cut_crease:
   number: 13
   name: Cut crease
+  layer: lid
   instruction: Carve the crease with a deep shade, then fill the lid.
   dims: { P: 3, E: 1, G: 3, H: 1, T: 3, F: 2, O: 3 } # O: slim palette
   swap: wash_and_smudged_lash_line
@@ -321,6 +344,7 @@ cut_crease:
 
 wash_and_smudged_lash_line:
   name: Lid wash, smudged darker at the lashes
+  layer: lid
   instruction: Pat colour on the lid. Smudge a deeper shade along the lashes.
   dims: { P: 2, E: 1, G: 1, H: 0, T: 1, F: 0, O: 2 } # O: small pot or palette
   swap: none
@@ -335,6 +359,7 @@ wash_and_smudged_lash_line:
 pencil_liner_crisp:
   number: 14
   name: Crisp pencil eyeliner
+  layer: liner
   instruction: Draw a thin, sharp line along your upper lashes.
   dims: { P: 2, E: 2, G: 2, H: 1, T: 1, F: 1, O: 1 } # O: pencil cap
   swap: smudged_pencil_liner
@@ -348,6 +373,7 @@ pencil_liner_crisp:
 gel_liner_brush:
   number: 15
   name: Gel eyeliner with a brush
+  layer: liner
   instruction: Paint a line along your upper lashes with the fine brush.
   dims: { P: 3, E: 2, G: 3, H: 1, T: 2, F: 2, O: 3 } # O: small screw lid pot
   swap: shadow_liner
@@ -361,6 +387,7 @@ gel_liner_brush:
 liquid_liner_thin:
   number: 16
   name: Thin liquid eyeliner
+  layer: liner
   instruction: Draw one thin line along your upper lashes.
   dims: { P: 3, E: 2, G: 2, H: 1, T: 1, F: 3, O: 2 } # O: twist cap
   swap: shadow_liner
@@ -374,6 +401,7 @@ liquid_liner_thin:
 liquid_liner_wing:
   number: 17
   name: Winged liquid eyeliner
+  layer: liner
   instruction: Draw a line along your lashes and flick a wing out.
   dims: { P: 3, E: 2, G: 2, H: 1, T: 2, F: 3, O: 2 } # O: twist cap
   swap: smudged_pencil_liner
@@ -386,6 +414,7 @@ liquid_liner_wing:
 
 smudged_pencil_liner:
   name: Smudged pencil eyeliner
+  layer: liner
   instruction: Dab short strokes along your lashes, then smudge them together.
   dims: { P: 2, E: 2, G: 1, H: 0, T: 1, F: 0, O: 1 } # O: chunky pencil, cap pulls straight off
   swap: none
@@ -401,6 +430,7 @@ smudged_pencil_liner:
 
 shadow_liner:
   name: Shadow liner with a flat brush
+  layer: liner
   instruction: Press dark shadow along your lashes with a damp flat brush.
   dims: { P: 1, E: 2, G: 1, H: 0, T: 1, F: 0, O: 2 } # O: shadow pan or palette
   swap: none
@@ -415,6 +445,7 @@ shadow_liner:
 tightline:
   number: 18
   name: Tightlining the waterline
+  layer: liner
   instruction: Run the pencil along your upper waterline, under the lashes.
   dims: { P: 3, E: 3, G: 2, H: 2, T: 1, F: 2, O: 1 } # O: pencil cap
   swap: skip
@@ -428,6 +459,7 @@ tightline:
 mascara_upper:
   number: 19
   name: Mascara on the upper lashes
+  layer: lashes
   instruction: Wiggle the wand at the lash roots, then pull it up.
   dims: { P: 2, E: 3, G: 2, H: 0, T: 1, F: 2, O: 2 } # O: twist cap tube
   swap: none
@@ -443,6 +475,7 @@ mascara_upper:
 mascara_lower:
   number: 20
   name: Mascara on the lower lashes
+  layer: lashes
   instruction: Tip the wand and touch it lightly to your lower lashes.
   dims: { P: 3, E: 3, G: 2, H: 0, T: 1, F: 3, O: 2 } # O: twist cap tube
   swap: skip
@@ -456,6 +489,7 @@ mascara_lower:
 eyelash_curler:
   number: 21
   name: Eyelash curler
+  layer: lashes
   instruction: Clamp the curler at the lash roots and hold for five seconds.
   dims: { P: 2, E: 3, G: 3, H: 1, T: 1, F: 1, O: 0 } # O: nothing to open
   swap: skip
@@ -469,6 +503,7 @@ eyelash_curler:
 strip_lashes:
   number: 22
   name: Strip lashes with glue
+  layer: lashes
   instruction: Glue the strip, wait, then press it onto your lash line.
   dims: { P: 3, E: 3, G: 3, H: 3, T: 3, F: 3, O: 3 } # O: clasp case and a small glue tube
   swap: mascara_upper
@@ -482,6 +517,7 @@ strip_lashes:
 magnetic_liner_lashes:
   number: 23
   name: Magnetic liner and lashes
+  layer: lashes
   instruction: Draw magnetic liner, then click the lash strip onto it.
   dims: { P: 2, E: 3, G: 3, H: 1, T: 2, F: 2, O: 3 } # O: clasp case and a twist cap liner
   swap: none
@@ -498,6 +534,7 @@ magnetic_liner_lashes:
 bullet_lipstick:
   number: 24
   name: Bullet lipstick
+  layer: lips
   instruction: Twist up the lipstick and trace it over your lips.
   dims: { P: 2, E: 0, G: 1, H: 0, T: 1, F: 1, O: 2 } # O: pull off cap, twist up base
   swap: tinted_balm
@@ -511,6 +548,7 @@ bullet_lipstick:
 liquid_matte_lipstick:
   number: 25
   name: Liquid matte lipstick
+  layer: lips
   instruction: Paint the colour on with the wand, edges first.
   dims: { P: 3, E: 0, G: 2, H: 1, T: 1, F: 3, O: 2 } # O: twist cap wand
   swap: tinted_balm
@@ -524,6 +562,7 @@ liquid_matte_lipstick:
 lip_liner:
   number: 26
   name: Lip liner
+  layer: lips
   instruction: Trace the edge of your lips with the pencil.
   dims: { P: 3, E: 0, G: 3, H: 0, T: 2, F: 2, O: 1 } # O: pencil cap
   swap: skip
@@ -543,6 +582,7 @@ lip_liner:
 tinted_balm:
   number: 27
   name: Tinted balm or chubby crayon
+  layer: lips
   instruction: Dab the balm on your lips and press them together.
   dims: { P: 1, E: 0, G: 0, H: 0, T: 0, F: 0, O: 1 } # O: chubby crayon or stick, cap pulls straight off
   swap: none
@@ -557,6 +597,7 @@ tinted_balm:
 doe_foot_gloss:
   number: 28
   name: Lip gloss with a wand
+  layer: lips
   instruction: Swipe the gloss wand across your lips.
   dims: { P: 1, E: 0, G: 2, H: 1, T: 0, F: 1, O: 2 } # O: twist cap wand
   swap: tinted_balm
@@ -573,6 +614,7 @@ doe_foot_gloss:
 setting_spray:
   number: 29
   name: Setting spray
+  layer: finish
   instruction: Close your eyes and mist your face from arm's length.
   dims: { P: 0, E: 1, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: spray pump, some are stiff to press
   swap: none
@@ -585,6 +627,7 @@ setting_spray:
 
 fixup:
   name: Tidy up with a cotton bud
+  layer: finish
   instruction: Dip a cotton bud in micellar water and wipe away smudges.
   dims: { P: 0, E: 0, G: 1, H: 0, T: 0, F: 0, O: 1 } # O: flip cap bottle
   swap: none

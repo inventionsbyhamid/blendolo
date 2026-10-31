@@ -42,6 +42,14 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
     end
   end
 
+  def test_every_step_has_a_layer_and_an_area
+    @steps.each do |step|
+      assert_includes Ease::Step::LAYERS, step.layer, step.id
+      assert step.area.present?, step.id
+    end
+    assert_equal %w[finish finish], %w[fixup setting_spray].map { Ease::StepCatalogue.fetch(it).layer }
+  end
+
   def test_steps_without_a_number_are_swap_targets_or_the_fixup
     targets = @steps.filter_map(&:swap_id)
 
