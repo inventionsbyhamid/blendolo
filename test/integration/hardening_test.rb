@@ -66,6 +66,14 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_equal 1.hour, ActiveStorage.urls_expire_in
   end
 
+  test "direct uploads to storage are closed" do
+    post "/rails/active_storage/direct_uploads", params: { blob: { filename: "x.jpg", byte_size: 3, checksum: "abc", content_type: "image/jpeg" } }, as: :json
+    assert_response :not_found
+
+    get "/rails/active_storage/direct_uploads"
+    assert_response :not_found
+  end
+
   test "the jobs page needs a password" do
     get "/jobs"
     assert_response :unauthorized

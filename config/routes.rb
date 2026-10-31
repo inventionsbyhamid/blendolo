@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  # Nothing here uploads straight to storage, so Active Storage's direct upload endpoint is closed (drawn before the
+  # engine's own route, so this one wins).
+  match "/rails/active_storage/direct_uploads", to: ->(_) { [ 404, {}, [] ] }, via: :all
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
