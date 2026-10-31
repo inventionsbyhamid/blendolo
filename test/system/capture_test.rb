@@ -313,7 +313,7 @@ class CaptureTest < ApplicationSystemTestCase
     page.driver.browser.execute_cdp("Page.removeScriptToEvaluateOnNewDocument", identifier: script["identifier"]) if script
   end
 
-  test "spoken help plays recordings one at a time: the newest message waits, the countdown cuts in" do
+  test "spoken help plays recordings one at a time: the newest message waits, the countdown cuts in at once" do
     visit new_kit_photo_path(@kit)
     assert_selector "[data-capture-state=live]", wait: 10
     result = evaluate_async_script(<<~JS)
@@ -321,17 +321,19 @@ class CaptureTest < ApplicationSystemTestCase
       #{FAKE_CHECKS}
       const tick = () => new Promise((resolve) => setTimeout(resolve, 50))
       import("voice/player").then(async (voice) => {
-        voice.stop() // whatever the page said as the camera started
-        const plays = [], spoken = []
+        const capture = captureController()
+        await capture.warmed // the countdown and the commonest prompts, fetched as the page opened
+        voice.stopAll() // whatever the page said as the camera started
+        const plays = [], sources = [], spoken = []
         let pauses = 0, audio = null
         HTMLAudioElement.prototype.play = function () {
           audio = this
-          plays.push(new URL(this.src).pathname)
+          plays.push(voice.reading())
+          sources.push(this.src)
           return Promise.resolve()
         }
         HTMLAudioElement.prototype.pause = function () { pauses += 1 }
         window.speechSynthesis.speak = (utterance) => { spoken.push(utterance.text) }
-        const capture = captureController()
 
         capture.say("Hold still")
         capture.say("Step back a little") // waits for "Hold still" to end
@@ -347,14 +349,18 @@ class CaptureTest < ApplicationSystemTestCase
         capture.toggleSpeech() // spoken help off: stops it
         const off = capture.element.querySelector("[data-capture-target=speech]").getAttribute("aria-pressed")
         capture.toggleSpeech() // and on again, as the next test expects
-        done({ plays, whileSaying, afterEnd, afterCountdown, pauses, spoken, off })
+        done({ plays, sources, whileSaying, afterEnd, afterCountdown, pauses, spoken, off })
       })
     JS
 
-    path = ->(text) { "/voice/#{Voice.key(text)}.mp3" }
-    assert_equal({ "plays" => [ path.("Hold still") ], "pauses" => 0 }, result["whileSaying"])
+    assert_equal({ "plays" => [ "Hold still" ], "pauses" => 0 }, result["whileSaying"])
     assert_equal 2, result["afterEnd"], "the newest message is said when the line before ends"
-    assert_equal [ path.("Hold still"), path.("Come a little closer"), path.("3") ], result["plays"]
+    assert_equal [ "Hold still", "Come a little closer", "3" ], result["plays"]
+    held, closer, three = result["sources"]
+    assert held.start_with?("blob:"), "fetched ahead: #{held}"
+    assert three.start_with?("blob:"), "fetched ahead: #{three}"
+    key = Voice.key("Come a little closer")
+    assert_equal "/voice/#{key}.mp3?v=#{Voice.manifest.dig(key, "audio")}", URI(closer).request_uri, "from the network"
     assert_equal({ "plays" => 3, "pauses" => 1 }, result["afterCountdown"])
     assert_equal 2, result["pauses"], "switching spoken help off stops the countdown's line"
     assert_empty result["spoken"], "every line had a recording"
@@ -368,7 +374,7 @@ class CaptureTest < ApplicationSystemTestCase
       const done = arguments[arguments.length - 1]
       #{FAKE_CHECKS}
       import("voice/player").then(async (voice) => {
-        voice.stop()
+        voice.stopAll()
         const spoken = []
         HTMLAudioElement.prototype.play = () => Promise.reject(new Error("no recording should play"))
         window.speechSynthesis.speak = (utterance) => { spoken.push({ text: utterance.text, rate: utterance.rate }) }

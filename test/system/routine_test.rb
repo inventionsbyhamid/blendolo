@@ -96,6 +96,48 @@ class RoutineTest < ApplicationSystemTestCase
     assert_selector "button[aria-pressed=true]", text: "Stop reading"
   end
 
+  test "read it to me uses the phone's own voice when the recording hasn't started after 3 seconds" do
+    visit step_kit_routine_path(@kit, 1)
+    execute_script AUDIO_STUBS
+    execute_script "HTMLAudioElement.prototype.play = function () { plays.push('waiting'); return new Promise(() => {}) }"
+    click_on "Read it to me"
+
+    assert_equal [], evaluate_script("window.spoken"), "not yet"
+    wait_for_script "window.spoken.length === 1", wait: 6
+    assert_equal Voice.card(@steps.first), evaluate_script("window.spoken[0].text")
+    assert_equal 1, evaluate_script("window.pauses"), "the recording is stopped, so it can't start late"
+    assert_selector "button[aria-pressed=true]", text: "Stop reading"
+  end
+
+  test "read it to me uses the phone's own voice when the recording fails to load" do
+    visit step_kit_routine_path(@kit, 1)
+    execute_script AUDIO_STUBS
+    click_on "Read it to me"
+    assert_equal 1, evaluate_script("window.plays.length")
+
+    execute_script "window.audio.dispatchEvent(new Event('error'))"
+    assert_equal [ Voice.card(@steps.first) ], evaluate_script("window.spoken.map((utterance) => utterance.text)")
+    assert_selector "button[aria-pressed=true]", text: "Stop reading"
+  end
+
+  test "a recording that stalls ends 2 seconds after its length" do
+    visit step_kit_routine_path(@kit, 1)
+    execute_script AUDIO_STUBS
+    execute_script <<~JS
+      const play = HTMLAudioElement.prototype.play
+      HTMLAudioElement.prototype.play = function () {
+        Object.defineProperty(this, "duration", { get: () => 0.5, configurable: true })
+        return play.call(this)
+      }
+    JS
+    click_on "Read it to me"
+    assert_selector "button[aria-pressed=true]", text: "Stop reading"
+
+    assert_selector "button[aria-pressed=false]", text: "Read it to me", wait: 5
+    assert_equal 1, evaluate_script("window.pauses")
+    assert_empty evaluate_script("window.spoken")
+  end
+
   test "print view one card per page" do
     visit print_kit_routine_path(@kit)
 
@@ -123,4 +165,12 @@ class RoutineTest < ApplicationSystemTestCase
     assert_selector ".honest", text: "Preview, not a promise"
     shot "step-card-zoom"
   end
+
+  private
+    # Waits until the script is true in the page.
+    def wait_for_script(script, wait:)
+      page.document.synchronize(wait) do
+        raise Capybara::ExpectationNotMet, "#{script} is still false" unless evaluate_script(script)
+      end
+    end
 end
