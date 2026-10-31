@@ -1,0 +1,21 @@
+<%# One preview. Broadcast replaces it by dom_id(render) as it moves from pending to done or failed. %>
+<% kind_words = { "classic" => "classic look", "easy" => "easy version", "tweak" => "easy version", "transfer" => "signature look", "step" => "step" }.fetch(render.kind, "look") %>
+<div id="<%= dom_id(render) %>" class="render render--<%= render.status %>">
+  <% if render.done? && render.result.attached? %>
+    <%= render_image(render, alt: "Your photo with the #{kind_words}. A preview, not a promise.") %>
+  <% elsif render.failed? %>
+    <div class="render__message" role="status">
+      <p><%= render_failure_message(render) %></p>
+      <% if render.failure_reason == "example" %>
+        <%= render(partial: "components/button", locals: { label: "Start your own kit", href: start_path, variant: :secondary }) %>
+      <% elsif render_failure_needs_photo?(render) %>
+        <%= render(partial: "components/button", locals: { label: "Take it again", href: new_kit_photo_path(render.kit, kind: (render.transfer? ? "reference" : "today")), variant: :secondary }) %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="render__message" role="status">
+      <span class="render__dot" aria-hidden="true"></span>
+      <p><%= render.running? ? "Putting the #{kind_words} on your photo." : "Getting your photo ready." %> This takes about a minute.</p>
+    </div>
+  <% end %>
+</div>
