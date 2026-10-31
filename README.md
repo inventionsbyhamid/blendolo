@@ -53,7 +53,7 @@ Around the API:
 
 ## How it is built
 
-Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active Storage (Cloudflare R2 in production), MediaPipe Face Landmarker in the browser for capture checks and colour sampling, and the Web Speech API for reading cards aloud.
+Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active Storage (Cloudflare R2 in production), MediaPipe Face Landmarker in the browser (in a Web Worker) for capture checks and colour sampling, and the Web Speech API for reading cards aloud.
 
 | Where | What |
 |---|---|
