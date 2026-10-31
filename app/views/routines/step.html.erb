@@ -1,0 +1,12 @@
+<% last = @number == @steps.size %>
+<div class="page stack">
+  <%= render "components/step_header", step: @number, of: @steps.size, back: (@number > 1 ? step_kit_routine_path(@kit, @number - 1) : kit_routine_path(@kit)), finish_later: kit_path(@kit) %>
+  <p class="instruction m-0"><%= @step.instruction %></p>
+  <%= render "components/chip", text: @step.product_type, tone: :mint %>
+  <% if @step.why_easier.present? %><p class="m-0"><strong>Why this is easier:</strong> <%= @step.why_easier %></p><% end %>
+  <% if @step.tips.any? %><p class="m-0"><strong>Tip:</strong> <%= @step.tips.first %></p><% end %>
+  <%= render "components/button", label: (last ? "Done, all finished" : "Done, next step"), href: (last ? kit_path(@kit) : step_kit_routine_path(@kit, @number + 1)), variant: :primary, icon: :check %>
+  <% unless last %>
+    <%= render "components/button", label: "Skip this step", href: step_kit_routine_path(@kit, @number + 1), variant: :secondary %>
+  <% end %>
+</div>

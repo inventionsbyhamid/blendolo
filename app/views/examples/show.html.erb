@@ -1,0 +1,12 @@
+<% name = ExampleKit.name_for(@key) %>
+<% seo title: "Try with #{name}", description: "See Blendolo with #{name}, an example person: their hands, their looks and the easy version." %>
+<div class="page stack">
+  <h1 class="m-0"><%= name %></h1>
+  <%= render "components/honest_label", text: "Example person, AI generated" %>
+  <% if @template %>
+    <p class="lead m-0">See <%= name %>'s looks, the easy versions and the step cards. Nothing you do here changes it for anyone else.</p>
+    <%= render "components/button", label: "Open #{name}'s kit", url: start_example_path(@key), variant: :primary, icon: :next %>
+  <% else %>
+    <%= render "components/empty_state", title: "Example coming soon", body: "#{name}'s kit isn't ready yet. You can start your own now.", action_label: "Start", action_href: start_path %>
+  <% end %>
+</div>

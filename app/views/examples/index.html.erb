@@ -1,0 +1,13 @@
+<% seo title: "Try with an example person", description: "See Blendolo with an example person: their hands, their looks and the easy version, with no photo of you." %>
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">Try with an example person</h1>
+    <p class="lead m-0">Their answers and photo are ready, so you can see everything without a photo of you.</p>
+    <%= render "components/honest_label", text: "Example people are AI generated" %>
+  </header>
+  <ul class="tiles">
+    <% ExampleKit::NAMES.each do |key, name| %>
+      <li><%= render "components/tile", label: name, url: start_example_path(key), method: :post %></li>
+    <% end %>
+  </ul>
+</div>

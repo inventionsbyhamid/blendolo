@@ -1,0 +1,17 @@
+<div class="page stack">
+  <h1 class="m-0">Shopping list</h1>
+  <% if @steps.empty? %>
+    <%= render "components/empty_state", title: "No routine yet", body: "Pick a look and make it your routine. Your list shows up here.", action_label: "Pick a look", action_href: kit_looks_path(@kit) %>
+  <% else %>
+    <ul class="linklist">
+      <% @steps.reject(&:fixup?).each do |step| %>
+        <li class="card">
+          <strong><%= step.product_type %></strong>
+          <ul class="tags">
+            <% step.ease_tags.each do |tag| %><li><%= Ease::Words.tag(tag) %></li><% end %>
+          </ul>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

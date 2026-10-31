@@ -1,0 +1,25 @@
+<% reference = @kit && @kind == "reference" %>
+<div class="page stack">
+  <% if reference %>
+    <%= render "components/step_header", step: 1, of: 2, back: kit_signature_path(@kit), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0">Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look</h1>
+  <% else %>
+    <%= render "components/step_header", step: KitsHelper::SETUP_STEPS, of: KitsHelper::SETUP_STEPS, back: kit_hand_path(@kit, 5), finish_later: kit_path(@kit) %>
+    <h1 class="instruction m-0"><%= @kit.helper? ? "Take a photo of their face" : "A photo of your face" %></h1>
+    <p class="lead m-0">Face the light, eyes open, no makeup or a little. Prop the phone up if you can.</p>
+  <% end %>
+
+  <% if @upload&.errors&.any? %>
+    <p class="flash" role="alert">That photo <%= @upload.errors.full_messages_for(:file).first&.delete_prefix("File ") || "didn't work" %>. Please choose another.</p>
+  <% end %>
+
+  <%= form_with url: kit_photos_path(@kit), multipart: true, class: "stack" do |form| %>
+    <%= form.hidden_field :kind, value: @kind %>
+    <%= form.hidden_field :source, value: "upload" %>
+    <%= form.label :image, "Choose a photo", class: "btn btn--secondary" %>
+    <%= form.file_field :image, accept: "image/jpeg,image/png,image/webp,image/heic,image/heif", required: true, class: "sr-only" %>
+    <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } do %>
+      <span class="btn__label">Use this photo</span><span class="btn__working">Working on it</span>
+    <% end %>
+  <% end %>
+</div>

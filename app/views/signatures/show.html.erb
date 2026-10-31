@@ -1,0 +1,35 @@
+<%= turbo_stream_from @kit %>
+<div class="page stack">
+  <h1 class="m-0">Bring back a signature look</h1>
+  <% if @transfer && @easy %>
+    <%= render "components/compare", classic: render(@transfer), easy: render(@easy), classic_label: "Your signature look", easy_label: "Easy version" %>
+    <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: "signature", liner: @liner, lips: @lips }, variant: :primary %>
+  <% else %>
+    <p class="lead m-0">Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing a look <%= you_or_they(@kit, "you", "they") %> loved, then answer two questions.</p>
+    <% if @upload&.errors&.any? %>
+      <p class="flash" role="alert">That photo <%= @upload.errors.full_messages_for(:file).first&.delete_prefix("File ") || "didn't work" %>. Please choose another.</p>
+    <% end %>
+    <%= form_with url: kit_signature_path(@kit), multipart: true, class: "stack" do |form| %>
+      <% if @reference %>
+        <p class="m-0">Using the old photo you chose. Or choose another:</p>
+      <% end %>
+      <%= form.label :image, "Choose an old photo", class: "btn btn--secondary" %>
+      <%= form.file_field :image, accept: "image/jpeg,image/png,image/webp,image/heic,image/heif", class: "sr-only" %>
+      <fieldset class="stack">
+        <legend class="instruction">Did <%= you_or_they(@kit, "you", "they") %> wear eyeliner?</legend>
+        <% { "winged" => "Winged", "thin" => "Thin line", "smudged" => "Smudged", "none" => "None" }.each do |value, label| %>
+          <label class="choice"><%= form.radio_button :liner, value %> <%= label %></label>
+        <% end %>
+      </fieldset>
+      <fieldset class="stack">
+        <legend class="instruction">Lips?</legend>
+        <% { "matte" => "Matte", "shiny" => "Shiny", "sheer" => "Sheer" }.each do |value, label| %>
+          <label class="choice"><%= form.radio_button :lips, value %> <%= label %></label>
+        <% end %>
+      </fieldset>
+      <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } do %>
+        <span class="btn__label">See it on me</span><span class="btn__working">Working on it</span>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

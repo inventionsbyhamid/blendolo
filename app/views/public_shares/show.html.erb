@@ -1,0 +1,16 @@
+<div class="page stack">
+  <h1 class="m-0">A makeup routine, shared with you</h1>
+  <p class="lead m-0">Steps in the order they like to do them. Detailed steps first, tidy up last.</p>
+  <% if @photos && (photo = @shared_kit.photos.today.order(:created_at).last) %>
+    <%= image_tag photo.image.variant(resize_to_limit: [ 600, 600 ]), alt: "Their photo", class: "photo" %>
+  <% end %>
+  <% if @steps.empty? %>
+    <%= render "components/empty_state", title: "No routine yet", body: "They haven't picked a routine yet. Check back later." %>
+  <% else %>
+    <ol class="stack p-0 m-0 list-none">
+      <% @steps.each.with_index(1) do |step, number| %>
+        <li class="card"><p class="m-0 muted">Step <%= number %> of <%= @steps.size %></p><p class="instruction m-0"><%= step.instruction %></p><p class="m-0"><%= step.product_type %></p></li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>
