@@ -43,8 +43,10 @@ Rails.application.configure do
   # No keys needed to run Blendolo locally. Without a Google client, the sign in page offers "Sign in as a test person
   # (local only)" (Local::SessionsController). Without a Dodo key, buying goes to a local test checkout that adds
   # credits through the same code as a paid webhook (Billing::LocalTest). Only this file turns them on.
-  config.x.local_sign_in = ENV["GOOGLE_CLIENT_ID"].blank?
-  config.x.local_billing = ENV["DODO_API_KEY"].blank?
+  # Never in a deployed container, whatever RAILS_ENV says: every deployed one sets BLENDOLO_PROCESS (web or jobs).
+  deployed = ENV["BLENDOLO_PROCESS"].present?
+  config.x.local_sign_in = !deployed && ENV["GOOGLE_CLIENT_ID"].blank?
+  config.x.local_billing = !deployed && ENV["DODO_API_KEY"].blank?
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

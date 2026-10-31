@@ -48,6 +48,24 @@ class LocalDevTest < ActionDispatch::IntegrationTest
       JSON.parse(line.delete_prefix("LOCAL_DEV_CHECK ")))
   end
 
+  test "a deployed container running development still has no local sign in and no test checkout" do
+    script = <<~RUBY
+      paths = Rails.application.routes.routes.map { |route| route.path.spec.to_s }
+      found = { sign_in: Rails.configuration.x.local_sign_in, billing: Rails.configuration.x.local_billing,
+        routes: paths.grep(%r{\\A/local}), env: Rails.env }
+      puts "LOCAL_DEV_CHECK \#{found.to_json}"
+    RUBY
+    env = { "RAILS_ENV" => "development", "BLENDOLO_PROCESS" => "web", "GOOGLE_CLIENT_ID" => "", "DODO_API_KEY" => "" }
+
+    output, status = Open3.capture2e(env, "bin/rails", "runner", script, chdir: Rails.root.to_s)
+
+    assert status.success?, output
+    line = output.lines.find { |text| text.start_with?("LOCAL_DEV_CHECK ") }
+    assert line, output
+    assert_equal({ "sign_in" => false, "billing" => false, "routes" => [], "env" => "development" },
+      JSON.parse(line.delete_prefix("LOCAL_DEV_CHECK ")))
+  end
+
   test "the test person signs in with one tap, gets the free credits and keeps this device's kit" do
     with_local(:local_sign_in) do
       kit = make_kit
