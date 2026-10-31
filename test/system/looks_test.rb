@@ -13,7 +13,9 @@ class LooksSystemTest < ApplicationSystemTestCase
 
     expected = LookForKit.easiest_first(@kit)
     assert_equal expected.map(&:name), all(".tiles--looks .tile__label").map(&:text)
-    assert_equal expected.map(&:classic_words), all(".tiles--looks .tile__badge").map(&:text)
+    expected.zip(all(".tiles--looks .tile__badge")) do |look, badge|
+      assert_match(/#{look.classic_words}.*\u2192.*#{look.easy_words}/, badge.text)
+    end
     eases = expected.map { |look| look.classic_ease[:ease] }
     assert_equal eases.sort.reverse, eases
     assert_selector ".tiles--looks .tile__hint", text: "Hardest step you need:", minimum: 1

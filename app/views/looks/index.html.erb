@@ -7,7 +7,7 @@
     <% @looks.each do |look| %>
       <li>
         <%= render "components/tile", label: look.name, href: kit_look_path(@kit, look.key), image: look_thumbnail(look),
-              image_alt: "", image_note: "AI generated", art: colour_swatch(look_colours(look)), badge: look.classic_words,
+              image_alt: "", image_note: "AI generated", art: colour_swatch(look_colours(look)), badge: ease_change(look),
               hint: hardest_step_words(look.classic_ease) %>
       </li>
     <% end %>

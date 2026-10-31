@@ -19,6 +19,15 @@ module LooksHelper
       "aria-hidden": "true", focusable: "false")
   end
 
+  # "Hard -> Some care": the classic look's ease, then the easy version's, for these hands. Screen readers hear
+  # "Classic: Hard, easy version: Some care".
+  def ease_change(look)
+    safe_join([
+      tag.span("Classic: ", class: "sr-only"), look.classic_words, tag.span(" \u2192 ", "aria-hidden": "true"),
+      tag.span(", easy version: ", class: "sr-only"), look.easy_words
+    ])
+  end
+
   # "Hardest step you need: winged liquid liner" (optional steps never count, so the hardest one is a step you need)
   def hardest_step_words(ease)
     step = ease[:hardest_step]
