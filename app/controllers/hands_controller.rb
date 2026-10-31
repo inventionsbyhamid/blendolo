@@ -17,7 +17,7 @@ class HandsController < ApplicationController
       return
     end
 
-    @kit.update!(@question => answer.to_i)
+    @kit.update!(@question => answer.to_i, **hands_today_from(answer.to_i))
     redirect_to next_path
   end
 
@@ -25,6 +25,12 @@ class HandsController < ApplicationController
     def set_question
       @number = params[:question].to_i
       @question = QUESTIONS.fetch(@number - 1)
+    end
+
+    # The tremor answer also sets "My hands today" (no: steady, a little: a bit shaky, a lot: very shaky or stiff),
+    # so the screens grow from the next question on. It can be changed any time from the menu.
+    def hands_today_from(answer)
+      @question == :tremor ? { hands_today: answer } : {}
     end
 
     def next_path
