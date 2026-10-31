@@ -124,6 +124,8 @@ class KitsTest < ActionDispatch::IntegrationTest
     post kit_photos_path(kit), params: { image: photo_upload("not_a_photo.jpg"), kind: "today" }
     assert_response :unprocessable_content
     assert_equal 0, kit.photos.count
+    # A page shown for a POST has no GET address to come back to: My hands today goes back by the referer instead.
+    assert_select "form[action=?] input[name=return_to]", kit_hands_today_path(kit), count: 0
   end
 
   test "hand answers are saved one screen at a time" do

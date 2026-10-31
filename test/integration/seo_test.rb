@@ -15,6 +15,23 @@ class SeoTest < ActionDispatch::IntegrationTest
     assert_equal %w[Organization WebApplication], json_ld["@graph"].map { |node| node["@type"] }
   end
 
+  test "home has the landing page's own link preview lines" do
+    get "/"
+
+    assert_select "meta[property='og:description'][content^='The same red lip, without eleven tries.']"
+    assert_select "meta[name='twitter:description'][content^='Makeup for hands that shake, tire or hurt.']"
+  end
+
+  test "the eyeliner guide quotes the ease engine" do
+    get "/guides/eyeliner-with-a-tremor"
+
+    profile = Ease::HandProfile.new
+    wing = Ease::Scorer.step(Ease::StepCatalogue.fetch("liquid_liner_wing"), profile)
+    pencil = Ease::Scorer.step(Ease::StepCatalogue.fetch("smudged_pencil_liner"), profile)
+    assert_includes response.body, "scores #{wing} out of 100"
+    assert_includes response.body, "A smudged pencil line scores #{pencil}."
+  end
+
   test "home title and description fit search results" do
     get "/"
 
