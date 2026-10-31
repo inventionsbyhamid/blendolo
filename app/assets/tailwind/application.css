@@ -322,7 +322,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
      App screens. Tremor rules: targets from --tap (64/88/104 px by "My hands today"), primary buttons at least
      88 px, 24 px between targets, a visible text label on every control, nothing that needs a steady hand. */
 
-  .page { width: min(760px, 100% - 32px); margin-inline: auto; padding: 8px 0 120px; }
+  /* 12 px on top: with the header's 12 px, the first control sits 24 px from the menu. */
+  .page { width: min(760px, 100% - 32px); margin-inline: auto; padding: 12px 0 120px; }
   .page--wide { width: min(1160px, 100% - 32px); }
   .page h1 { font-size: clamp(2rem, 6vw, 2.8rem); }
   .page h2 { font-size: clamp(1.6rem, 4.5vw, 2.1rem); margin-top: 1.4em; }
