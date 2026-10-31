@@ -67,6 +67,31 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     assert share.reload.live?, "nobody can switch the example's link off"
   end
 
+  test "an example's signature page shows the ease and swaps of its stored answers" do
+    kit = Examples.kit_for(:rosa)
+
+    assert_no_difference [ -> { ProviderCall.count }, -> { Render.count } ] do
+      get kit_signature_path(kit)
+    end
+    assert_response :success
+    assert_select "h1", "Rosa's signature look"
+    assert_select "#ease-title", /How easy for your hands/
+    assert_select ".meter", minimum: 2
+    assert_select ".swaplist li", /Winged liquid eyeliner/
+    assert_select ".swaplist li", /Liquid matte lipstick.*Tinted balm/m
+    assert_select "form[action=?]", kit_routine_path(kit), count: 0
+    assert_equal 0, KitHelpers::CountRequests.count
+  end
+
+  test "every example's signature colours are our own shades, so its easy version uses them as stored" do
+    Examples.all.each do |person|
+      colours = person.signature.fetch("colours")
+      mapped = Looks::ColourSamplerMapping.map(colours)
+      assert_equal colours.transform_keys(&:to_sym), mapped.slice(*colours.keys.map(&:to_sym)), person.key
+      assert SignatureLook::LINERS.key?(person.signature["liner"]) && SignatureLook::LIPS.key?(person.signature["lips"])
+    end
+  end
+
   test "an example person's routine follows their chosen look" do
     kit = Examples.kit_for("rosa")
 

@@ -35,9 +35,12 @@ class SignaturesController < ApplicationController
   end
 
   private
-    # An example person's stored signature look: their transfer and its easy version.
+    # An example person's stored signature look: their transfer and its easy version, with the ease and swaps from the
+    # answers and colours stored with the example (no provider call).
     def show_example
       @transfer = Previews.find(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
       @easy = Previews.find(@kit, today_photo, "signature", :easy, [])
+      answers = Examples.fetch(@kit.example_key).signature
+      @signature = SignatureLook.build(@kit, @reference, liner: answers["liner"], lips: answers["lips"])
     end
 end

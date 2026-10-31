@@ -63,8 +63,10 @@
           </ul>
         </section>
       <% end %>
-      <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: "signature", liner: @signature.liner, lips: @signature.lips }, variant: :primary, icon: :check %>
-      <%= render "components/button", label: "Use a different old photo", href: new_kit_photo_path(@kit, kind: "reference"), variant: :secondary %>
+      <% unless @kit.example? %>
+        <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: "signature", liner: @signature.liner, lips: @signature.lips }, variant: :primary, icon: :check %>
+        <%= render "components/button", label: "Use a different old photo", href: new_kit_photo_path(@kit, kind: "reference"), variant: :secondary %>
+      <% end %>
     <% end %>
   </div>
 <% elsif @reference.nil? %>

@@ -7,6 +7,8 @@
 # hands_today: 0 steady, 1 a bit shaky, 2 very shaky or stiff.
 # renders: kind is classic, easy, tweak, transfer or step; look is a key in looks.yml, or "signature" for the easy
 # version of their own signature look.
+# signature: the answers about the old photo (liner, lips) and the colours read from it (lips, lids, cheeks, as our
+# shades) that the stored easy signature look was made from, so its page shows the same ease and swaps.
 
 images_dir: db/seeds/files/examples
 photo_label: AI generated photo
@@ -26,6 +28,7 @@ people:
       - { kind: easy, look: red_lip, file: rosa_easy.jpg }
       - { kind: transfer, file: rosa_transfer.jpg }
       - { kind: easy, look: signature, file: rosa_signature_easy.jpg }
+    signature: { liner: winged, lips: matte, colours: { lips: "#B0182A", lids: "#9A6A3E", cheeks: "#E59A7A" } }
 
   june:
     name: June
@@ -41,6 +44,7 @@ people:
       - { kind: easy, look: everyday_fresh, file: june_easy.jpg }
       - { kind: transfer, file: june_transfer.jpg }
       - { kind: easy, look: signature, file: june_signature_easy.jpg }
+    signature: { liner: thin, lips: shiny, colours: { lips: "#E0605A", lids: "#9C8577", cheeks: "#E59A7A" } }
 
   amara:
     name: Amara
@@ -56,3 +60,4 @@ people:
       - { kind: easy, look: soft_smoky_evening, file: amara_easy.jpg }
       - { kind: transfer, file: amara_transfer.jpg }
       - { kind: easy, look: signature, file: amara_signature_easy.jpg }
+    signature: { liner: smudged, lips: matte, colours: { lips: "#B85C6B", lids: "#9A6A3E", cheeks: "#E59A7A" } }

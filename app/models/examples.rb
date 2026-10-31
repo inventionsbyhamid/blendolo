@@ -14,7 +14,7 @@ module Examples
   # The sizes the example pages show (RendersHelper#proxied_image_path), made in the background when a kit is built.
   VARIANT_SIZES = [ 900, 600 ].freeze
 
-  Person = Data.define(:key, :name, :blurb, :hands, :hands_today, :chosen_look, :photos, :renders, :digest)
+  Person = Data.define(:key, :name, :blurb, :hands, :hands_today, :chosen_look, :photos, :renders, :signature, :digest)
 
   class << self
     def all = people.values
@@ -56,8 +56,9 @@ module Examples
           kit.building_example = true
           kit.save!
           photos = person.photos.to_h do |kind, file|
+            sampled = kind == "reference" ? person.signature.fetch("colours") : {}
             [ kind, kit.photos.create!(kind:, source: "example", sha256: Digest::SHA256.file(file_path(file)).hexdigest,
-              image: attachable(file)) ]
+              sampled:, image: attachable(file)) ]
           end
           person.renders.each do |render|
             kit.renders.create!(kind: render.fetch("kind"), look_key: render["look"], status: :done,
@@ -90,7 +91,7 @@ module Examples
             key:, name: person.fetch("name"), blurb: person.fetch("blurb"),
             hands: person.fetch("hands").transform_keys(&:to_sym), hands_today: person.fetch("hands_today"),
             chosen_look: person.fetch("chosen_look"), photos: person.fetch("photos"), renders: person.fetch("renders"),
-            digest: digest_for(person)
+            signature: person.fetch("signature"), digest: digest_for(person)
           ) ]
         end.freeze
       end
