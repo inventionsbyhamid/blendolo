@@ -51,8 +51,14 @@ module Looks
 
     module_function
 
-    # Problems with one effect, as sentences. Empty when the effect is valid.
+    # An effect with symbol keys all the way down, as it reads back from JSON (string keys) or as built.
+    def normalise(effect)
+      effect.to_h.deep_symbolize_keys
+    end
+
+    # Problems with one effect, as sentences. Empty when the effect is valid. String or symbol keys.
     def errors(effect)
+      effect = normalise(effect)
       category = effect[:category]
       return [ "unknown category #{category.inspect}" ] unless CATEGORIES.include?(category)
 

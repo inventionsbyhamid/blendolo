@@ -48,6 +48,16 @@ class Looks::VocabularyTest < ActiveSupport::TestCase
                                         pattern: "SoftArch3", mode: "color")
   end
 
+  def test_effects_read_back_from_json_with_string_keys_are_valid
+    built = Looks::EffectsBuilder.build(Looks::Catalogue.fetch(:red_lip).steps)
+    stored = JSON.parse(built.to_json)
+    assert_kind_of String, stored.first.keys.first
+
+    stored.each { assert_empty Looks::Vocabulary.errors(it), it.inspect }
+    assert_equal built, stored.map { Looks::Vocabulary.normalise(it) }
+    assert_not Looks::Vocabulary.valid?(stored.first.merge("intensity" => 300))
+  end
+
   def test_optional_settings_belong_to_their_categories
     assert_not Looks::Vocabulary.valid?(effect(gloss: 30))
     assert_not Looks::Vocabulary.valid?(effect(texture: "satin", glow: 130))

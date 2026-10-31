@@ -3,7 +3,7 @@
 Blendolo describes makeup in its own words. A look's steps become a list of **effects**, and only the appearance provider adapter turns them into a provider's request. The rest of the app never sees a provider's field names.
 
 - `Looks::EffectsBuilder` builds effects from look steps (`config/blendolo/steps.yml` holds each step's effect, `config/blendolo/looks.yml` the colours of each look).
-- `Looks::Vocabulary.errors(effect)` lists what is wrong with an effect, or nothing when it is valid.
+- `Looks::Vocabulary.errors(effect)` lists what is wrong with an effect, or nothing when it is valid. It takes string or symbol keys, so effects stored as JSON can be checked as they read back; `Looks::Vocabulary.normalise(effect)` turns them back into symbol keys.
 
 ## Shape of an effect
 
