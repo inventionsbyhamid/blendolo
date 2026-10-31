@@ -28,8 +28,13 @@ module RendersHelper
     PHOTO_REASONS.include?(render.failure_reason.to_s)
   end
 
-  # A resized copy: makeup results arrive as large PNGs.
+  # A resized copy (makeup results arrive as large PNGs), served from our own origin.
   def render_image(render, alt:)
-    image_tag render.result.variant(resize_to_limit: [ 900, 900 ]), alt:, class: "render__image"
+    image_tag proxied_image_path(render.result, 900), alt:, class: "render__image"
+  end
+
+  # An attachment resized to fit size x size, as a same-origin path through the Active Storage proxy.
+  def proxied_image_path(attachment, size)
+    rails_storage_proxy_path(attachment.variant(resize_to_limit: [ size, size ]))
   end
 end
