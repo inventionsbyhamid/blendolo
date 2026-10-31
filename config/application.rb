@@ -32,6 +32,9 @@ module Blendolo
       package_url: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/",
       model_url: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
     )
+    # The checks run in a Web Worker so the page stays quick. CAPTURE_WORKER=off makes every page run them itself, as
+    # it does already where a browser can't run the worker: a switch for a browser that runs the worker badly.
+    config.x.capture_worker = ENV.fetch("CAPTURE_WORKER", "on") != "off"
 
     # Only the camera, and only for us. Rails' permissions_policy still sends the older Feature-Policy header.
     config.action_dispatch.default_headers["Permissions-Policy"] =
