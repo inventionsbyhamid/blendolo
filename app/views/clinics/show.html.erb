@@ -1,0 +1,44 @@
+<% page_title "Your clients" %>
+<div class="page stack">
+  <header class="stack">
+    <h1 class="m-0">Your clients</h1>
+    <p class="lead m-0"><%= credits_balance_words(Credits.balance(current_user)) %></p>
+  </header>
+
+  <section class="card stack" aria-labelledby="new-client-title">
+    <h2 id="new-client-title" class="m-0">New client kit</h2>
+    <%= form_with url: clinic_kits_path, class: "stack", data: { turbo: false } do |form| %>
+      <%= form.label :label, "Client's name or initials", class: "instruction m-0" %>
+      <%= form.text_field :label, maxlength: Kit::LABEL_MAX, required: true, autocomplete: "off", class: "link-box",
+            aria: { describedby: "client-label-hint" } %>
+      <p id="client-label-hint" class="m-0 muted">Initials are enough. Only your account sees this name.</p>
+      <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } do %>
+        <span class="btn__label">New client kit</span><span class="btn__working">Working on it</span>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="stack" aria-labelledby="clients-title">
+    <h2 id="clients-title" class="m-0">Client kits</h2>
+    <% if @kits.any? %>
+      <ul class="clients">
+        <% @kits.each do |kit| %>
+          <li class="card stack">
+            <h3 class="m-0"><%= kit_name(kit) %></h3>
+            <p class="m-0 muted">Last used <%= l kit.last_active_at.to_date, format: :long %></p>
+            <div class="button-row button-row--2">
+              <%= render "components/button", label: "Open #{kit_name(kit)}", href: kit_path(kit), variant: :secondary, icon: :next %>
+              <%= render "components/button", label: "Share", href: kit_shares_path(kit), variant: :secondary, icon: :share %>
+              <% if RoutinePlan.entries(kit).any? %>
+                <%= render "components/button", label: "Print the routine", href: print_kit_routine_path(kit), variant: :secondary %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <%= render "components/empty_state", title: "No client kits yet", body: "Make one for each client. Each kit keeps their hands, photo, looks and routine." %>
+    <% end %>
+    <p class="m-0 muted">Each kit is kept 30 days from its last use (or 7, if chosen when it starts), then deleted with its photos.</p>
+  </section>
+</div>
