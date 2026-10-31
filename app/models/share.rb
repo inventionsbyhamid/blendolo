@@ -11,7 +11,7 @@ class Share < ApplicationRecord
 
   scope :live, -> { where(revoked_at: nil).where.not(expires_at: ..Time.current) }
 
-  before_validation(on: :create) { self.expires_at ||= LIFETIME.from_now }
+  attribute :expires_at, default: -> { LIFETIME.from_now }
 
   def live?
     revoked_at.nil? && expires_at.future?
