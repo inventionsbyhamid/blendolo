@@ -43,9 +43,11 @@
         <button type="button" class="btn btn--quiet" aria-pressed="false" data-capture-target="helper" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#helper"><span class="btn__label">A helper is taking it</span></button>
       </div>
     </div>
-    <label class="btn btn--secondary capture__choose" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">
+    <%# The guard sits on the input, not the label: the label forwards its click to the input, and a guard on the
+        label would cancel that forwarded click as a repeat. %>
+    <label class="btn btn--secondary capture__choose">
       <span>Choose a photo</span>
-      <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" data-capture-target="choose" data-action="change->capture#choose">
+      <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" data-capture-target="choose" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard change->capture#choose">
     </label>
   </div>
 

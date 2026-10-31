@@ -74,6 +74,26 @@ class CaptureTest < ApplicationSystemTestCase
     assert evaluate_script("window.cameraTracks.length > 0 && window.cameraTracks.every((track) => track.readyState === 'ended')")
   end
 
+  test "choose a photo opens the file picker from its label, once per tap" do
+    [ new_kit_photo_path(@kit), new_kit_photo_path(@kit, kind: "reference") ].each do |path|
+      visit path
+      assert_selector "[data-capture-state=live], [data-capture-state=choose], [data-capture-state=no-camera]", wait: 10
+      wait_for_guard
+      # Listen after the guard, as the browser's own file picker would act: a click it didn't cancel opens it.
+      execute_script <<~JS
+        window.pickerClicks = []
+        document.querySelector("input[data-capture-target=choose]")
+          .addEventListener("click", (event) => { window.pickerClicks.push(!event.defaultPrevented); event.preventDefault() })
+      JS
+
+      find("label", text: "Choose a photo").click
+      assert_equal [ true ], evaluate_script("window.pickerClicks"), "the label's click reaches the file input on #{path}"
+
+      execute_script "const label = [...document.querySelectorAll('label')].find((el) => el.textContent.includes('Choose a photo')); label.click(); label.click()"
+      assert_equal [ true, false, false ], evaluate_script("window.pickerClicks"), "repeat taps inside the window are swallowed"
+    end
+  end
+
   test "gate messages" do
     visit privacy_path
     cases = {
@@ -127,6 +147,13 @@ class CaptureTest < ApplicationSystemTestCase
   end
 
   private
+    def wait_for_guard
+      page.document.synchronize(5) do
+        connected = evaluate_script("!!window.Stimulus.getControllerForElementAndIdentifier(document.querySelector('input[data-capture-target=choose]'), 'tap-guard')")
+        raise Capybara::ExpectationNotMet, "tap-guard not connected" unless connected
+      end
+    end
+
     def on_phone
       page.current_window.resize_to(390, 844)
       yield
