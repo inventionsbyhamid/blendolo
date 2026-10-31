@@ -8,7 +8,8 @@ module Appearance::Youcam::EdgeTrim
   MAX_LEFT = 2
   # A left column darker than this share of the columns just inside it is cut off too.
   DARK = 0.5
-  JPEG_QUALITY = 92
+  # A JPEG is saved again at about the size it came (4:2:0 colour, as the provider's are).
+  JPEG = { Q: 85, subsample_mode: :on }.freeze
 
   module_function
 
@@ -19,7 +20,7 @@ module Appearance::Youcam::EdgeTrim
 
     left = dark_columns(source)
     trimmed = source.crop(left, TOP, source.width - left, source.height - TOP)
-    bytes = image.content_type == "image/png" ? trimmed.pngsave_buffer : trimmed.jpegsave_buffer(Q: JPEG_QUALITY)
+    bytes = image.content_type == "image/png" ? trimmed.pngsave_buffer : trimmed.jpegsave_buffer(**JPEG)
     Appearance::Image.from_bytes(bytes, basename: File.basename(image.filename, ".*"))
   rescue Vips::Error
     image
