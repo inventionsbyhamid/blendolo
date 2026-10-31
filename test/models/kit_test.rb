@@ -65,6 +65,10 @@ class KitTest < ActiveSupport::TestCase
 
     unanswered = Kit.create!(tremor: 1)
     assert_equal({ tremor: 1, pinch: 0, one_hand: 0, fatigue: 0, near_vision: 0 }, unanswered.hand_answers)
+
+    assert_kind_of Ease::HandProfile, kit.hand_profile
+    assert_equal 3, kit.hand_profile.weights[:P]
+    assert Kit.create!.hand_profile.default?
   end
 
   test "hand answers and hands today stay within 0 to 2" do
