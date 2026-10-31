@@ -24,7 +24,7 @@ Makeup try-on for people with Parkinson's, essential tremor, arthritis, MS or af
 - **8 looks, scored for your hands**: Easy, Some care, Tricky or Hard, by the look's hardest step, shown as "Hard → Some care".
 - **Classic vs easy, on your face**: hard steps become easier ones, rendered side by side. Winged liquid liner → shadow liner or a smudged pencil. Liquid matte lipstick → tinted balm dabbed on with a finger.
 - **Signature look**: an old photo of a look you loved, put on today's face, then rebuilt from easy steps.
-- **Step cards** read aloud, a **shopping list** tagged by grip and closure, and a **share link** for a helper or an occupational therapist (expires after 30 days, can be switched off).
+- **Step cards** read aloud in one recorded voice (the phone's own voice as a fallback), a **shopping list** tagged by grip and closure, and a **share link** for a helper or an occupational therapist (expires after 30 days, can be switched off).
 - **Ease tags API for shops**: `GET /api/ease_tags?product_format=stick&closure=pull_cap&grip=chunky&step=tinted_balm`. Free, no key, 60 requests a minute.
 - **Accounts and plans**: Google sign in, 2 free credits (one look on your face), a Look Pack ($7.99, 16 credits) and a Clinic plan for occupational therapists ($19 a month, 40 credits), through Dodo Payments.
 - **3 example people** (Rosa, June, Amara) with stored results: explore for free, with no photo and no account.
@@ -38,7 +38,7 @@ flowchart LR
   subgraph Phone["Phone browser"]
     UI["Hotwire pages<br/>big targets, tap guard"]
     FC["Face checks<br/>MediaPipe, in a Web Worker"]
-    TTS["Read aloud<br/>Web Speech"]
+    TTS["Read aloud<br/>recorded voice, Web Speech fallback"]
   end
 
   subgraph App["Rails 8.1 app"]
