@@ -21,7 +21,7 @@ Every variable in [`.env.example`](../.env.example) that production uses is set 
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`: a private Cloudflare R2 bucket and an API token limited to Object Read and Write on that bucket alone. Uploaded photos and renders go there (`config/storage.yml`, service `r2`).
 - `APPEARANCE_PROVIDER`: `fake` replays recorded responses and costs nothing; `youcam` calls the live API and then also needs `YOUCAM_API_KEYS`, `YOUCAM_DAILY_UNIT_CAP` and `YOUCAM_UNIT_FLOOR`.
 - `BLENDOLO_PROCESS`: `web` on the web app, `jobs` on the worker.
-- `CAPTURE_WORKER` (optional, web app): `off` makes the capture page run its face checks on the page instead of in a Web Worker. Pages get slower while the camera shows; use it only if a browser runs the worker badly.
+- `CAPTURE_WORKER` (optional, web app): `off` (or `false`, or `0`) makes the capture page run its face checks on the page instead of in a Web Worker. Pages get slower while the camera shows; use it only if a browser runs the worker badly.
 
 Production stops at boot and names the variable when a required one is blank (`lib/required_env.rb`). After changing a variable, redeploy or restart both apps.
 
