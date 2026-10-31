@@ -1,22 +1,25 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
+# This Dockerfile is designed for production, not development. One image runs both processes: the web server by
+# default, and the Solid Queue worker with TRESSOLO_PROCESS=jobs (bin/docker-entrypoint). Build and run by hand:
 # docker build -t tressolo .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name tressolo tressolo
+# docker run -d -p 80:80 --env-file .env --name tressolo tressolo
+# .env.example lists the environment production needs; it refuses to boot while one is missing.
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.12
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+# Pinned to Debian bookworm: the plain -slim tag moved to trixie, where package names differ.
+FROM docker.io/library/ruby:$RUBY_VERSION-slim-bookworm AS base
 
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages: libpq5 for the pg gem, libvips42 for image variants, curl for the health check.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libpq5 libvips42 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -30,9 +33,10 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems
+# Install packages needed to build gems. The Ruby images no longer ship the -dev headers, so they're listed here.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev pkg-config && \
+    apt-get install --no-install-recommends -y build-essential git libffi-dev libgmp-dev libpq-dev libssl-dev \
+      libyaml-dev pkg-config zlib1g-dev && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems

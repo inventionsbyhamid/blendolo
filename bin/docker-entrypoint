@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# The worker runs this same image with TRESSOLO_PROCESS=jobs: Solid Queue instead of the web server.
+if [ "${TRESSOLO_PROCESS}" == "jobs" ]; then
+  set -- ./bin/jobs
+fi
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare

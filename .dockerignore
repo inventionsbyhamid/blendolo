@@ -42,3 +42,6 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# Ignore local tooling.
+/.superpowers/
