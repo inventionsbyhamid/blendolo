@@ -90,6 +90,7 @@ production:
     database: tressolo_production
     username: tressolo
     password: <%= ENV["TRESSOLO_DATABASE_PASSWORD"] %>
+    host: <%= ENV["DB_HOST"] %>
   cache:
     <<: *primary_production
     database: tressolo_production_cache
