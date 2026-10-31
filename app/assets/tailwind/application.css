@@ -506,3 +506,20 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .choice input { width: 32px; height: 32px; accent-color: var(--ink); flex: none; }
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 }
+
+@layer components {
+  /* Hands-free capture: the camera on a neutral canvas with a face guide, and big words for each check. */
+  .capture__stage { position: relative; overflow: hidden; aspect-ratio: 3 / 4; height: min(48vh, 133vw); max-width: 100%; margin-inline: auto; border-radius: var(--radius-card); background: var(--color-canvas); }
+  .capture__video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .capture__video--mirror { transform: scaleX(-1); }
+  .capture__guide { position: absolute; inset: 14% 20% 18%; border: 4px dashed rgb(255 255 255 / 85%); border-radius: 50%; pointer-events: none; }
+  .capture__count { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: 7rem; font-weight: 900; color: var(--surface); text-shadow: 0 4px 18px rgb(42 33 28 / 60%); pointer-events: none; }
+  .capture__count:empty { display: none; }
+  .capture__message { margin: 0; min-height: 2.6em; display: grid; place-items: center; padding: 8px 12px; border-radius: 18px; background: var(--sun-soft); font-size: 1.75rem; font-weight: 800; line-height: 1.3; text-align: center; text-wrap: balance; }
+  .capture__review { display: block; width: 100%; max-height: 62vh; object-fit: contain; border-radius: var(--radius-card); background: var(--color-canvas); }
+  [data-capture-state="no-camera"] .capture__live, [data-capture-state="choose"] .capture__live, [data-capture-state="review"] .capture__live { display: none; }
+  [data-capture-state="no-camera"] .capture__choose, [data-capture-state="choose"] .capture__choose {
+    min-height: max(var(--tap-primary), var(--tap)); background: var(--primary); color: var(--on-primary); border-color: var(--primary); font-size: 1.375rem;
+  }
+  .btn[aria-pressed="true"] { border-color: var(--ink); }
+}
