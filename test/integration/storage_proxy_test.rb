@@ -19,5 +19,14 @@ class StorageProxyTest < ActionDispatch::IntegrationTest
     get src
     assert_response :success
     assert_equal "image/jpeg", response.media_type
+    assert_equal "max-age=3600, private", response.headers["Cache-Control"]
+  end
+
+  test "a photo through the proxy is private and kept for an hour at most" do
+    kit = make_kit
+    get rails_storage_proxy_path(kit.photos.sole.image)
+
+    assert_response :success
+    assert_equal "max-age=3600, private", response.headers["Cache-Control"]
   end
 end
