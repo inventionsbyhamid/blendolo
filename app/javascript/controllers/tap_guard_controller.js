@@ -20,12 +20,15 @@ export default class extends Controller {
     this.release = this.release.bind(this)
     this.failed = this.failed.bind(this)
     document.addEventListener("turbo:before-cache", this.release)
+    // A visit or submit that couldn't reach the server (offline): the page stays, so the control lets go.
+    document.addEventListener("turbo:fetch-request-error", this.release)
     window.addEventListener("pageshow", this.release)
     this.form?.addEventListener("turbo:submit-end", this.failed)
   }
 
   disconnect() {
     document.removeEventListener("turbo:before-cache", this.release)
+    document.removeEventListener("turbo:fetch-request-error", this.release)
     window.removeEventListener("pageshow", this.release)
     this.form?.removeEventListener("turbo:submit-end", this.failed)
   }

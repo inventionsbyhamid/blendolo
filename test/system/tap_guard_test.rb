@@ -57,6 +57,24 @@ class TapGuardTest < ApplicationSystemTestCase
     assert_equal 4, evaluate_script("window.clicks")
   end
 
+  test "a held link lets go when its page can't be fetched" do
+    execute_script <<~JS
+      document.querySelector("main").insertAdjacentHTML("beforeend",
+        `<a id="held" href="/privacy" class="btn" data-controller="tap-guard" data-action="click->tap-guard#guard">Go</a>`)
+    JS
+    wait_for_controller "#held"
+    execute_script <<~JS
+      const link = document.getElementById("held")
+      link.addEventListener("click", (event) => event.preventDefault())
+      link.click()
+    JS
+    assert_selector "#held.is-working[aria-busy=true]"
+
+    execute_script %(document.dispatchEvent(new CustomEvent("turbo:fetch-request-error", { bubbles: true })))
+    assert_no_selector "#held.is-working"
+    assert_no_selector "#held[aria-busy]"
+  end
+
   private
     def wait_for_controller(selector)
       page.document.synchronize(5) do
