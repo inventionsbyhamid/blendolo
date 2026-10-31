@@ -15,8 +15,9 @@ class Render < ApplicationRecord
 
   validates :reference_photo, presence: true, if: :transfer?
 
-  # Refusals that signing in or more credits lift: the next "Show it on my face" asks again (Previews.for).
-  PAYMENT_REFUSALS = %w[sign_in no_credits].freeze
+  # Refusals that signing in or more credits lift: the next "Show it on my face" asks again (Previews.for). kit_cap
+  # was a per-kit limit before kits paid with credits: previews it held are asked again too.
+  PAYMENT_REFUSALS = %w[sign_in no_credits kit_cap].freeze
 
   def awaiting_payment?
     failed? && PAYMENT_REFUSALS.include?(failure_reason)

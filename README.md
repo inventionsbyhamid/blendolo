@@ -58,7 +58,7 @@ Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active
 | Where | What |
 |---|---|
 | `config/blendolo/steps.yml` | 40 makeup steps, classic and easy, each scored 0 to 3 for precision, closeness to the eye, grip, hands needed, time, forgiveness and opening, with their easier swaps, tips and product types |
-| `config/blendolo/looks.yml`, `examples.yml`, `products.yml`, `caps.yml` | The 8 looks, the example people, the demo catalogue and the unit caps |
+| `config/blendolo/looks.yml`, `examples.yml`, `products.yml`, `credits.yml`, `plans.yml` | The 8 looks, the example people, the demo catalogue, what previews cost in credits, and the paid plans |
 | `app/models/ease/` | The ease engine: hand profile weights, step and look scores, the swap planner, routine order |
 | `app/models/looks/` | Turns steps into effects in our own vocabulary; snaps colours read from a photo to our shades |
 | `app/models/appearance/` | The provider interface, the YouCam adapter and a fake provider that replays recorded responses |

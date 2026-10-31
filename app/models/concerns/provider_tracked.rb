@@ -7,7 +7,7 @@
 #             finishes with that call
 #   :cached   a finished call with the same inputs left a result in our storage: copy it, no call
 #   :sign_in  the kit is in no account, so nobody pays: the render fails with that reason
-#   a refusal from UnitGuard (:example, :kit_cap, :daily_cap, :floor): the render fails with that reason
+#   a refusal from UnitGuard (:example, :daily_cap, :floor): the render fails with that reason
 #   :no_credits the account can't pay for the call (Credits): the render fails with that reason
 #   :queued   a new call, paid for (Credits.charge_render!): ProviderStartJob, then ProviderPollJob until done,
 #             failed or out of time

@@ -8,38 +8,9 @@ class UnitGuardTest < ActiveSupport::TestCase
 
   teardown { Appearance.provider = nil }
 
-  test "lets a call through" do
-    assert_equal :ok, UnitGuard.check(kit: @kit, operation: :makeup)
-  end
-
-  test "kit cap blocks eleventh render" do
+  test "lets a call through, however many the kit made: kits pay with credits" do
     10.times { |n| calls(n, operation: "makeup") }
-    assert_equal :kit_cap, UnitGuard.check(kit: @kit, operation: :makeup)
-    assert_equal :ok, UnitGuard.check(kit: @kit, operation: :transfer)
-    assert_equal :ok, UnitGuard.check(kit: Kit.create!, operation: :makeup)
-  end
-
-  test "a kit in an account pays with credits instead of the kit cap" do
-    user = User.create!(provider: "google_oauth2", uid: "g-cap", email: "cap@example.com")
-    @kit.update!(user:)
-    10.times { |n| calls(n, operation: "makeup") }
-
     assert_equal :ok, UnitGuard.check(kit: @kit, operation: :makeup)
-  end
-
-  test "kit cap allows two transfers and ignores refunded failures" do
-    calls(1, operation: "transfer")
-    calls(2, operation: "transfer", status: :failed, units: 0)
-    assert_equal :ok, UnitGuard.check(kit: @kit, operation: :transfer)
-
-    calls(3, operation: "transfer")
-    assert_equal :kit_cap, UnitGuard.check(kit: @kit, operation: :transfer)
-  end
-
-  test "a failure that may have been charged counts towards the kit cap" do
-    calls(1, operation: "transfer")
-    calls(2, operation: "transfer", status: :failed, units: 2)
-    assert_equal :kit_cap, UnitGuard.check(kit: @kit, operation: :transfer)
   end
 
   test "daily cap counts every kit's units today" do
@@ -61,8 +32,7 @@ class UnitGuardTest < ActiveSupport::TestCase
     assert_equal :example, UnitGuard.check(kit: Kit.create!(path: :example), operation: :makeup)
   end
 
-  test "caps and limits come from config and the environment" do
-    assert_equal({ makeup: 10, transfer: 2 }, UnitGuard.per_kit)
+  test "limits come from the environment" do
     assert_equal 30, UnitGuard.daily_cap("YOUCAM_DAILY_UNIT_CAP" => "30")
     assert_equal 60, UnitGuard.daily_cap({})
     assert_equal 150, UnitGuard.floor({})

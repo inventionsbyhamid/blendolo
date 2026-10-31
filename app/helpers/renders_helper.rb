@@ -14,7 +14,6 @@ module RendersHelper
     "out_of_units" => PAUSED,
     "daily_cap" => PAUSED,
     "floor" => PAUSED,
-    "kit_cap" => "You've made all the previews this kit can make. Your routine and step cards still work.",
     "timeout" => "That took too long on our side. Try again.",
     "provider_error" => "Something went wrong on our side. Try again.",
     "example" => "This preview isn't stored for the example person. Start your own kit to see it on you.",
@@ -24,7 +23,8 @@ module RendersHelper
   PHOTO_REASONS = %w[no_face many_faces face_too_small eyes_closed bad_pose bad_image too_large].freeze
   # Failures on our side or the provider's that another go can fix. A pause is asked again too: Render#request! checks
   # the unit guard again, and a refusal costs nothing.
-  TRY_AGAIN = %w[timeout provider_error rate_limited out_of_units daily_cap floor].freeze
+  # kit_cap: a per-kit limit that no longer exists (kits pay with credits); previews it held are asked again.
+  TRY_AGAIN = %w[timeout provider_error rate_limited out_of_units daily_cap floor kit_cap].freeze
 
   def render_failure_message(render)
     FAILURES.fetch(render.failure_reason.to_s, FAILURES["provider_error"])

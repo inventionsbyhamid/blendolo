@@ -1,8 +1,0 @@
-# Live provider calls one kit may make, per operation. Cached results, refunded failures and example kits don't
-# count; a failure that may have been charged (a timeout, an unclear create) does. Kits in an account pay for each
-# call with credits (config/blendolo/credits.yml), so this cap holds only kits in no account.
-# The daily cap and the balance floor for the whole app come from YOUCAM_DAILY_UNIT_CAP and YOUCAM_UNIT_FLOOR.
-shared:
-  per_kit:
-    makeup: 10
-    transfer: 2

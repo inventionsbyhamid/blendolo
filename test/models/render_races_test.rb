@@ -66,6 +66,16 @@ class RenderRacesTest < ActiveJob::TestCase
     assert_equal [ "failed", 5 ], [ render.reload.status, Credits.balance(@user) ]
   end
 
+  test "a preview held by the old per-kit cap is asked again by the next tap" do
+    render = makeup_render.tap { it.update!(status: :failed, failure_reason: "kit_cap") }
+
+    assert render.awaiting_payment?
+    assert_includes RendersHelper::TRY_AGAIN, "kit_cap"
+    assert_equal render, Previews.for(@kit, @photo, "red_lip", :easy, EFFECTS)
+    assert render.reload.pending?
+    assert_equal 4, Credits.balance(@user)
+  end
+
   private
     # Puts body in place of klass#method_name while the block runs (minitest 6 has no stub).
     def replacing(klass, method_name, body)

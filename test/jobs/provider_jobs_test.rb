@@ -158,7 +158,7 @@ class ProviderJobsTest < ActiveJob::TestCase
     assert render.reload.failed?
     assert_equal "no_face", render.failure_reason
     assert_equal [ "failed", 0.0 ], render.provider_call.then { [ it.status, it.units.to_f ] }
-    assert_equal 0, UnitGuard.live_calls(@kit, :makeup)
+    assert_equal 0, @kit.provider_calls.counted.where(operation: "makeup").count
   end
 
   test "a refused start fails the render without spending units" do
@@ -337,7 +337,7 @@ class ProviderJobsTest < ActiveJob::TestCase
     travel 181.seconds
     ProviderPollJob.perform_now(render.reload)
 
-    assert_equal 1, UnitGuard.live_calls(@kit, :makeup)
+    assert_equal 1, @kit.provider_calls.counted.where(operation: "makeup").count
     Appearance.provider = Appearance::FakeProvider.new
     assert_equal :queued, makeup_render.request!
     assert_equal 2.0, render.provider_call.units.to_f
