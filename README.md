@@ -8,7 +8,7 @@ Makeup try-on for people with Parkinson's, essential tremor, arthritis, MS or af
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/inventionsbyhamid/blendolo)
 
-![Blendolo's looks list for Rosa, an AI generated example person, with each look's ease before and after, next to the red lip page: the classic look and the easy version side by side on her face, rated Hard before and Some care after](docs/images/classic-and-easy.png)
+![Blendolo's looks list with each look's ease before and after for Rosa's hands, its thumbnails showing an AI generated model, next to the red lip page: the classic look and the easy version side by side on Rosa, an AI generated example person, rated Hard before and Some care after](docs/images/classic-and-easy.png)
 
 ## Why
 
@@ -98,14 +98,14 @@ sequenceDiagram
 |---|---|---|
 | `POST /s2s/v2.0/task/makeup-vto` | Classic and easy look on your photo, the easy signature look, Softer and Bolder | 1 per render, any number of effects |
 | `POST /s2s/v2.0/task/mu-transfer` | Signature look from an old photo | 2 |
-| `POST /s2s/v2.0/file`, `GET /s2s/v2.0/credit/feature-cost`, `GET /s2s/v1.0/client/credit` | Upload, live prices and balance for the unit guard | 0 |
+| `POST /s2s/v2.0/file`, `GET /s2s/v2.0/task/<task>/<id>`, `GET /s2s/v2.0/credit/feature-cost`, `GET /s2s/v1.0/client/credit` | Upload, task status, live prices and balance for the unit guard | 0 |
 
 - **Every swap is a parameter change** in one Makeup VTO call. Mapping: [docs/effects-vocabulary.md](docs/effects-vocabulary.md).
 - **Never pays twice**: one render per photo and effect list, under a row lock. A repeat view or a double tap is free.
-- **Never runs dry**: every live preview is paid with credits. The app stops at a daily unit cap (`YOUCAM_DAILY_UNIT_CAP`, 40 on the live site) or before the balance drops below a floor (`YOUCAM_UNIT_FLOOR`, 150). Example people never call the API.
+- **Never runs dry**: every live preview is paid with credits. The app stops at a daily unit cap (`YOUCAM_DAILY_UNIT_CAP`: 60 by default, the live site sets 40) or before the balance drops below a floor (`YOUCAM_UNIT_FLOOR`, 150). Example people never call the API.
 - **Stays under the rate limit**: 1.4 s between calls across web and worker, under YouCam's 250 requests per 5 minutes.
 - **Never hangs**: webhook plus polling, with a clear message after 3 minutes.
-- **Several keys**: `YOUCAM_API_KEYS` takes a comma separated list. A call uses the first key above the floor.
+- **Several keys**: `YOUCAM_API_KEYS` takes a comma separated list. A call uses the first key at or above the floor.
 
 ## Run it locally
 
@@ -117,11 +117,11 @@ cd blendolo
 bin/setup
 ```
 
-`bin/setup` installs gems, makes the database, seeds the 3 example people and starts the app at http://localhost:3107. Run `bin/dev` to start it again later.
+`bin/setup` installs gems, makes the database, seeds the 3 example people on a new database (`bin/rails examples:rebuild` builds them again) and starts the app at http://localhost:3107. Run `bin/dev` to start it again later.
 
 | Needs a key in production | Locally, with no key |
 |---|---|
-| YouCam API | A fake provider replays recorded responses. No units spent. |
+| YouCam API | A fake provider answers with stock sample images, not your own face. No units spent. |
 | Google sign in | "Sign in as a test person (local only)": one tap, no typing. You get the 2 free credits. |
 | Dodo Payments | A local test checkout. "Pay" adds credits through the same code as a paid webhook. Nothing is charged. |
 
@@ -138,7 +138,7 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 ```
 
 - 466 unit and integration tests and 53 system tests in headless Chrome, all green at the last CI run.
-- `BLENDOLO_CI_HOST=<ssh host> bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine, so the full suite doesn't load your laptop. It needs Docker, rsync and flock there. Steps live in `config/ci.rb`.
+- `BLENDOLO_CI_HOST=<ssh host> bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine, so the full suite doesn't load your laptop. It needs ssh and rsync here, and Docker, rsync and flock there. Steps live in `config/ci.rb`.
 
 ## Code map
 
@@ -157,7 +157,7 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 ## Deploy
 
 - One Docker image runs the web (Thruster + Puma, port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker.
-- Production needs `SECRET_KEY_BASE` (or `RAILS_MASTER_KEY`), `DB_HOST`, `BLENDOLO_DATABASE_PASSWORD`, the 4 `R2_*` values, `APPEARANCE_PROVIDER`, `BLENDOLO_PROCESS` and the Google client. `APPEARANCE_PROVIDER=youcam` adds the 3 `YOUCAM_*` values. Payments are optional.
+- Production needs `SECRET_KEY_BASE` (or `RAILS_MASTER_KEY`), `DB_HOST`, `BLENDOLO_DATABASE_PASSWORD`, the 4 `R2_*` values, `APPEARANCE_PROVIDER`, `BLENDOLO_PROCESS`, and on the web app the Google client (the worker boots without it). `APPEARANCE_PROVIDER=youcam` adds the 3 `YOUCAM_*` values. Payments are optional.
 - It refuses to boot while a required one is missing. [.env.example](.env.example) explains every variable.
 - Health check: `GET /up`, on any host. Settings, storage, deploys, checks and backups: [docs/deploy.md](docs/deploy.md).
 
