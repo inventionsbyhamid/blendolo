@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
+import { blankFrame, evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
 import { startChecks } from "capture/checks"
 import { sampleRegions, sharpness, toJpeg, pixels } from "capture/sampler"
 
@@ -19,8 +19,8 @@ const CHECK_SHARE = { worker: 2, page: 3 }
 // Plus up to this much at random, so checks don't fall in step with a head tremor (4 to 6 a second) and catch it at
 // the same point of each shake, where it would look still.
 const CHECK_JITTER_MS = 80
-// After this many checks in a row that fail or get an empty frame, the checks give way: the worker to the page's own
-// checks, those to the shutter and timers alone (giveWay).
+// After this many checks in a row that fail (or, in the worker, get an empty copy of a frame the camera shows fine),
+// the checks give way: the worker to the page's own checks, those to the shutter and timers alone (giveWay).
 const MISSES_TO_GIVE_WAY = 10
 const NO_CHECKS = "Tap Take the photo when you're ready"
 const SAY_AGAIN_AFTER_MS = 4000
@@ -72,6 +72,7 @@ export default class extends Controller {
     this.gatesLoading = null
     this.gate?.close()
     this.gate = null
+    this.gaveWay = this.checksOff = this.workerFailed = false
   }
 
   // The camera running (or "Choose a photo" for an old photo), nothing chosen.
@@ -96,6 +97,7 @@ export default class extends Controller {
     this.stopCamera()
     if (!navigator.mediaDevices?.getUserMedia) return this.noCamera()
     const attempt = ++this.attempt
+    if (this.gaveWay) this.restartChecks()
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -150,16 +152,31 @@ export default class extends Controller {
     else if (!worker && this.state === "live") this.say(NO_CHECKS)
   }
 
-  // The checks failed for good (a worker that stopped), or kept failing or getting empty frames (a camera or browser
-  // fault): close them. The worker gives way to the page's own checks; when those fail too, the checks stop and the
-  // page says to use the shutter.
+  // The checks failed for good (a worker that stopped), or kept failing (or getting empty copies of the camera's
+  // frames: a browser fault). The worker is closed and the page runs its own checks. When those keep failing on the
+  // camera's frames too, they stop looking at the camera and the page says to use the shutter; they stay loaded, so
+  // "Choose a photo" still checks its photo.
   giveWay(gate) {
-    gate.close()
-    this.gate = null
     this.misses = 0
-    if (gate.kind === "worker") return this.loadGates({ worker: false })
-    this.gatesLoading = null
+    this.gaveWay = true
+    if (gate.kind === "worker") {
+      this.workerFailed = true // For the rest of this visit: whatever broke it would most likely break it again.
+      gate.close()
+      this.gate = null
+      return this.loadGates({ worker: false })
+    }
+    this.checksOff = true
     if (this.state === "live") this.say(NO_CHECKS)
+  }
+
+  // A new start of the camera ("Take it again", "A helper is taking it", coming back to the page) turns checks that
+  // gave way back on: the page's own checks, still loaded, look at the camera again. Only when none are loaded does
+  // it load them again, and the worker only if it never failed in this visit.
+  restartChecks() {
+    this.gaveWay = false
+    this.checksOff = false
+    this.misses = 0
+    if (!this.gate) this.loadGates({ worker: !this.workerFailed })
   }
 
   // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
@@ -170,7 +187,7 @@ export default class extends Controller {
   }
 
   get watching() {
-    return this.state === "live" && this.gate && !this.counting && !document.hidden
+    return this.state === "live" && this.gate && !this.checksOff && !this.counting && !document.hidden
   }
 
   async look() {
@@ -190,11 +207,20 @@ export default class extends Controller {
     if (gate.broken) return this.giveWay(gate)
     if (failed || summary?.blank) this.misses += 1
     else if (summary) this.misses = 0
+    // The worker's copies came out empty: before it gives way, see whether the camera's own picture is dark too (the
+    // phone lies face down, a finger covers the lens). Then it isn't the worker's doing.
+    if (summary?.blank && this.misses >= MISSES_TO_GIVE_WAY && this.cameraDark()) this.misses = 0
     if (this.misses >= MISSES_TO_GIVE_WAY) return this.giveWay(gate)
     if (summary) this.check(summary, started)
     const took = performance.now() - started
     const gap = CHECK_GAP_MS[gate.kind] + Math.random() * CHECK_JITTER_MS
     this.watch(Math.max(gap, CHECK_SHARE[gate.kind] * took) - took)
+  }
+
+  // Whether the camera's own picture is dark, drawn on a page canvas as the burst draws it.
+  cameraDark() {
+    this.darkCanvas ||= document.createElement("canvas")
+    return blankFrame(this.videoTarget, this.darkCanvas)
   }
 
   // One frame's checks: say what to change, or take the photo after a second of stillness.
@@ -360,6 +386,8 @@ export default class extends Controller {
 
   // Face landmarks of a still image, or null when the checks aren't there (or take more than 8 s to load).
   async detectStill(source) {
+    // A worker that stopped (on an earlier photo, say) gives way first, so this photo is still checked.
+    if (this.gate?.broken) this.giveWay(this.gate)
     if (this.gatesLoading) {
       await Promise.race([this.gatesLoading.catch(() => {}), new Promise((resolve) => setTimeout(resolve, CHECKS_WAIT_MS))])
     }

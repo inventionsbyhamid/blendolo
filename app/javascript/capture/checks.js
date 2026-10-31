@@ -1,4 +1,4 @@
-import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
+import { loadLandmarker, summarize, warm } from "capture/gate"
 
 // The face checks' landmarker, kept off the page's main thread where the browser allows it, so the page stays quick
 // to answer taps while the camera shows. A module worker (workers/face_checks.js) runs MediaPipe on small copies of
@@ -10,17 +10,24 @@ import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
 //   kind          "worker" or "page"
 //   broken        set once the worker has failed for good
 //   video(video, timestamp)  the summary of the camera's current frame (blank: true when no face was found because
-//                            the frame was empty); null while another frame is being checked; fails once broken
+//                            the worker's copy of the frame was empty); null while another frame is being checked;
+//                            fails once broken
 //   still(source)            the face landmarks ([{x, y}] per face) of a photo, image or canvas
 //   close()                  stops the worker or frees the landmarker
 
 // The width of the frames checked: plenty for a face a quarter of the frame wide, and quick to look at.
 const FRAME_WIDTH = 384
 // A worker that hasn't answered within this long, or 10 times its slowest frame check so far (a slow phone's still
-// photo check takes several frame checks' time), hangs: it is stopped, and what it was asked fails. A photo being
-// reviewed is then kept without sampled colours, rather than leaving the screen waiting.
+// photo check takes several frame checks' time) but never more than 15 s, hangs: it is stopped, and what it was asked
+// fails. A photo being reviewed is then kept without sampled colours, rather than leaving the screen waiting. The
+// wait starts before the frame's bitmap is made, and time the page spends hidden (a locked phone) never counts.
 const REPLY_WAIT_MS = 5000
 const REPLY_WAIT_CHECKS = 10
+const REPLY_WAIT_MAX_MS = 15000
+
+// How many times the page has been hidden or shown: a wait or a timing that saw it change was partly asleep.
+let visibilityChanges = 0
+document.addEventListener("visibilitychange", () => { visibilityChanges += 1 })
 
 export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) {
   if (workerUrl && gateUrl && typeof Worker === "function" && typeof createImageBitmap === "function" &&
@@ -77,9 +84,13 @@ export class WorkerChecks {
     this.busy = true
     try {
       const started = performance.now()
-      const frame = await smallBitmap(video)
-      const { summary } = await this.request({ type: "video", frame, timestamp }, [frame])
-      this.slowest = Math.max(this.slowest, performance.now() - started)
+      const changes = visibilityChanges
+      const { summary } = await this.within(async () => {
+        const frame = await smallBitmap(video)
+        return this.request({ type: "video", frame, timestamp }, [frame])
+      })
+      const awake = changes === visibilityChanges && !document.hidden
+      if (awake) this.slowest = Math.max(this.slowest, performance.now() - started)
       return summary
     } finally {
       this.busy = false
@@ -87,9 +98,46 @@ export class WorkerChecks {
   }
 
   async still(source) {
-    const image = await createImageBitmap(source, { imageOrientation: "from-image" })
-      .catch(() => createImageBitmap(source))
-    return (await this.request({ type: "still", image }, [image])).faces
+    const { faces } = await this.within(async () => {
+      const image = await createImageBitmap(source, { imageOrientation: "from-image" })
+        .catch(() => createImageBitmap(source))
+      return this.request({ type: "still", image }, [image])
+    })
+    return faces
+  }
+
+  // How long to wait for an answer (REPLY_WAIT_MS).
+  replyWait() {
+    return Math.min(REPLY_WAIT_MAX_MS, Math.max(REPLY_WAIT_MS, REPLY_WAIT_CHECKS * this.slowest))
+  }
+
+  // Runs work (making a bitmap, then asking the worker) against the reply wait. When the wait runs out the worker is
+  // stopped and work fails, unless the page was hidden meanwhile or the timer came late (the phone slept): then it
+  // waits again from now.
+  within(work) {
+    return new Promise((resolve, reject) => {
+      let timer
+      const wait = () => {
+        const changes = visibilityChanges
+        const armedAt = Date.now()
+        const limit = this.replyWait()
+        timer = setTimeout(() => {
+          if (this.broken) return reject(this.broken) // Closed meanwhile.
+          const slept = changes !== visibilityChanges || document.hidden || Date.now() - armedAt > limit + 1000
+          if (slept) return wait()
+          this.hung()
+          reject(this.broken)
+        }, limit)
+      }
+      wait()
+      work().then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      }, (error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+    })
   }
 
   close() {
@@ -105,18 +153,13 @@ export class WorkerChecks {
     }
     const id = this.nextId++
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => this.hung(), Math.max(REPLY_WAIT_MS, REPLY_WAIT_CHECKS * this.slowest))
-      const settled = (then) => (value) => {
-        clearTimeout(timer)
-        then(value)
-      }
-      this.requests.set(id, { resolve: settled(resolve), reject: settled(reject) })
+      this.requests.set(id, { resolve, reject })
       try {
         this.worker.postMessage({ ...message, id }, transfer)
       } catch (error) {
-        this.requests.get(id).reject(error)
         this.requests.delete(id)
         transfer.forEach((bitmap) => bitmap.close())
+        reject(error)
       }
     })
   }
@@ -185,9 +228,9 @@ class PageChecks {
     this.canvas.getContext("2d").drawImage(video, 0, 0, width, height)
     // In video mode each frame's timestamp must be later than the last one's.
     this.lastTimestamp = Math.max(timestamp, this.lastTimestamp + 1)
-    const summary = summarize(this.landmarker.detectForVideo(this.canvas, this.lastTimestamp))
-    if (summary.faces === 0) summary.blank = blankFrame(this.canvas)
-    return summary
+    // No blank check here: the page draws the camera's own picture, so an empty frame means the camera shows nothing
+    // (the phone lies face down), which is no fault of the checks.
+    return summarize(this.landmarker.detectForVideo(this.canvas, this.lastTimestamp))
   }
 
   async still(source) {

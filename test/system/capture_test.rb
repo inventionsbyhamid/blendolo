@@ -30,31 +30,75 @@ class CaptureTest < ApplicationSystemTestCase
     assert_operator photo.height, :<, 1080
   end
 
-  test "checks that keep failing give way: the worker to the page's checks, those to the shutter" do
+  test "checks that keep failing give way to the page's, then the shutter, until the camera starts again" do
+    # The fake camera shows a picture (a test pattern), so the worker's empty copies are the worker's doing.
     on_phone { visit new_kit_photo_path(@kit) }
     assert_selector "[data-capture-state=live]", wait: 10
-    # A worker whose frames come out empty (no face, no picture), and page checks that fail on every frame.
+    # A worker whose copies of the frames come out empty, and page checks that fail on every camera frame but still
+    # check a chosen photo (they find no face in it).
     execute_script <<~JS
       #{FAKE_CHECKS}
       window.log = []
       const capture = captureController()
       const worker = fakeChecks("worker", async () => ({ ...noFace, blank: true }))
-      const page = fakeChecks("page", async () => { throw new Error("lost") })
-      capture.loadGates = async (options) => {
-        log.push(`load page checks: ${!options.worker}`)
+      window.pageLooks = 0
+      const page = fakeChecks("page", async () => {
+        pageLooks += 1
+        throw new Error("lost")
+      })
+      capture.loadGates = async ({ worker = true } = {}) => {
+        log.push(worker ? "load worker checks" : "load page checks")
         capture.gate = page
         capture.watch()
       }
+      const message = document.querySelector("[data-capture-target=message]")
+      window.shown = []
+      new MutationObserver(() => window.shown.push(message.textContent))
+        .observe(message, { childList: true, characterData: true, subtree: true })
       capture.show("Look straight at the phone")
       capture.gate = worker
       capture.watch()
     JS
 
     assert_selector "[data-capture-target=message]", text: "Tap Take the photo when you're ready", wait: 15
-    assert_equal [ "worker closed", "load page checks: true", "page closed" ], evaluate_script("window.log")
-    assert evaluate_script("captureController().gate === null")
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    assert_equal "page", evaluate_script("captureController().gate.kind"), "kept for a chosen photo"
+    assert_equal 10, evaluate_script("window.pageLooks")
+
+    # "Choose a photo" still checks its photo; turning it down starts the camera again, and with it the page's checks,
+    # without loading anything again (the worker failed once in this visit).
+    find("input[data-capture-target=choose]", visible: :all).attach_file(file_fixture("face.jpg"))
+    assert_selector "[data-capture-state=live]", wait: 10
+    assert_includes evaluate_script("window.shown"), "We couldn't find a face in that photo. Please choose another."
+    page.document.synchronize(5) do
+      raise Capybara::ExpectationNotMet, "page checks not back" unless evaluate_script("window.pageLooks") > 10
+    end
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
     click_on "Take the photo"
     assert_selector "[data-capture-state=review]", wait: 10
+  end
+
+  test "a stopped worker gives way before a chosen photo is checked" do
+    visit new_kit_photo_path(@kit, kind: "reference")
+    assert_selector "[data-capture-state=choose]", wait: 10
+    two_faces = FaceResults.result(FaceResults.face(centre: [ 0.3, 0.5 ], width: 0.3), FaceResults.face(centre: [ 0.7, 0.5 ], width: 0.3))
+    execute_script <<~JS, two_faces[:faceLandmarks]
+      const faces = arguments[0]
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const worker = fakeChecks("worker", async () => noFace)
+      worker.broken = new Error("The face checks stopped answering")
+      capture.loadGates = async () => {
+        log.push("load page checks")
+        capture.gate = { ...fakeChecks("page", async () => noFace), still: async () => faces }
+      }
+      capture.gate = worker
+    JS
+
+    find("input[data-capture-target=choose]", visible: :all).attach_file(file_fixture("face.jpg"))
+    assert_selector "[data-capture-target=message]", text: "Try a photo of just you", wait: 10
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
   end
 
   test "a worker that stops after starting gives way at once, and no face in view isn't a failure" do
@@ -87,27 +131,163 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal "page", evaluate_script("captureController().gate.kind")
   end
 
-  test "a worker that doesn't answer is stopped, and the photo goes on without colours" do
-    visit privacy_path
-    outcome = using_wait_time(15) do
+  test "the checks worker's reply wait" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    outcome = using_wait_time(40) do
       evaluate_async_script(<<~JS)
         const done = arguments[arguments.length - 1]
         import("capture/checks").then(async ({ WorkerChecks }) => {
-          const log = []
-          const checks = new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") })
+          const outcome = {}
+          const camera = document.querySelector("video[data-capture-target=video]")
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
           const photo = document.createElement("canvas")
           photo.width = photo.height = 8
-          const started = performance.now()
-          const answer = await checks.still(photo).then(() => "answered", (error) => error.message)
-          done({ answer, waited: performance.now() - started, broken: !!checks.broken, log })
+          // A worker that never answers, and one that answers each frame after a while with the summary given.
+          const silent = () => {
+            const log = []
+            return { log, checks: new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") }) }
+          }
+          const answering = (summary, after = 10) => {
+            const checks = new WorkerChecks({
+              postMessage: (message) => setTimeout(() => checks.receive({ type: "video", id: message.id, summary: { ...summary } }), after),
+              terminate: () => {}
+            })
+            return checks
+          }
+          const timed = async (promise) => {
+            const started = performance.now()
+            const answer = await promise.then(() => "answered", (error) => error.message)
+            return { answer, waited: performance.now() - started }
+          }
+          const noFace = { faces: 0, width: 0, angles: null, points: null, scores: {} }
+
+          // 5 s, or ten times the slowest check, but at most 15 s.
+          const { checks } = silent()
+          outcome.waits = [ 0, 800, 60000 ].map((slowest) => { checks.slowest = slowest; return checks.replyWait() })
+
+          // No answer to a still photo, and a frame's bitmap that never comes: both stop the worker after 5 s.
+          const still = silent()
+          const frame = silent()
+          const stillWaiting = timed(still.checks.still(photo))
+          const makeBitmap = window.createImageBitmap
+          window.createImageBitmap = () => new Promise(() => {})
+          const frameWaiting = timed(frame.checks.video(camera, 1))
+          window.createImageBitmap = makeBitmap
+          const [ stillWait, frameWait ] = await Promise.all([ stillWaiting, frameWaiting ])
+          Object.assign(outcome, { stillWait, stillLog: still.log, frameWait, frameLog: frame.log, frameBusy: !!frame.checks.busy })
+
+          // Hidden for a moment during the wait (a locked phone): the wait starts again from then.
+          let hidden = false
+          Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden })
+          const asleep = silent()
+          const asleepWait = timed(asleep.checks.still(photo))
+          await sleep(1000)
+          hidden = true
+          document.dispatchEvent(new Event("visibilitychange"))
+          await sleep(1000)
+          hidden = false
+          document.dispatchEvent(new Event("visibilitychange"))
+          outcome.asleepWait = await asleepWait
+
+          // A check that spanned hidden time doesn't count as the slowest.
+          const slow = answering(noFace, 300)
+          const check = slow.video(camera, 2)
+          await sleep(100)
+          document.dispatchEvent(new Event("visibilitychange"))
+          await check
+          outcome.slowestAfterHidden = slow.slowest
+          await slow.video(camera, 3)
+          outcome.slowestAwake = slow.slowest
+          delete document.hidden
+
+          done(outcome)
         })
       JS
     end
 
-    assert_equal "The face checks stopped answering", outcome["answer"]
-    assert_in_delta 5000, outcome["waited"], 1000
-    assert outcome["broken"]
-    assert_equal [ "still", "terminated" ], outcome["log"]
+    assert_equal [ 5000, 8000, 15000 ], outcome["waits"]
+    assert_equal "The face checks stopped answering", outcome["stillWait"]["answer"]
+    assert_in_delta 5000, outcome["stillWait"]["waited"], 1000
+    assert_equal [ "still", "terminated" ], outcome["stillLog"]
+    assert_equal "The face checks stopped answering", outcome["frameWait"]["answer"], "the wait covers making the bitmap"
+    assert_in_delta 5000, outcome["frameWait"]["waited"], 1000
+    assert_equal [ "terminated" ], outcome["frameLog"]
+    assert_not outcome["frameBusy"]
+    assert_equal "The face checks stopped answering", outcome["asleepWait"]["answer"]
+    assert_in_delta 10_000, outcome["asleepWait"]["waited"], 1500, "the first wait saw the page hidden, so a second one ran"
+    assert_equal 0, outcome["slowestAfterHidden"]
+    assert_operator outcome["slowestAwake"], :>=, 250
+  end
+
+  test "a dark camera never makes the worker give way" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    # The phone lies face down: the camera's picture is black, and so is every copy the worker gets.
+    evaluate_async_script <<~JS
+      const done = arguments[arguments.length - 1]
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const dark = document.createElement("canvas")
+      dark.width = dark.height = 64
+      setInterval(() => dark.getContext("2d").fillRect(0, 0, 64, 64), 50)
+      capture.videoTarget.srcObject = dark.captureStream(10)
+      capture.videoTarget.play().then(() => {
+        window.workerLooks = 0
+        capture.gate = fakeChecks("worker", async () => {
+          workerLooks += 1
+          return { ...noFace, blank: true }
+        })
+        capture.loadGates = async () => log.push("load page checks")
+        capture.watch()
+        done()
+      })
+    JS
+
+    page.document.synchronize(10) do
+      raise Capybara::ExpectationNotMet, "too few checks yet" unless evaluate_script("window.workerLooks") >= 25
+    end
+    assert_equal [], evaluate_script("window.log")
+    assert_equal "worker", evaluate_script("captureController().gate.kind")
+  end
+
+  test "an empty frame is one with no picture in it" do
+    visit privacy_path
+    blank = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      import("capture/gate").then((gate) => {
+        const frame = (paint) => {
+          const canvas = document.createElement("canvas")
+          canvas.width = 320
+          canvas.height = 240
+          paint(canvas.getContext("2d"))
+          return gate.blankFrame(canvas)
+        }
+        const fill = (context, colour, x = 0, y = 0, width = 320, height = 240) => {
+          context.fillStyle = colour
+          context.fillRect(x, y, width, height)
+        }
+        done({
+          black: frame((context) => fill(context, "#000000")),
+          grey: frame((context) => fill(context, "#7F7F7F")),
+          nearlyBlack: frame((context) => { fill(context, "#050505"); fill(context, "#070707", 0, 0, 160) }),
+          face: frame((context) => { fill(context, "#C99A7A"); fill(context, "#3F2A20", 100, 60, 120, 120) }),
+          softLight: frame((context) => {
+            const light = context.createLinearGradient(0, 0, 320, 0)
+            light.addColorStop(0, "#808080")
+            light.addColorStop(1, "#909090")
+            fill(context, light)
+          })
+        })
+      })
+    JS
+
+    assert blank["black"], "a phone lying face down"
+    assert blank["grey"]
+    assert blank["nearlyBlack"]
+    assert_not blank["face"]
+    assert_not blank["softLight"], "a plain wall still has a little light and shade"
   end
 
   test "camera denied shows choose photo" do
