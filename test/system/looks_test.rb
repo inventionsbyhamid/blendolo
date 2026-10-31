@@ -1,8 +1,10 @@
 require "application_system_test_case"
 require "support/kit_helpers"
+require "support/account_helpers"
 
 class LooksSystemTest < ApplicationSystemTestCase
   include KitHelpers
+  include AccountHelpers
 
   setup do
     @kit = make_kit(tremor: 2, pinch: 0, one_hand: 0, fatigue: 0, near_vision: 1)
@@ -22,11 +24,23 @@ class LooksSystemTest < ApplicationSystemTestCase
     shot "looks"
   end
 
-  test "look page shows classic and easy" do
+  test "signed out, the look page asks for a sign in, then shows the price, then classic and easy" do
     visit kit_look_path(@kit, "red_lip")
-    # The page asks for its previews itself, once (a POST), and shows them while they're made.
+    assert_selector ".spend", text: "Sign in to see this on your face. Free for your first look."
+    assert_no_button "Show it on my face"
+    mock_google(name: "Rosa Diaz")
+    click_on "Sign in with Google"
+
+    # Back on the same look, with the free credits and the price before anything is spent.
+    assert_selector "h1", text: LookForKit.find(@kit, "red_lip").name
+    assert_selector ".flash", text: "You're signed in, Rosa."
+    assert_selector ".spend__words", text: "Uses 2 credits. You have 2."
+    assert_equal 0, @kit.renders.count
+    click_on "Show it on my face"
     assert_selector "[id^=render_]", count: 2, wait: 10
-    assert_no_selector "form[data-controller=autostart]"
+    assert_no_selector ".spend"
+    assert_equal 0, Credits.balance(User.sole)
+    assert_equal User.sole, @kit.reload.user
     classic, easy = @kit.renders.order(:id).to_a
     assert_equal %w[classic easy], [ classic.kind, easy.kind ]
     assert_selector "##{dom_id(classic)}", text: "This takes about half a minute. If it takes longer, this page checks again by itself."

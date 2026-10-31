@@ -47,6 +47,13 @@ gem "aws-sdk-s3", require: false
 gem "dodopayments", "~> 2.34"
 gem "standardwebhooks", "~> 1.1"
 
+# Google sign in. OmniAuth runs the OAuth exchange and checks Google's answer (state, token, id token), which Rails has
+# no built-in for; the sessions themselves are plain Rails sessions, so no Devise. omniauth-rails_csrf_protection makes
+# OmniAuth's POST-only sign in check Rails' own authenticity token.
+gem "omniauth", "~> 2.3"
+gem "omniauth-google-oauth2", "~> 1.2"
+gem "omniauth-rails_csrf_protection", "~> 2.0"
+
 # QR codes for share links, drawn as SVG on the server so they print and need no script.
 gem "rqrcode", "~> 3.1"
 

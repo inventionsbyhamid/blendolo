@@ -41,4 +41,14 @@ module KitScoped
     def require_today_photo
       redirect_to new_kit_photo_path(@kit) unless today_photo
     end
+
+    # Previews on a person's own face are paid with credits, so they need the account the kit is in. A kit in no
+    # account joins the signed-in one here. Example kits stop before this (keep_example_kits_as_they_are).
+    def require_kit_owner
+      if !signed_in?
+        redirect_to url_from(request.referer) || kit_path(@kit), notice: CreditsHelper::SIGN_IN
+      elsif !current_user.claim!(@kit)
+        redirect_to url_from(request.referer) || kit_path(@kit), notice: CreditsHelper::OTHER_ACCOUNT
+      end
+    end
 end

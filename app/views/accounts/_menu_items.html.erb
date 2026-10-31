@@ -1,0 +1,8 @@
+<%# Account items for a header menu: signed in, the account page and sign out; signed out, sign in. %>
+<% if signed_in? %>
+  <p class="m-0">Signed in as <strong><%= current_user.first_name %></strong></p>
+  <%= render "components/button", label: "Your account", href: account_path, variant: :secondary %>
+  <%= render "components/button", label: "Sign out", url: sign_out_path, method: :delete, variant: :secondary %>
+<% else %>
+  <%= render "components/button", label: "Sign in", href: sign_in_path(origin: request.fullpath), variant: :secondary %>
+<% end %>

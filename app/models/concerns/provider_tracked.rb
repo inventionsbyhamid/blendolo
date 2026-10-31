@@ -6,9 +6,14 @@
 #   :waiting  the render is already running (and not stale), or a call with the same inputs is in flight: it
 #             finishes with that call
 #   :cached   a finished call with the same inputs left a result in our storage: copy it, no call
+#   :sign_in  the kit is in no account, so nobody pays: the render fails with that reason
 #   a refusal from UnitGuard (:example, :kit_cap, :daily_cap, :floor): the render fails with that reason
-#   :queued   a new call: ProviderStartJob, then ProviderPollJob until done, failed or out of time
+#   :no_credits the account can't pay for the call (Credits): the render fails with that reason
+#   :queued   a new call, paid for (Credits.charge_render!): ProviderStartJob, then ProviderPollJob until done,
+#             failed or out of time
 # Two requests for the same inputs never start two paid tasks: the call row and the render are claimed atomically.
+# The credits are taken in the same transaction as the claim, so a lost claim or a refusal takes nothing, and a
+# cached or waiting render costs nothing. A definite refusal from the provider gives them back (fail_call!).
 # Each change of state is broadcast to the kit's stream as a replace of renders/_render (dom_id(render)).
 module ProviderTracked
   extend ActiveSupport::Concern
@@ -34,17 +39,28 @@ module ProviderTracked
     end
     return :waiting if call&.in_flight?
 
+    return :sign_in.tap { fail!(:sign_in) } unless kit.user
+
     verdict = UnitGuard.check(kit:, operation:)
     return verdict.tap { fail!(verdict) } unless verdict == :ok
 
     cost = Appearance.provider.feature_cost(operation)
-    if call
-      return :waiting unless call.claim!(kit:, units: units_after(call, cost))
-    else
-      ProviderCall.create!(kit:, operation: operation.to_s, input_hash:, status: :pending, units: cost)
+    claimed = ProviderCall.transaction do
+      if call
+        raise ActiveRecord::Rollback unless call.claim!(kit:, units: units_after(call, cost))
+      else
+        ProviderCall.create!(kit:, operation: operation.to_s, input_hash:, status: :pending, units: cost)
+      end
+      Credits.charge_render!(self)
+      true
     end
+    return :waiting unless claimed
+
     ProviderStartJob.perform_later(self)
     :queued
+  rescue Credits::Insufficient
+    fail!(:no_credits)
+    :no_credits
   rescue ActiveRecord::RecordNotUnique
     :waiting
   end
@@ -96,10 +112,12 @@ module ProviderTracked
   end
 
   # Fails this render, its call and the renders that waited for it. refund: the provider gave the units back or
-  # never took them (engine errors, definite refusals); anything else may have been charged and keeps its units.
+  # never took them (engine errors, definite refusals), so the credits go back too; anything else may have been
+  # charged and keeps its units and credits. Renders that waited paid nothing.
   def fail_call!(reason, refund:)
     fail!(reason)
     provider_call&.update!(status: :failed, **(refund ? { units: 0 } : {}))
+    Credits.refund_render!(self) if refund
     waiting_renders.each { |render| render.fail!(reason) }
   end
 

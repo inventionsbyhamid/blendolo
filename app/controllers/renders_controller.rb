@@ -6,6 +6,7 @@ class RendersController < ApplicationController
   include KitScoped
 
   before_action :keep_example_kits_as_they_are
+  before_action :require_kit_owner
   rate_limit to: 10, within: 1.minute, with: -> { too_many_requests }
 
   def try_again

@@ -19,6 +19,14 @@ class UnitGuardTest < ActiveSupport::TestCase
     assert_equal :ok, UnitGuard.check(kit: Kit.create!, operation: :makeup)
   end
 
+  test "a kit in an account pays with credits instead of the kit cap" do
+    user = User.create!(provider: "google_oauth2", uid: "g-cap", email: "cap@example.com")
+    @kit.update!(user:)
+    10.times { |n| calls(n, operation: "makeup") }
+
+    assert_equal :ok, UnitGuard.check(kit: @kit, operation: :makeup)
+  end
+
   test "kit cap allows two transfers and ignores refunded failures" do
     calls(1, operation: "transfer")
     calls(2, operation: "transfer", status: :failed, units: 0)

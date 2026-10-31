@@ -1,13 +1,20 @@
 require "test_helper"
 require "support/kit_helpers"
+require "support/account_helpers"
 
 class LooksTest < ActionDispatch::IntegrationTest
   include KitHelpers
+  include AccountHelpers
   include ActiveJob::TestHelper
 
-  setup { KitHelpers::CountRequests.count = 0 }
+  # Previews on a person's own face need the kit's account and its credits: signed in, with plenty.
+  setup do
+    KitHelpers::CountRequests.count = 0
+    @user = make_user(credits: 50)
+    sign_in_as(@user)
+  end
 
-  test "get look page creates no renders" do
+  test "get look page creates no renders and shows the price before spending" do
     kit = make_kit(tremor: 2)
 
     assert_no_difference -> { Render.count } do
@@ -16,8 +23,79 @@ class LooksTest < ActionDispatch::IntegrationTest
     end
     assert_response :success
     assert_equal 0, KitHelpers::CountRequests.count
-    assert_select "form[action=?][data-controller=autostart] button", previews_kit_look_path(kit, "red_lip"), text: /Show it on my face/
-    assert_select ".render", text: /Getting your photo ready. This takes about half a minute.\s*\z/, count: 2
+    assert_select ".spend__words", "Uses 3 credits. You have 52."
+    assert_select "form[action=?] button", previews_kit_look_path(kit, "red_lip"), text: /Show it on my face/
+    assert_select "form[data-controller=autostart]", count: 0
+    assert_select ".render", text: /shows here\.\s*\z/, count: 2
+
+    get kit_look_path(kit, "red_lip")
+    assert_select ".spend__words", "Uses 2 credits. You have 52."
+    assert_select "p", "Each change uses 1 credit. You have 52."
+  end
+
+  test "signed out, the look page asks for a sign in where the button was, and posting makes nothing" do
+    kit = make_kit(tremor: 2)
+    delete sign_out_path
+
+    get kit_look_path(kit, "red_lip")
+    assert_select ".spend", /Sign in to see this on your face. Free for your first look./
+    assert_select ".spend form[action='/auth/google_oauth2'] input[name=origin][value=?]", kit_look_path(kit, "red_lip")
+    assert_select "form[action=?]", previews_kit_look_path(kit, "red_lip"), count: 0
+    assert_select "#strength-title", count: 0
+
+    assert_no_difference -> { Render.count } do
+      post previews_kit_look_path(kit, "red_lip"), headers: { "HTTP_REFERER" => kit_look_path(kit, "red_lip") }
+      post tweak_kit_look_path(kit, "red_lip"), params: { direction: "bolder", level: 0 }
+    end
+    assert_redirected_to kit_path(kit)
+    follow_redirect!
+    assert_select ".flash", "Sign in to see this on your face. Free for your first look."
+  end
+
+  test "another account's kit stays theirs" do
+    kit = make_kit(tremor: 2)
+    kit.update!(user: make_user)
+
+    get kit_look_path(kit, "red_lip")
+    assert_select ".card", "This kit is in another account. Sign in with that account to see it on your face."
+    assert_no_difference -> { Render.count } do
+      post previews_kit_look_path(kit, "red_lip")
+    end
+  end
+
+  test "out of credits, the look page offers more instead of spending" do
+    kit = make_kit(tremor: 2)
+    Credits.debit!(@user, 51, reason: :admin, source: nil)
+
+    get kit_look_path(kit, "red_lip")
+    assert_select ".spend__words", "Uses 2 credits. You have 1. Get more to see this on your face."
+    assert_select ".spend a[href=?]", Credits::PRICING_PATH, text: /Get credits/
+
+    Credits.debit!(@user, 1, reason: :admin, source: nil)
+    get kit_look_path(kit, "red_lip")
+    assert_select ".spend__words", "You are out of credits. Get more to see this on your face."
+
+    post previews_kit_look_path(kit, "red_lip")
+    assert_equal %w[no_credits no_credits], kit.renders.order(:id).map(&:failure_reason)
+    assert_equal 0, Credits.balance(@user)
+    follow_redirect!
+    assert_select ".spend__words", "You are out of credits. Get more to see this on your face."
+
+    Credits.grant!(@user, 16, reason: :pack_purchase, source: "pay_1")
+    get kit_look_path(kit, "red_lip")
+    assert_select ".spend__words", "Uses 2 credits. You have 16."
+    post previews_kit_look_path(kit, "red_lip")
+    assert_equal %w[pending pending], kit.renders.order(:id).map(&:status)
+    assert_equal 14, Credits.balance(@user)
+  end
+
+  test "show it on my face spends 2 credits once, on a double tap too" do
+    kit = make_kit(tremor: 2)
+
+    2.times { post previews_kit_look_path(kit, "red_lip") }
+
+    assert_equal 50, Credits.balance(@user)
+    assert_equal @user, kit.reload.user, "a kit in no account joins the one that pays"
   end
 
   test "hover prefetch disabled meta present" do

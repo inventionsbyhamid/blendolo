@@ -28,7 +28,7 @@
       <div class="cta">
         <%= link_to "Start", start_path, class: "button button--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } %>
         <a class="button button--ghost" href="#how">See how it works</a>
-        <p class="cta__note">Free. Private. No account.</p>
+        <p class="cta__note">Private. Try the examples with no account. Your first look on your face is free.</p>
       </div>
       <ul class="pills" aria-label="Made for tremor">
         <li>Big buttons</li>
@@ -223,7 +223,7 @@
   <div class="wrap narrow">
     <h2 id="privacy-title" class="center">Private by design</h2>
     <ul class="trust">
-      <li><b>No account, no ads.</b> Your looks live behind a private link.</li>
+      <li><b>No ads, no passwords.</b> Try the examples without an account. Sign in with Google to see looks on your own face.</li>
       <li><b>Your photos, your call.</b> Keep them for 30 days, or delete them when you're done.</li>
       <li><b>Partner processing.</b> YouCam, our try-on partner, uses your photos to make the previews and removes its copies within 30 days.</li>
       <li><b>Shares you control.</b> Choose what a helper sees. Switch the link off any time.</li>
@@ -245,6 +245,10 @@
     <details>
       <summary data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">Can it bring back a look from an old photo?</summary>
       <p>Yes. Upload a photo of you wearing a look you loved. We show it on today's photo, then rebuild it from easy steps. It works best when your eyes are open and your face is clear in both photos.</p>
+    </details>
+    <details>
+      <summary data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">Do I need an account?</summary>
+      <p>Not to try the example people or to start a kit. To see looks on your own face, sign in with Google. Your first look is free.</p>
     </details>
     <details>
       <summary data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">What happens to my photos?</summary>

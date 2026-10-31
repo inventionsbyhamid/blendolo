@@ -322,7 +322,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
      App screens. Tremor rules: targets from --tap (64/88/104 px by "My hands today"), primary buttons at least
      88 px, 24 px between targets, a visible text label on every control, nothing that needs a steady hand. */
 
-  .page { width: min(760px, 100% - 32px); margin-inline: auto; padding: 8px 0 120px; }
+  /* 12 px on top: with the header's 12 px, the first control sits 24 px from the menu. */
+  .page { width: min(760px, 100% - 32px); margin-inline: auto; padding: 12px 0 120px; }
   .page--wide { width: min(1160px, 100% - 32px); }
   .page h1 { font-size: clamp(2rem, 6vw, 2.8rem); }
   .page h2 { font-size: clamp(1.6rem, 4.5vw, 2.1rem); margin-top: 1.4em; }
@@ -353,6 +354,14 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .btn--quiet:hover { background: var(--surface); color: var(--ink); }
   .btn--danger { background: var(--surface); color: var(--rose-ink); border-color: var(--rose-ink); }
   .btn--danger:hover { background: var(--rose); color: var(--rose-ink); }
+  /* "Sign in with Google": Google's own light button colours (white, #747775 outline, #1F1F1F words, the four-colour G),
+     as their brand rules ask, at our primary size. */
+  .btn--google {
+    min-height: max(var(--tap-primary), var(--tap)); font-size: 1.375rem;
+    background: #FFFFFF; color: #1F1F1F; border-color: #747775; border-width: 2px;
+  }
+  .btn--google:hover { background: #F2F2F2; color: #1F1F1F; }
+  .btn__logo { width: 1.5em; height: 1.5em; flex: none; }
   .btn--inline { width: auto; display: inline-flex; }
   .btn__icon { width: 1.3em; height: 1.3em; flex: none; }
   .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.75; cursor: progress; }
@@ -442,6 +451,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 24px; }
   .card > :last-child { margin-bottom: 0; }
+  /* The price of a preview, shown before it is spent: "Uses 2 credits. You have 14." */
+  .spend__words { font-size: 1.375rem; font-weight: 800; }
 
   /* Link cards: lists of links in prose become full-width targets. */
   .linklist { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: var(--gap); }

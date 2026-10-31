@@ -1,0 +1,7 @@
+<%# The account's header menu, on pages without a kit: the first name, the account page and sign out. %>
+<details class="menu">
+  <summary data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard"><span class="sr-only">Menu for </span><%= current_user.first_name %></summary>
+  <div class="menu__panel">
+    <%= render "accounts/menu_items" %>
+  </div>
+</details>

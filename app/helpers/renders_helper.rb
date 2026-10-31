@@ -17,7 +17,9 @@ module RendersHelper
     "kit_cap" => "You've made all the previews this kit can make. Your routine and step cards still work.",
     "timeout" => "That took too long on our side. Try again.",
     "provider_error" => "Something went wrong on our side. Try again.",
-    "example" => "This preview isn't stored for the example person. Start your own kit to see it on you."
+    "example" => "This preview isn't stored for the example person. Start your own kit to see it on you.",
+    "no_credits" => CreditsHelper::OUT_OF_CREDITS,
+    "sign_in" => CreditsHelper::SIGN_IN
   }.freeze
   PHOTO_REASONS = %w[no_face many_faces face_too_small eyes_closed bad_pose bad_image too_large].freeze
   # Failures on our side or the provider's that another go can fix. A pause is asked again too: Render#request! checks

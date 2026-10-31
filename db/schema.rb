@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_140300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_110000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "credit_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "delta", null: false
+    t.integer "reason", null: false
+    t.string "source"
+    t.integer "balance_after", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reason", "source"], name: "index_credit_entries_once_per_source", unique: true, where: "((source IS NOT NULL) AND (reason <> ALL (ARRAY[3, 4])))"
+    t.index ["user_id", "id"], name: "index_credit_entries_on_user_id_and_id"
+    t.check_constraint "balance_after >= 0", name: "credit_entries_balance_not_negative"
+    t.check_constraint "delta <> 0", name: "credit_entries_delta_not_zero"
+  end
+
   create_table "kits", force: :cascade do |t|
     t.string "token", null: false
     t.integer "path", default: 0, null: false
@@ -61,8 +75,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_110000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "example_digest"
+    t.bigint "user_id"
+    t.string "label", limit: 40
     t.index ["purge_after"], name: "index_kits_on_purge_after"
     t.index ["token"], name: "index_kits_on_token", unique: true
+    t.index ["user_id"], name: "index_kits_on_user_id"
   end
 
   create_table "photos", force: :cascade do |t|
@@ -127,8 +144,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_110000) do
     t.index ["token"], name: "index_shares_on_token", unique: true
   end
 
+  create_table "signup_grants", force: :cascade do |t|
+    t.string "account_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_digest"], name: "index_signup_grants_on_account_digest", unique: true
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string "provider", null: false
+    t.string "uid", null: false
+    t.string "email", null: false
+    t.string "name"
+    t.string "avatar_url"
+    t.datetime "clinic_until"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "credit_entries", "users"
+  add_foreign_key "kits", "users"
   add_foreign_key "photos", "kits"
   add_foreign_key "provider_calls", "kits", on_delete: :nullify
   add_foreign_key "renders", "kits"

@@ -33,8 +33,7 @@
       </figure>
     </div>
     <% if @waiting %>
-      <%= render "components/button", label: "Show it on my face", url: kit_signature_path(@kit),
-            params: { liner: @signature.liner, lips: @signature.lips }, variant: :primary %>
+      <%= render "credits/spend", cost: @cost, url: kit_signature_path(@kit), params: { liner: @signature.liner, lips: @signature.lips } %>
     <% end %>
     <%= render "components/honest_label" %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label.pluralize}" %><% end %>
@@ -94,7 +93,7 @@
     <p class="lead m-0">How did <%= you_or_they(@kit, "your", "their") %> lipstick look in the old photo?</p>
     <ul class="tiles" aria-labelledby="question">
       <% SignatureLook::LIPS.each do |value, label| %>
-        <li><%= render "components/tile", label: label, url: kit_signature_path(@kit), method: :post, params: { liner: @liner, lips: value } %></li>
+        <li><%= render "components/tile", label: label, href: kit_signature_path(@kit, liner: @liner, lips: value) %></li>
       <% end %>
     </ul>
   </div>

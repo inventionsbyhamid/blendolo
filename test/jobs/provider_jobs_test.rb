@@ -1,11 +1,13 @@
 require "test_helper"
+require "support/account_helpers"
 
 class ProviderJobsTest < ActiveJob::TestCase
+  include AccountHelpers
   EFFECTS = [ { "category" => "lip_color", "colour" => "#8E1F2F", "intensity" => 85, "texture" => "matte" } ].freeze
 
   setup do
     Appearance.provider = Appearance::FakeProvider.new
-    @kit = Kit.create!
+    @kit = Kit.create!(user: make_user(credits: 100))
     @photo = @kit.photos.create!(source: "camera", image: jpeg("today.jpg"))
   end
 
@@ -171,13 +173,13 @@ class ProviderJobsTest < ActiveJob::TestCase
   end
 
   test "a guard refusal fails the render at once" do
-    10.times { |n| ProviderCall.create!(kit: @kit, operation: "makeup", input_hash: "used-#{n}", units: 1, status: :done) }
+    ProviderCall.create!(operation: "makeup", input_hash: "spent today", units: UnitGuard.daily_cap, status: :done)
     render = makeup_render
 
     assert_no_enqueued_jobs only: ProviderStartJob do
-      assert_equal :kit_cap, render.request!
+      assert_equal :daily_cap, render.request!
     end
-    assert_equal [ "failed", "kit_cap" ], render.reload.then { [ it.status, it.failure_reason ] }
+    assert_equal [ "failed", "daily_cap" ], render.reload.then { [ it.status, it.failure_reason ] }
   end
 
   test "an example kit's render is never requested or changed" do

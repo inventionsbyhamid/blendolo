@@ -1,5 +1,6 @@
 # Finds or makes the render of some effects (or a transfer) on a photo, so a look viewed twice, or a button tapped
-# twice, never asks the provider twice. A new render goes through Render#request! (cache, unit guard, jobs).
+# twice, never asks the provider twice. A new render goes through Render#request! (cache, unit guard, credits, jobs),
+# and so does one refused for want of a sign in or credits, once those are there.
 # Only POSTs make renders (Previews.for); pages only look them up (Previews.find), so a GET (or a prefetch) never
 # spends units. Example kits only ever show their stored previews: they never call the provider.
 module Previews
@@ -13,7 +14,7 @@ module Previews
     render = kit.with_lock do
       matching(kit.renders, attributes).order(:id).last || kit.renders.create!(attributes).tap { created = true }
     end
-    render.request! if created
+    render.request! if created || render.awaiting_payment?
     render
   end
 

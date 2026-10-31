@@ -12,9 +12,9 @@
   <%= render "components/compare", classic: render(@classic || Previews.waiting(@kit, :classic)),
         easy: render((@level.zero? ? @easy : @tweak) || Previews.waiting(@kit, :easy)) %>
   <% if @waiting %>
-    <%# Asked for once, by the page itself (autostart), never by a GET; the button is there if that didn't happen. %>
-    <%= render "components/button", label: "Show it on my face", url: previews_kit_look_path(@kit, @look.key),
-          params: { level: (@level unless @level.zero?) }.compact, variant: :primary, form: { data: { controller: "autostart" } } %>
+    <%# Previews cost credits, so they're asked for with a tap after the price shows, never by a GET. %>
+    <%= render "credits/spend", cost: @cost, url: previews_kit_look_path(@kit, @look.key),
+          params: { level: (@level unless @level.zero?) }.compact %>
   <% end %>
   <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
 
@@ -56,13 +56,19 @@
     </section>
   <% end %>
 
-  <section class="stack" aria-labelledby="strength-title">
-    <h2 id="strength-title" class="m-0">Strength of the easy version: <%= LookForKit::LEVELS.fetch(@level) %></h2>
-    <div class="button-row button-row--2">
-      <%= render "components/button", label: "Softer", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "softer", level: @level } %>
-      <%= render "components/button", label: "Bolder", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "bolder", level: @level } %>
-    </div>
-  </section>
+  <%# Softer and Bolder make a new preview each, so they need the kit's account (examples say they stay as they are). %>
+  <% if @kit.example? || (signed_in? && (@kit.user_id.nil? || @kit.owned_by?(current_user))) %>
+    <section class="stack" aria-labelledby="strength-title">
+      <h2 id="strength-title" class="m-0">Strength of the easy version: <%= LookForKit::LEVELS.fetch(@level) %></h2>
+      <% unless @kit.example? %>
+        <p class="m-0"><%= "Each change uses #{pluralize(Credits.cost(:makeup), "credit")}. You have #{Credits.balance(current_user)}." %></p>
+      <% end %>
+      <div class="button-row button-row--2">
+        <%= render "components/button", label: "Softer", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "softer", level: @level } %>
+        <%= render "components/button", label: "Bolder", url: tweak_kit_look_path(@kit, @look.key), params: { direction: "bolder", level: @level } %>
+      </div>
+    </section>
+  <% end %>
 
   <%= render "components/button", label: "Make this my routine", url: kit_routine_path(@kit), params: { look_key: @look.key }, variant: :primary, icon: :check %>
 </div>

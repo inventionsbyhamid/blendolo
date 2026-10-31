@@ -64,6 +64,20 @@ class RequiredEnvTest < ActiveSupport::TestCase
     end
   end
 
+  test "production needs the Google client with Google sign in, the default" do
+    default = RequiredEnv.production("APPEARANCE_PROVIDER" => "fake").flatten
+    google = RequiredEnv.production("AUTH_PROVIDER" => " google ").flatten
+
+    [ default, google ].each do |names|
+      assert_includes names, "GOOGLE_CLIENT_ID"
+      assert_includes names, "GOOGLE_CLIENT_SECRET"
+    end
+
+    error = assert_raises(RequiredEnv::Invalid) { RequiredEnv.check_values!(env: { "AUTH_PROVIDER" => "gogle" }) }
+    assert_includes error.message, "AUTH_PROVIDER must be google"
+    assert_nothing_raised { RequiredEnv.check_values!(env: { "AUTH_PROVIDER" => "google" }) }
+  end
+
   test "production needs the youcam variables only with the youcam provider" do
     fake = RequiredEnv.production("APPEARANCE_PROVIDER" => "fake").flatten
     youcam = RequiredEnv.production("APPEARANCE_PROVIDER" => "youcam").flatten

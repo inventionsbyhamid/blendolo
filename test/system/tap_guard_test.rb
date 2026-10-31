@@ -1,5 +1,6 @@
 require "application_system_test_case"
 require "support/kit_helpers"
+require "support/account_helpers"
 
 # The repeat-tap guard on its own, on a form added to a real page: no server in the way, only the browser.
 class TapGuardTest < ApplicationSystemTestCase
@@ -88,6 +89,7 @@ end
 # same place on the next page Turbo shows.
 class TapGuardAcrossControlsTest < ApplicationSystemTestCase
   include KitHelpers
+  include AccountHelpers
 
   test "a repeat tap on the next page's tile is ignored" do
     kit = make_kit(photo: false)
@@ -133,6 +135,7 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
 
   test "softer then bolder inside the window sends one change" do
     kit = make_kit(tremor: 2, hands_today: 2)
+    sign_in_in_browser(make_user)
     # Both previews asked for already, so the page doesn't send its own request while it loads.
     photo = kit.photos.today.sole
     look = LookForKit.find(kit, "red_lip")

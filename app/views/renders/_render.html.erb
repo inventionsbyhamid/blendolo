@@ -8,6 +8,10 @@
       <p><%= render_failure_message(render) %></p>
       <% if RendersHelper::TRY_AGAIN.include?(render.failure_reason) && render.persisted? %>
         <%= render(partial: "components/button", locals: { label: "Try again", url: try_again_kit_render_path(render.kit, render), variant: :secondary }) %>
+      <% elsif render.failure_reason == "no_credits" %>
+        <%= render(partial: "components/button", locals: { label: "Get credits", href: Credits::PRICING_PATH, variant: :secondary }) %>
+      <% elsif render.failure_reason == "sign_in" %>
+        <%= render(partial: "components/button", locals: { label: "Sign in", href: sign_in_path(origin: kit_path(render.kit)), variant: :secondary }) %>
       <% elsif render.failure_reason == "example" %>
         <%= render(partial: "components/button", locals: { label: "Start your own kit", href: start_path, variant: :secondary }) %>
       <% elsif render_failure_needs_photo?(render) %>
@@ -16,9 +20,14 @@
     </div>
   <% else %>
     <div class="render__message" role="status">
-      <span class="render__dot" aria-hidden="true"></span>
       <%# A preview already asked for is checked again by the page itself (refresh_controller.js) if live updates can't reach it. %>
-      <p><%= render.running? ? "Putting the #{kind_words} on your photo." : "Getting your photo ready." %> This takes about half a minute.<% if render.persisted? %> If it takes longer, this page checks again by itself.<% end %></p>
+      <% if render.persisted? %>
+        <span class="render__dot" aria-hidden="true"></span>
+        <p><%= render.running? ? "Putting the #{kind_words} on your photo." : "Getting your photo ready." %> This takes about half a minute. If it takes longer, this page checks again by itself.</p>
+      <% else %>
+        <%# A stand-in: nothing asked for yet. %>
+        <p>Your <%= kind_words %> shows here.</p>
+      <% end %>
     </div>
   <% end %>
 </div>

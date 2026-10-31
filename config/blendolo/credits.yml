@@ -1,0 +1,8 @@
+# Credits pay for live previews on a person's own face. One credit is one makeup render (one provider unit); a transfer
+# (the signature look) takes two units, so two credits. A look on your face (classic and easy) is two credits.
+# signup_grant: the free credits a new account gets, once per Google account: one look on your face.
+shared:
+  signup_grant: 2
+  costs:
+    makeup: 1
+    transfer: 2

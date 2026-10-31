@@ -87,7 +87,7 @@ Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active
 
 ## Privacy
 
-No account and no trackers. A kit lives behind a private link and is deleted 30 days (or 7, your choice) after your last visit, or at once with "Delete everything". Photos go from your phone to our server and storage, then to YouCam to make the previews; YouCam deletes its copies within 30 days.
+No trackers and no passwords. The example people and starting a kit need no account; seeing looks on your own face needs Google sign in, which gives us your name, email and Google id, nothing else. Your first look is free. A kit lives behind a private link and is deleted 30 days (or 7, your choice) after your last visit, or at once with "Delete everything"; "Delete my account" deletes the account, its kits and its credits. Photos go from your phone to our server and storage, then to YouCam to make the previews; YouCam deletes its copies within 30 days.
 
 ## Run it
 
@@ -104,7 +104,7 @@ bin/setup   # installs gems, prepares the database and starts the app
 bin/dev     # starts the app again later
 ```
 
-The app runs at http://localhost:3107. Development and tests need no environment variables.
+The app runs at http://localhost:3107. Development and tests need no environment variables, except that signing in with Google locally needs a Google OAuth client (redirect URI `http://localhost:3107/auth/google_oauth2/callback`) in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Tests sign in through OmniAuth's test mode.
 
 ## Tests
 
