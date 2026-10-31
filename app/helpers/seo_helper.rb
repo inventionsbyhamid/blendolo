@@ -10,8 +10,10 @@ module SeoHelper
   DEFAULT_IMAGE_ALT = "Blendolo: the same red lip, in easier steps. A smiling woman at her kitchen table next to a " \
     "card that swaps liquid lipstick for a tinted balm.".freeze
 
-  def seo(title:, description:, image: nil, canonical: nil, noindex: false)
-    @seo = { title:, description:, image:, canonical:, noindex: }
+  # social_description and x_description are the shorter lines for link previews (Open Graph and X); they default to
+  # the description.
+  def seo(title:, description:, image: nil, canonical: nil, noindex: false, social_description: nil, x_description: nil)
+    @seo = { title:, description:, image:, canonical:, noindex:, social_description:, x_description: }
   end
 
   def seo_title
@@ -27,6 +29,8 @@ module SeoHelper
 
   def seo_tags
     description = @seo&.dig(:description) || DEFAULT_DESCRIPTION
+    social = @seo&.dig(:social_description) || description
+    x = @seo&.dig(:x_description) || social
     image = absolute_url(@seo&.dig(:image) || image_path("og.png"))
     title = seo_title
 
@@ -41,14 +45,14 @@ module SeoHelper
       tag.meta(property: "og:site_name", content: SITE_NAME),
       tag.meta(property: "og:locale", content: "en_GB"),
       tag.meta(property: "og:title", content: title),
-      tag.meta(property: "og:description", content: description),
+      tag.meta(property: "og:description", content: social),
       tag.meta(property: "og:image", content: image),
       tag.meta(property: "og:image:width", content: "1200"),
       tag.meta(property: "og:image:height", content: "630"),
       tag.meta(property: "og:image:alt", content: DEFAULT_IMAGE_ALT),
       tag.meta(name: "twitter:card", content: "summary_large_image"),
       tag.meta(name: "twitter:title", content: title),
-      tag.meta(name: "twitter:description", content: description),
+      tag.meta(name: "twitter:description", content: x),
       tag.meta(name: "twitter:image", content: image),
       tag.meta(name: "twitter:image:alt", content: DEFAULT_IMAGE_ALT)
     ]
