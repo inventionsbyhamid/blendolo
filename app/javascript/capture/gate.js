@@ -2,8 +2,9 @@
 // (summarize), so it can be checked with recorded results as well as the live camera, and the worker that runs the
 // landmarker (workers/face_checks.js) only has to send back a few numbers per frame.
 //
-// One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink and
-// squint under 0.4), mouth relaxed (jawOpen under 0.3), then still for a second.
+// One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink under
+// 0.4; squint under 0.75, as smiling and older eyes read as squinting), mouth relaxed (jawOpen under 0.3), then still
+// for a second.
 
 export const MESSAGES = {
   manyFaces: "Try a photo of just you",
@@ -16,7 +17,8 @@ export const MESSAGES = {
 }
 
 // maxMove: a share of the frame per 100 ms (movement).
-export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxEyes: 0.4, maxJaw: 0.3, stillFor: 1000, maxMove: 0.012 }
+export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxBlink: 0.4, maxSquint: 0.75, maxJaw: 0.3,
+  stillFor: 1000, maxMove: 0.012 }
 
 const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
 
@@ -53,8 +55,11 @@ export function evaluate(summary) {
   const turned = angles && (Math.abs(angles.yaw) > LIMITS.maxAngle || Math.abs(angles.pitch) > LIMITS.maxAngle)
   if (turned) return fail(MESSAGES.straight)
 
-  if (Math.max(...EYES.map((name) => summary.scores[name])) >= LIMITS.maxEyes) return fail(MESSAGES.eyes)
-  if (summary.scores.jawOpen >= LIMITS.maxJaw) return fail(MESSAGES.still)
+  const { scores } = summary
+  const eyesOpen = Math.max(scores.eyeBlinkLeft, scores.eyeBlinkRight) < LIMITS.maxBlink &&
+    Math.max(scores.eyeSquintLeft, scores.eyeSquintRight) < LIMITS.maxSquint
+  if (!eyesOpen) return fail(MESSAGES.eyes)
+  if (scores.jawOpen >= LIMITS.maxJaw) return fail(MESSAGES.still)
 
   return { ok: true }
 }

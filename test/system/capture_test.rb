@@ -111,18 +111,24 @@ class CaptureTest < ApplicationSystemTestCase
     }
     cases["Look straight at the phone (no face)"] = { faceLandmarks: [] }
     cases["Look straight at the phone (nodding)"] = FaceResults.result(FaceResults.face(pitch: -15))
-    cases["Open your eyes wide (squinting)"] = FaceResults.result(FaceResults.face(eyeSquintRight: 0.5))
+    cases["Open your eyes wide (squinting hard)"] = FaceResults.result(FaceResults.face(eyeSquintRight: 0.8))
+    good = {
+      straight: FaceResults.result(FaceResults.face),
+      smiling: FaceResults.result(FaceResults.face(eyeSquintLeft: 0.6, eyeSquintRight: 0.7, eyeBlinkLeft: 0.25, eyeBlinkRight: 0.2))
+    }
 
-    verdicts = evaluate_async_script(<<~JS, cases.values, FaceResults.result(FaceResults.face))
+    verdicts = evaluate_async_script(<<~JS, cases.values, good)
       const [results, good, done] = arguments
       import("capture/gate").then((gate) => {
         const evaluate = (result) => gate.evaluate(gate.summarize(result))
-        done({ messages: results.map((result) => evaluate(result).message), good: evaluate(good) })
+        const each = (results) => Object.fromEntries(Object.entries(results).map(([name, result]) => [name, evaluate(result)]))
+        done({ messages: results.map((result) => evaluate(result).message), good: each(good) })
       })
     JS
 
     assert_equal cases.keys.map { |key| key.sub(/ \(.*\)\z/, "") }, verdicts["messages"]
-    assert_equal({ "ok" => true }, verdicts["good"])
+    assert_equal({ "ok" => true }, verdicts["good"]["straight"])
+    assert_equal({ "ok" => true }, verdicts["good"]["smiling"], "smiling eyes read as squinting, and pass")
   end
 
   test "stillness is measured per 100 ms" do
