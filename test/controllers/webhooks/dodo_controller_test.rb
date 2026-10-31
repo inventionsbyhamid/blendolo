@@ -3,6 +3,7 @@ require "support/dodo_webhooks"
 require "support/account_helpers"
 
 class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
   include DodoWebhooks
   include AccountHelpers
 
@@ -200,6 +201,33 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
     assert_match "the rest were spent", refund.note
   end
 
+  test "partial refunds take back their share, counted over every refund of the payment" do
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
+    customer = { "customer_id" => @user.billing_customer_id }
+    deliver dodo_body("refund_succeeded", refund_id: "ref_a", amount: 400, is_partial: true, customer:), id: "msg_r1"
+    assert_equal 7, Credits.balance(@user), "400 of 799 back: 9 of 16 credits"
+
+    deliver dodo_body("refund_succeeded", refund_id: "ref_b", amount: 399, is_partial: true, customer:), id: "msg_r2"
+    assert_equal 0, Credits.balance(@user), "all of it back: all 16 credits"
+    assert_equal [ -9, -7 ], BillingEvent.refund.order(:id).pluck(:credits)
+
+    deliver dodo_body("refund_succeeded", refund_id: "ref_b", amount: 399, is_partial: true, customer:), id: "msg_r2_again"
+    assert_equal 0, Credits.balance(@user)
+  end
+
+  test "a won dispute gives back what it took, once, and the account lists the dispute once" do
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
+    deliver dodo_body("dispute_opened"), id: "msg_dispute_opened"
+    deliver dodo_body("dispute_opened").sub('"dispute.opened"', '"dispute.challenged"'), id: "msg_dispute_challenged"
+    assert_equal 0, Credits.balance(@user)
+
+    2.times { |n| deliver dodo_body("dispute_opened").sub('"dispute.opened"', '"dispute.won"'), id: "msg_dispute_won_#{n}" }
+
+    assert_equal 16, Credits.balance(@user)
+    listed = BillingEvent.purchases.where(user: @user).map { [ it.kind, it.credits ] }
+    assert_equal [ [ "dispute_won", 16 ], [ "dispute", -16 ], [ "pack_paid", 16 ] ], listed
+  end
+
   test "a chargeback takes the pack back once, whichever dispute events come" do
     deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
     Credits.grant!(@user, 5, reason: :admin, source: nil)
@@ -210,15 +238,33 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ -16, nil ], BillingEvent.dispute.order(:id).pluck(:credits)
   end
 
-  test "a refunded Clinic month takes its credits back and ends the plan now" do
+  test "a refunded Clinic month takes its credits back, ends the plan now and stops the subscription at Dodo" do
     checkout = checkout_for(@user, :clinic)
     deliver clinic("subscription_active", checkout:), id: "msg_active"
     deliver dodo_body("payment_succeeded_subscription", customer: { "customer_id" => @user.billing_customer_id }), id: "msg_payment"
-    deliver dodo_body("refund_succeeded", payment_id: "pay_test_clinic_0001", amount: 1900,
-      customer: { "customer_id" => @user.billing_customer_id }), id: "msg_refund"
+
+    assert_enqueued_with(job: BillingCancelJob, args: [ "dodo", "sub_test_clinic_0001" ]) do
+      deliver dodo_body("refund_succeeded", payment_id: "pay_test_clinic_0001", amount: 1900,
+        customer: { "customer_id" => @user.billing_customer_id }), id: "msg_refund"
+    end
 
     assert_not @user.reload.clinic?
     assert_equal 0, Credits.balance(@user)
+    assert_not BillingSubscription.sole.renewing?
+  end
+
+  test "a subscription paid through a deleted account's checkout is stopped at Dodo; one with no reference is only listed" do
+    checkout = checkout_for(@user, :clinic)
+    @user.destroy_everything!
+    assert checkout.reload.expired?
+
+    assert_enqueued_with(job: BillingCancelJob, args: [ "dodo", "sub_test_clinic_0001" ]) do
+      deliver dodo_body("subscription_active", metadata: { "ref" => checkout.token }, next_billing_date: @period_end.iso8601), id: "msg_orphan"
+    end
+    assert_no_enqueued_jobs(only: BillingCancelJob) do
+      deliver dodo_body("subscription_active", subscription_id: "sub_no_ref", next_billing_date: @period_end.iso8601), id: "msg_no_ref"
+    end
+    assert_equal %w[unmatched unmatched], BillingEvent.order(:id).pluck(:status)
   end
 
   test "a refund for a payment that isn't ours is unmatched" do
@@ -229,7 +275,7 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
 
   test "events we don't act on are stored as ignored" do
     deliver dodo_body("payment_succeeded_subscription"), id: "msg_sub_payment"
-    deliver dodo_body("subscription_active").sub('"subscription.active"', '"dispute.won"'), id: "msg_dispute_won"
+    deliver dodo_body("subscription_active").sub('"subscription.active"', '"dispute.challenged"'), id: "msg_dispute_challenged"
 
     assert_equal %w[ignored ignored], BillingEvent.pluck(:status)
     assert_equal 0, Credits.balance(@user)

@@ -47,7 +47,7 @@ class Billing::DodoTest < ActiveSupport::TestCase
   test "maps updates, retries and money taken back" do
     { "subscription.updated" => :subscription_updated, "subscription.past_due" => :subscription_past_due,
       "subscription.on_hold" => :subscription_past_due, "dispute.opened" => :dispute, "dispute.lost" => :dispute,
-      "dispute.won" => nil, "subscription.failed" => nil }.each do |name, type|
+      "dispute.won" => :dispute_won, "dispute.challenged" => nil, "subscription.failed" => nil }.each do |name, type|
       body = dodo_body("subscription_active").sub('"subscription.active"', %("#{name}"))
 
       parsed = @dodo.parse_webhook(dodo_request(body, id: "msg_#{name}")).type

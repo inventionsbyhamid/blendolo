@@ -15,8 +15,13 @@ module BillingHelper
 
   # A line of the account's purchases list.
   def purchase_words(event)
-    if event.refund? || event.dispute?
-      what = event.refund? ? "Refund of #{money(event.amount_cents, event.currency)}".strip : "Payment taken back by the bank"
+    if event.dispute_won?
+      "Dispute won: #{pluralize(event.credits, "credit")} given back"
+    elsif event.refund? || event.dispute?
+      what = if event.refund? then "Refund of #{money(event.amount_cents, event.currency)}".strip
+      elsif event.event_type == "dispute.lost" then "Payment taken back by the bank"
+      else "Payment disputed with the bank"
+      end
       event.credits.to_i.negative? ? "#{what}: #{pluralize(-event.credits, "credit")} taken back" : what
     elsif (plan = event.plan_record)
       "#{plan.subscription? ? "#{plan.name} plan, one month" : plan.name}: #{pluralize(event.credits, "credit")}"

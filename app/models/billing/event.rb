@@ -18,7 +18,7 @@ module Billing
     :money_back_id, :subscription_status, :cancel_at_period_end, :period_end, :amount_cents, :net_cents, :currency,
     :occurred_at, :payload)
     TYPES = %i[pack_paid subscription_active subscription_renewed subscription_updated subscription_past_due
-      subscription_cancelled subscription_expired refund dispute].freeze
+      subscription_cancelled subscription_expired refund dispute dispute_won].freeze
     # Events that start or renew a paid period.
     PAID_PERIODS = %i[subscription_active subscription_renewed].freeze
 

@@ -9,7 +9,8 @@ module Billing
 
     # Dodo's event names => ours. payment.succeeded is a pack only when it belongs to no subscription (a
     # subscription's own payments come with subscription events). A dispute counts once the money is taken back
-    # (opened, accepted or lost: the first one counts). Anything else is stored and changes nothing.
+    # (opened, accepted or lost: the first one counts), and a won one gives it back. Anything else is stored and
+    # changes nothing.
     EVENT_TYPES = {
       "subscription.active" => :subscription_active,
       "subscription.renewed" => :subscription_renewed,
@@ -21,7 +22,8 @@ module Billing
       "refund.succeeded" => :refund,
       "dispute.opened" => :dispute,
       "dispute.accepted" => :dispute,
-      "dispute.lost" => :dispute
+      "dispute.lost" => :dispute,
+      "dispute.won" => :dispute_won
     }.freeze
     # The webhook events the endpoint asks for (script/billing/dodo_setup.rb).
     SUBSCRIBED = [ "payment.succeeded", *EVENT_TYPES.keys ].freeze

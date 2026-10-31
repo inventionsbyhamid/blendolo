@@ -17,31 +17,44 @@
 #   subscription_cancelled  it won't renew; the plan runs to its paid end
 #   subscription_expired    ends the plan now (unless another subscription of the account still pays for it)
 #   refund, dispute         takes back what is left of that payment's credits (never below zero), once per refund or
-#                           dispute; a Clinic payment taken back also ends the plan now
+#                           dispute; partial refunds take back their share, counted over all refunds of the payment.
+#                           A Clinic payment taken back also ends the plan now and cancels the subscription at the
+#                           provider (a job, after the commit), so it is never charged again
+#   dispute_won             gives back what that dispute took, once
 # clinic_until only moves forward, except on an expiry, a refund or a dispute. State follows the provider's event
 # times, not the order deliveries arrive.
 class BillingEvent < ApplicationRecord
   belongs_to :user, optional: true
 
   enum :kind, { pack_paid: 0, subscription_active: 1, subscription_renewed: 2, subscription_cancelled: 3,
-    subscription_expired: 4, refund: 5, subscription_updated: 6, subscription_past_due: 7, dispute: 8 },
+    subscription_expired: 4, refund: 5, subscription_updated: 6, subscription_past_due: 7, dispute: 8, dispute_won: 9 },
     validate: { allow_nil: true }
   enum :status, { applied: 0, ignored: 1, unmatched: 2 }, validate: true
 
-  # What the account page lists: payments that added credits, and money taken back. Newest first.
-  scope :purchases, -> { where.not(credits: nil).or(where(kind: %i[refund dispute], status: :applied)).order(created_at: :desc, id: :desc) }
+  # What the account page lists, newest first: payments that added credits, refunds, and each dispute once (the event
+  # that took its credits back, and the one that gave them back if the dispute was won).
+  scope :purchases, -> { where.not(credits: nil).or(where(kind: :refund, status: :applied)).order(created_at: :desc, id: :desc) }
 
   # Stores and applies a verified event; the row already stored when the provider sends it again.
   def self.receive!(event, provider:)
-    transaction do
+    row = transaction do
       create!(provider:, event_id: event.id, event_type: event.name.presence || "unknown", kind: event.type,
         reference: event.reference, plan: event.plan&.key, customer_id: event.customer_id,
         subscription_id: event.subscription_id, payment_id: event.payment_id, amount_cents: event.amount_cents,
         currency: event.currency, period_end: event.period_end, occurred_at: event.occurred_at,
-        payload: event.payload).tap { |row| row.apply!(event) }
+        payload: event.payload).tap { |created| created.apply!(event) }
     end
+    # Network calls never run inside the transaction: subscriptions to stop go to a job once it has committed.
+    row.to_cancel.each { |subscription_id| BillingCancelJob.perform_later(provider, subscription_id) }
+    row
   rescue ActiveRecord::RecordNotUnique
     find_by!(provider:, event_id: event.id)
+  end
+
+  # Subscriptions this event says to stop at the provider: a Clinic payment taken back, or one paid for an account
+  # that is gone or isn't the checkout's.
+  def to_cancel
+    @to_cancel ||= []
   end
 
   def apply!(event)
@@ -64,10 +77,11 @@ class BillingEvent < ApplicationRecord
 
     def settle
       return "not an event we act on" unless kind
-      return unmatched("not one of our products") if plan_record.nil? && !money_back?
+      return unmatched("not one of our products") if plan_record.nil? && !money_back? && !dispute_won?
 
       if pack_paid? then pay_pack
       elsif money_back? then take_back
+      elsif dispute_won? then give_back
       else follow_subscription
       end
     end
@@ -92,7 +106,7 @@ class BillingEvent < ApplicationRecord
       return "a subscription product paid as a pack" if plan_record.subscription?
 
       self.user = account_from_checkout or return unmatched("no checkout of ours for this customer")
-      Checkout.where(token: reference, provider:).update_all(status: Checkout.statuses[:paid], updated_at: Time.current)
+      Checkout.where(token: reference, provider:).each(&:paid!)
       check_amount
       grant(:pack_purchase, source: "#{provider}:#{payment_id}")
     end
@@ -102,7 +116,10 @@ class BillingEvent < ApplicationRecord
 
       subscription = BillingSubscription.find_by(provider:, subscription_id:)
       self.user = subscription&.user || account_from_checkout
-      return unmatched("no checkout of ours for this customer") unless user && user.billing_customer_id == customer_id
+      unless user && user.billing_customer_id == customer_id
+        stop_orphan(subscription)
+        return unmatched("no checkout of ours for this customer")
+      end
 
       subscription ||= start_subscription
       current = subscription.follow!(event)
@@ -115,8 +132,18 @@ class BillingEvent < ApplicationRecord
       end
     end
 
+    # A subscription paid for through a checkout of ours whose account is gone, or by a customer that isn't the
+    # checkout's, is stopped at once so it isn't charged again. One with no reference of ours at all is only listed
+    # (bin/rails billing:unmatched): stopping those would end real plans if a delivery ever lacked our metadata.
+    def stop_orphan(subscription)
+      return unless subscription_id && Billing::Event::PAID_PERIODS.include?(kind.to_sym)
+
+      checkout = Checkout.find_by(token: reference, provider:) if reference.present?
+      to_cancel << subscription_id if checkout || (subscription && subscription.user_id.nil?)
+    end
+
     def start_subscription
-      Checkout.where(token: reference, provider:).update_all(status: Checkout.statuses[:paid], updated_at: Time.current)
+      Checkout.where(token: reference, provider:).each(&:paid!)
       # A savepoint of its own, so losing the insert race to a second delivery leaves this transaction usable.
       BillingSubscription.transaction(requires_new: true) do
         BillingSubscription.create!(provider:, subscription_id:, user:, plan:, status: event.subscription_status || "active")
@@ -145,10 +172,36 @@ class BillingEvent < ApplicationRecord
 
       self.plan ||= paid.plan
       if paid.plan_record&.subscription?
-        ended = end_clinic!(except: BillingSubscription.find_by(provider:, subscription_id: paid.subscription_id))
+        subscription = BillingSubscription.find_by(provider:, subscription_id: paid.subscription_id)
+        stop_refunded(subscription)
+        ended = end_clinic!(except: subscription)
       end
       taken = claw_back(paid)
       [ taken, ("the Clinic plan ended now" if ended) ].compact.join("; ").presence
+    end
+
+    # The money for a Clinic month went back: the plan stops here now and at the provider after the commit, so the
+    # account can start a new one straight away and is never charged again for this one.
+    def stop_refunded(subscription)
+      return unless subscription
+
+      subscription.update!(status: "cancelled", cancel_at_period_end: true)
+      to_cancel << subscription.subscription_id
+    end
+
+    # A dispute the business won: what it took back comes back, once.
+    def give_back
+      taken = BillingEvent.where(provider:, kind: :dispute, status: :applied, payment_id:).where("credits < 0")
+        .where("payload -> 'data' ->> 'dispute_id' = ?", event.money_back_id.to_s).first
+      return "nothing was taken back for this dispute" unless taken
+
+      self.user = taken.user or return unmatched("the account is gone")
+      self.plan = taken.plan
+      entry = Credits.grant!(user, -taken.credits, reason: :refund, source: "#{provider}:dispute_won:#{event.money_back_id}")
+      return "credits already given back" unless entry.previously_new_record?
+
+      self.credits = -taken.credits
+      nil
     end
 
     # The payment this refund or dispute is about: the pack payment, or the Clinic period it paid for.
@@ -165,16 +218,25 @@ class BillingEvent < ApplicationRecord
       BillingEvent.where(provider:, subscription_id: subscription, status: :applied).where("credits > 0").order(:id).first
     end
 
+    # Refunds take back their share of the payment's credits, counted over every refund of it so far (refunded / paid
+    # x granted, rounded up); a dispute takes back all of it. Never more than the payment granted, never below zero.
     def claw_back(paid)
-      share = amount_cents && paid.amount_cents.to_i.positive? ? [ amount_cents.fdiv(paid.amount_cents), 1 ].min : 1
-      already = user.credit_entries.where(reason: "clawback").where("source LIKE ?", "#{provider}:#{paid.payment_id || paid.event_id}:%").sum(:delta).abs
-      wanted = (paid.credits * share).ceil - already
+      key = "#{provider}:#{paid.payment_id || paid.event_id}"
+      already = user.credit_entries.where(reason: "clawback").where("source LIKE ?", "#{key}:%").sum(:delta).abs
+      wanted = (paid.credits * share_back(paid)).ceil - already
       return "credits already taken back" unless wanted.positive?
 
-      entry = Credits.claw_back!(user, wanted, source: "#{provider}:#{paid.payment_id || paid.event_id}:#{event.money_back_id || event_id}")
+      entry = Credits.claw_back!(user, wanted, source: "#{key}:#{event.money_back_id || event_id}")
       taken = entry ? -entry.delta : 0
-      self.credits = -taken if taken.positive?
+      self.credits = -taken
       taken < wanted ? "took back #{taken} of #{wanted} credits; the rest were spent" : nil
+    end
+
+    def share_back(paid)
+      return 1 unless refund? && amount_cents && paid.amount_cents.to_i.positive?
+
+      refunded = BillingEvent.applied.where(provider:, kind: :refund, payment_id:).where.not(id:).sum(:amount_cents) + amount_cents
+      [ refunded.fdiv(paid.amount_cents), 1 ].min
     end
 
     def grant(reason, source:)

@@ -17,7 +17,7 @@ module DodoSetup
   # The events Billing::Dodo acts on (Billing::Dodo::SUBSCRIBED; a test keeps the two the same).
   EVENTS = %w[payment.succeeded subscription.active subscription.renewed subscription.updated subscription.past_due
     subscription.on_hold subscription.cancelled subscription.expired refund.succeeded dispute.opened dispute.accepted
-    dispute.lost].freeze
+    dispute.lost dispute.won].freeze
   DESCRIPTIONS = {
     "look_pack" => "%{credits} credits for previews of makeup looks on your own face. One credit is one preview.",
     "clinic" => "%{credits} credits every month and a client list, for clinics and care teams. One credit is one preview."

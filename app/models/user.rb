@@ -56,6 +56,7 @@ class User < ApplicationRecord
   def destroy_everything!
     files = transaction do
       lock!
+      Checkout.expire_for!(self)
       found = kits.reload.flat_map(&:destroy_rows!)
       destroy!
       found
