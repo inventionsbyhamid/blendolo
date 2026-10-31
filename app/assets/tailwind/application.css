@@ -523,3 +523,12 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   }
   .btn[aria-pressed="true"] { border-color: var(--ink); }
 }
+
+@layer components {
+  /* Look tiles: the look's colours as a swatch until its picture arrives, and ease in words above the name. */
+  .tile__art { display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; border-radius: 16px; background: var(--color-canvas); }
+  .swatch { width: 80%; height: auto; }
+  .tile__badge { display: inline-block; padding: 2px 14px; border-radius: 999px; background: var(--ink); color: var(--surface); font-size: 1.05rem; font-weight: 800; }
+  .ease-change { font-size: 1.75rem; font-weight: 900; }
+  .swaplist__why { display: block; margin-top: 6px; color: var(--ink); font-size: 1.125rem; }
+}

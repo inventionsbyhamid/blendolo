@@ -1,13 +1,14 @@
 <div class="page page--wide stack">
   <header class="stack">
     <h1 class="m-0">Pick a look</h1>
-    <p class="lead m-0">Easiest first for <%= you_or_they(@kit, "your", "their") %> hands. Each look is as easy as its hardest step.</p>
+    <p class="lead m-0">Easiest first for <%= you_or_they(@kit, "your", "their") %> hands. A look is as easy as its hardest step, and every look has an easier version.</p>
   </header>
   <ul class="tiles tiles--2 tiles--looks">
     <% @looks.each do |look| %>
       <li>
         <%= render "components/tile", label: look.name, href: kit_look_path(@kit, look.key), image: look_thumbnail(look),
-              hint: "#{look.classic_words} for #{you_or_they(@kit, "your", "their")} hands. Hardest step: #{look.classic_ease[:hardest_step]&.name&.downcase_first}" %>
+              image_alt: "", art: colour_swatch(look_colours(look)), badge: look.classic_words,
+              hint: hardest_step_words(look.classic_ease) %>
       </li>
     <% end %>
   </ul>

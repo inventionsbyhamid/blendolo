@@ -25,7 +25,7 @@ class LookForKit
     @look = look
   end
 
-  delegate :key, :name, :blurb, :thumbnail, to: :look
+  delegate :key, :name, :blurb, :thumbnail, :steps, to: :look
 
   def profile
     @profile ||= kit.hand_profile
