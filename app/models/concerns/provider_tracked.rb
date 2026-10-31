@@ -3,7 +3,8 @@
 # request! keys the render by its inputs (input_hash: operation, photo bytes, and the effects or the reference photo's
 # bytes) and then, in order:
 #   :example  an example kit's render: nothing changes, nothing is called
-#   :waiting  the render is already running, or a call with the same inputs is in flight: it finishes with that call
+#   :waiting  the render is already running (and not stale), or a call with the same inputs is in flight: it
+#             finishes with that call
 #   :cached   a finished call with the same inputs left a result in our storage: copy it, no call
 #   a refusal from UnitGuard (:example, :kit_cap, :daily_cap, :floor): the render fails with that reason
 #   :queued   a new call: ProviderStartJob, then ProviderPollJob until done, failed or out of time
@@ -16,7 +17,9 @@ module ProviderTracked
 
   def request!
     return :example if kit.example? # example kits only show their stored previews, and refuse changes
-    return :waiting if running?
+    # A running render is left alone, unless its start went quiet: a worker that died between claiming it and
+    # starting the task leaves it running with nothing to finish it, so it can be requested again.
+    return :waiting if running? && started_at.present? && started_at > ProviderCall::STALE_AFTER.ago
 
     update!(input_hash: compute_input_hash, status: :pending, failure_reason: nil)
     call = provider_call

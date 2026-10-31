@@ -281,6 +281,44 @@ class ProviderJobsTest < ActiveJob::TestCase
     assert render.reload.running?
   end
 
+  test "stale running render can be requested again" do
+    render = makeup_render.tap(&:request!)
+    assert render.claim_start! # the start job claimed it, then its worker died before the provider answered
+
+    travel ProviderCall::STALE_AFTER + 1.minute
+    assert_enqueued_jobs 1, only: ProviderStartJob do
+      assert_equal :queued, render.reload.request!
+    end
+    assert render.reload.pending?
+    assert_equal 2.0, render.provider_call.units.to_f
+  end
+
+  test "start crash before external id times out" do
+    Appearance.provider = provider_with(start: -> { raise Interrupt }) # a worker restart, not an error we rescue
+    render = makeup_render.tap(&:request!)
+
+    assert_enqueued_with(job: ProviderPollJob, args: [ render ]) do
+      assert_raises(Interrupt) { ProviderStartJob.perform_now(render) }
+    end
+    assert render.reload.running?
+    assert_nil render.external_id
+
+    travel 4.seconds
+    assert_enqueued_with(job: ProviderPollJob) { ProviderPollJob.perform_now(render.reload) }
+
+    travel 181.seconds
+    ProviderPollJob.perform_now(render.reload)
+    assert_equal [ "failed", "timeout" ], render.reload.then { [ it.status, it.failure_reason ] }
+    assert_equal 1.0, render.provider_call.units.to_f
+  end
+
+  test "one poll chain per start" do
+    render = makeup_render.tap(&:request!)
+    assert_enqueued_jobs 1, only: ProviderPollJob do
+      ProviderStartJob.perform_now(render)
+    end
+  end
+
   test "a timed out call keeps counting its units and the kit's call" do
     Appearance.provider = Appearance::FakeProvider.new(ready_after: 600)
     render = makeup_render.tap(&:request!)
