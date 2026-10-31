@@ -1,9 +1,11 @@
 require "application_system_test_case"
 require "support/kit_helpers"
 require "support/face_results"
+require "support/account_helpers"
 
 class SignatureTest < ApplicationSystemTestCase
   include KitHelpers
+  include AccountHelpers
 
   setup do
     @kit = make_kit(tremor: 2, pinch: 0, one_hand: 0, fatigue: 0, near_vision: 0)
@@ -13,6 +15,7 @@ class SignatureTest < ApplicationSystemTestCase
 
   test "signature flow with fake" do
     page.current_window.resize_to(390, 844)
+    sign_in_in_browser(make_user(credits: 3))
     visit kit_signature_path(@kit)
     click_on "Choose an old photo"
 
@@ -32,6 +35,9 @@ class SignatureTest < ApplicationSystemTestCase
     click_on "Matte"
 
     assert_selector "h1", text: "Your signature look, today"
+    assert_selector ".spend__words", text: "Uses 3 credits. You have 5."
+    click_on "Show it on my face"
+    assert_no_selector ".spend"
     transfer = @kit.renders.transfer.sole
     easy = @kit.renders.easy.where(look_key: "signature").sole
     assert_equal reference, transfer.reference_photo
