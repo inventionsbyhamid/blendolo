@@ -532,3 +532,12 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .ease-change { font-size: 1.75rem; font-weight: 900; }
   .swaplist__why { display: block; margin-top: 6px; color: var(--ink); font-size: 1.125rem; }
 }
+
+@layer components {
+  /* Signature look: the old photo, today with the look, today easy. */
+  .three-up { display: grid; gap: 16px; grid-template-columns: 1fr; padding: 12px; border-radius: var(--radius-card); background: var(--color-canvas); }
+  @media (min-width: 700px) { .three-up { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .three-up__item { margin: 0; display: grid; gap: 8px; }
+  .three-up__photo { aspect-ratio: 3 / 4; border-radius: 16px; }
+  .signature__thumb { width: 140px; height: 175px; object-fit: cover; border-radius: 16px; background: var(--color-canvas); }
+}

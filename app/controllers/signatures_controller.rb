@@ -1,13 +1,10 @@
-# Bring back a signature look: an old photo of you wearing it goes on today's photo (a transfer), and is rebuilt from
-# easy steps using colours sampled from the old photo and two answers (liner, lips).
+# Bring back a signature look, one decision per screen: an old photo of you wearing it (photos/new?kind=reference),
+# "Did you wear eyeliner?", "Lips?", then the old photo, today with the look put on by the provider (a transfer) and
+# today with the easy version rebuilt from colours sampled on the old photo.
 class SignaturesController < ApplicationController
   include KitScoped
 
   before_action :keep_example_kits_as_they_are, only: :create
-
-  LINERS = %w[winged thin smudged none].freeze
-  LIPS = %w[matte shiny sheer].freeze
-
   before_action :require_consent
   before_action :require_today_photo
   rate_limit to: 10, within: 1.minute, only: :create, with: -> { too_many_requests }
@@ -16,26 +13,23 @@ class SignaturesController < ApplicationController
     @reference = @kit.photos.reference.order(:created_at).last
     return show_example if @kit.example?
 
-    @liner = params[:liner].presence_in(LINERS)
-    @lips = params[:lips].presence_in(LIPS)
-    return unless @reference && @liner && @lips
+    @liner = params[:liner].presence_in(SignatureLook::LINERS.keys)
+    @signature = SignatureLook.build(@kit, @reference, liner: @liner, lips: params[:lips])
+    return unless @signature
 
     @transfer = Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
-    @easy = Previews.for(@kit, today_photo, "signature", :easy, easy_effects)
+    @easy = Previews.for(@kit, today_photo, "signature", :easy, @signature.easy_effects(today_photo))
   end
 
-  # The old photo (or the one already sent) and the two answers. Sending it twice finds the same photo and renders.
+  # The two answers for the old photo already chosen. Sending them twice finds the same renders.
   def create
-    @liner = params[:liner].presence_in(LINERS)
-    @lips = params[:lips].presence_in(LIPS)
-    @reference = reference_from_params
-    return if performed?
-    return redirect_to(kit_signature_path(@kit), notice: "Please choose an old photo of you.") unless @reference
-    return redirect_to(kit_signature_path(@kit), notice: "Please answer both questions.") unless @liner && @lips
+    reference = @kit.photos.reference.order(:created_at).last
+    signature = SignatureLook.build(@kit, reference, liner: params[:liner], lips: params[:lips])
+    return redirect_to(kit_signature_path(@kit)) unless signature
 
-    Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
-    Previews.for(@kit, today_photo, "signature", :easy, easy_effects)
-    redirect_to kit_signature_path(@kit, liner: @liner, lips: @lips)
+    Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: reference)
+    Previews.for(@kit, today_photo, "signature", :easy, signature.easy_effects(today_photo))
+    redirect_to kit_signature_path(@kit, liner: signature.liner, lips: signature.lips)
   end
 
   private
@@ -43,21 +37,5 @@ class SignaturesController < ApplicationController
     def show_example
       @transfer = Previews.for(@kit, today_photo, "signature", :transfer, [], reference_photo: @reference)
       @easy = Previews.for(@kit, today_photo, "signature", :easy, [])
-    end
-
-    # A new upload, or the old photo already sent. Example people keep their own old photo.
-    def reference_from_params
-      return @kit.photos.reference.order(:created_at).last if params[:image].blank?
-
-      @upload = PhotoUpload.new(kit: @kit, file: params[:image], kind: "reference", sampled: params[:sampled])
-      return @upload.photo if @upload.save
-
-      render :show, status: :unprocessable_content
-      nil
-    end
-
-    def easy_effects
-      steps = Looks::EffectsBuilder.signature(sampled: @reference.sampled, liner: @liner, lips: @lips)
-      Looks::EffectsBuilder.build(Looks::Look.easy_steps(steps, @kit.hand_profile), skin: today_photo.sampled["skin"])
     end
 end

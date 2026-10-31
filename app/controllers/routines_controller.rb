@@ -42,10 +42,8 @@ class RoutinesController < ApplicationController
     end
 
     def signature_steps
-      reference = @kit.photos.reference.order(:created_at).last or raise KeyError
-      steps = Looks::EffectsBuilder.signature(sampled: reference.sampled, liner: params[:liner], lips: params[:lips])
-      Looks::Look.easy_steps(steps, @kit.hand_profile)
-    rescue ArgumentError
-      raise KeyError
+      reference = @kit.photos.reference.order(:created_at).last
+      signature = SignatureLook.build(@kit, reference, liner: params[:liner], lips: params[:lips]) or raise KeyError
+      signature.easy_steps
     end
 end
