@@ -44,3 +44,6 @@
 
 # Local tooling workspace.
 .superpowers/
+
+# Local secrets folder, if one is ever created inside the repo.
+/.secrets/
