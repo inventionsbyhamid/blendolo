@@ -203,6 +203,7 @@ class ProviderJobsTest < ActiveJob::TestCase
     ProviderStartJob.perform_now(render)
     ProviderPollJob.perform_now(render.reload)
     assert_equal "image/jpeg", render.reload.result.content_type
+    assert_equal file_fixture("youcam/makeup/m03_mu_transfer.jpg").binread, render.result.download, "stored as it came"
   end
 
   test "an unexpected error in the start job fails the render and keeps the units" do

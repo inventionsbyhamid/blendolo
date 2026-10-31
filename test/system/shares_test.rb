@@ -1,8 +1,10 @@
 require "application_system_test_case"
 require "support/kit_helpers"
+require "support/tremor_checks"
 
 class SharesSystemTest < ApplicationSystemTestCase
   include KitHelpers
+  include TremorChecks
 
   setup do
     @kit = make_kit(tremor: 2, pinch: 0, one_hand: 0, fatigue: 0, near_vision: 0)
@@ -68,5 +70,14 @@ class SharesSystemTest < ApplicationSystemTestCase
     assert_selector "pre.code", text: "\"pinch_grip\""
     assert_selector "pre.code", text: "\"label\": \"No pinch grip\""
     shot "brands"
+
+    # Long lines scroll inside their box, which takes focus to scroll from the keyboard; the page itself doesn't scroll
+    # sideways.
+    assert_operator evaluate_script("document.documentElement.scrollWidth"), :<=, evaluate_script("window.innerWidth")
+    request = find("pre.code[role=region][tabindex='0'][aria-label='Example request']")
+    assert evaluate_script("arguments[0].scrollWidth > arguments[0].clientWidth", request), "the request line scrolls in its box"
+    assert_selector "pre.code[role=region][tabindex='0'][aria-label='Example answer']"
+    assert_equal "pre", evaluate_script("getComputedStyle(arguments[0]).whiteSpace", request)
+    assert_axe_clean
   end
 end

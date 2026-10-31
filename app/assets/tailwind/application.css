@@ -572,7 +572,9 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
 }
 
 @layer components {
-  .code { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px 20px; border-radius: 18px; background: var(--ink); color: var(--surface); font-size: 1rem; line-height: 1.45; }
+  /* Long lines (a URL, JSON) scroll sideways inside the box instead of breaking mid-word; the box can take focus,
+     so it scrolls from the keyboard too, and never widens the page. */
+  .code { max-width: 100%; overflow-x: auto; white-space: pre; padding: 16px 20px; border-radius: 18px; background: var(--ink); color: var(--surface); font-size: 1rem; line-height: 1.45; }
   .qr { display: block; width: min(240px, 70vw); height: auto; padding: 16px; border-radius: 18px; background: var(--color-white); }
   .product { display: grid; gap: 6px; padding: 16px 20px; border-radius: 18px; background: var(--soft); }
   .product__name { margin: 0; font-weight: 800; }

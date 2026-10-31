@@ -35,7 +35,7 @@ class Appearance::FakeProvider < Appearance::Provider
     end
   end
 
-  def download(outcome)
+  def download(outcome, operation: nil)
     name = File.basename(outcome.image_url.delete_prefix("fake://"))
     Appearance::Image.from_bytes(RESULTS.join(name).binread)
   end

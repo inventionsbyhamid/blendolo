@@ -5,6 +5,7 @@
    regions = reference ? %w[lips lids cheeks skin] : %w[skin lips lids cheeks] %>
 <div class="page stack capture" data-controller="capture" data-capture-state="starting"
      data-capture-package-url-value="<%= urls[:package_url] %>" data-capture-model-url-value="<%= urls[:model_url] %>"
+     data-capture-worker-url-value="<%= urls[:worker_url] %>" data-capture-gate-url-value="<%= urls[:gate_url] %>"
      data-capture-regions-value="<%= regions.to_json %>" data-capture-camera-value="<%= !reference %>"
      data-capture-choose-prompt-value="Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look.">
   <% if reference %>

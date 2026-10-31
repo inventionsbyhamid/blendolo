@@ -70,7 +70,8 @@ class SignatureTest < ApplicationSystemTestCase
     execute_script <<~JS, two_faces
       const element = document.querySelector("[data-controller~=capture]")
       const capture = window.Stimulus.getControllerForElementAndIdentifier(element, "capture")
-      capture.gate = { setOptions: async () => {}, detect: () => arguments[0] }
+      const faces = arguments[0].faceLandmarks
+      capture.gate = { kind: "page", still: async () => faces, video: async () => null, close: () => {} }
     JS
 
     find("input[data-capture-target=choose]", visible: :all).attach_file(file_fixture("face.jpg"))

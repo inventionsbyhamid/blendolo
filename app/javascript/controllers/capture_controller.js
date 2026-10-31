@@ -1,15 +1,28 @@
 import { Controller } from "@hotwired/stimulus"
-import { evaluate, movement, loadLandmarker, LIMITS, MESSAGES } from "capture/gate"
+import { evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
+import { startChecks } from "capture/checks"
 import { sampleRegions, sharpness, toJpeg, pixels } from "capture/sampler"
 
-// Hands-free photo. The phone stands on its own; the camera checks each frame (one face, close enough, looking
-// straight, eyes open) and takes the photo by itself after a second of stillness: a burst of five frames, keeping the
-// sharpest. There's always a big shutter, 3 and 10 second timers, "Choose a photo", and "A helper is taking it".
-// Messages are shown large and, unless switched off, spoken. Everything happens on this one page: the chosen photo
-// is re-encoded (JPEG, width a multiple of 8, height under 1080), its colours sampled, and sent with the form.
+// Hands-free photo. The phone stands on its own; a few times a second the page checks the camera's picture (one face,
+// close enough, looking straight, eyes open) and takes the photo by itself after a second of stillness: a burst of
+// five frames, keeping the sharpest. The checks run in a worker where the browser allows it (capture/checks.js), so
+// the page stays quick to answer taps. There's always a big shutter, 3 and 10 second timers, "Choose a photo", and
+// "A helper is taking it". Messages are shown large and, unless switched off, spoken. Everything happens on this one
+// page: the chosen photo is re-encoded (JPEG, width a multiple of 8, height under 1080), its colours sampled, and sent
+// with the form.
 const BURST = 5
 const BURST_GAP_MS = 150
-const DETECT_EVERY_MS = 100
+// After each check the next waits at least this long, and at least this many times as long as the check took, so the
+// checks never take more than half the time (a third when the page runs them itself, without a worker).
+const CHECK_GAP_MS = { worker: 200, page: 300 }
+const CHECK_SHARE = { worker: 2, page: 3 }
+// Plus up to this much at random, so checks don't fall in step with a head tremor (4 to 6 a second) and catch it at
+// the same point of each shake, where it would look still.
+const CHECK_JITTER_MS = 80
+// After this many checks in a row that fail or get an empty frame, the checks give way: the worker to the page's own
+// checks, those to the shutter and timers alone (giveWay).
+const MISSES_TO_GIVE_WAY = 10
+const NO_CHECKS = "Tap Take the photo when you're ready"
 const SAY_AGAIN_AFTER_MS = 4000
 // A new check message shows (and is spoken) only after it has held this long, so a head near a limit doesn't make
 // the words flicker between two messages.
@@ -21,8 +34,8 @@ const SPEECH_KEY = "blendolo:spoken-help"
 export default class extends Controller {
   static targets = ["video", "message", "count", "review", "reviewImage", "form", "file", "sampled", "source",
     "choose", "speech", "helper", "liveControls"]
-  static values = { packageUrl: String, modelUrl: String, regions: Array, camera: { type: Boolean, default: true },
-    choosePrompt: String }
+  static values = { packageUrl: String, modelUrl: String, workerUrl: String, gateUrl: String, regions: Array,
+    camera: { type: Boolean, default: true }, choosePrompt: String }
 
   connect() {
     this.attempt = 0
@@ -35,7 +48,13 @@ export default class extends Controller {
     this.restore = (event) => {
       if (event.persisted && this.cameraValue && this.state !== "review") this.startCamera()
     }
+    // The checks rest while the page is hidden (another tab, the phone locked) and start afresh when it shows again.
+    this.visibility = () => {
+      this.lastPoints = null
+      this.watch()
+    }
     document.addEventListener("turbo:before-visit", this.leave)
+    document.addEventListener("visibilitychange", this.visibility)
     window.addEventListener("pagehide", this.leave)
     window.addEventListener("pageshow", this.restore)
     this.fresh()
@@ -45,10 +64,14 @@ export default class extends Controller {
     this.attempt += 1
     this.stopCamera()
     document.removeEventListener("turbo:before-visit", this.leave)
+    document.removeEventListener("visibilitychange", this.visibility)
     window.removeEventListener("pagehide", this.leave)
     window.removeEventListener("pageshow", this.restore)
     clearTimeout(this.countdownTimer)
     window.speechSynthesis?.cancel()
+    this.gatesLoading = null
+    this.gate?.close()
+    this.gate = null
   }
 
   // The camera running (or "Choose a photo" for an old photo), nothing chosen.
@@ -87,15 +110,17 @@ export default class extends Controller {
       this.videoTarget.classList.toggle("capture__video--mirror", this.facing === "user")
       await this.videoTarget.play()
       this.state = "live"
-      this.say(this.gate ? MESSAGES.straight : "Tap Take the photo when you're ready")
-      this.loop()
+      this.say(this.gate ? MESSAGES.straight : NO_CHECKS)
+      this.lastPoints = null
+      this.misses = 0
+      this.watch()
     } catch {
       if (attempt === this.attempt) this.noCamera()
     }
   }
 
   stopCamera() {
-    cancelAnimationFrame(this.frame)
+    clearTimeout(this.watchTimer)
     this.stream?.getTracks().forEach((track) => track.stop())
     this.stream = null
     if (this.videoTarget) this.videoTarget.srcObject = null
@@ -106,42 +131,86 @@ export default class extends Controller {
     this.show("We can't use the camera here. Choose a photo instead.")
   }
 
-  async loadGates() {
+  // Starts loading the face checks as the page opens, so they're ready by the time the camera shows. worker: false
+  // loads the page's own checks, after the worker gave way.
+  async loadGates({ worker = true } = {}) {
     if (!this.packageUrlValue || !this.modelUrlValue) return
-    this.gatesLoading = loadLandmarker(this.packageUrlValue, this.modelUrlValue)
+    const loading = startChecks({ packageUrl: this.packageUrlValue, modelUrl: this.modelUrlValue,
+      workerUrl: worker ? this.workerUrlValue : "", gateUrl: this.gateUrlValue })
+    this.gatesLoading = loading
+    let gate = null
     try {
-      this.gate = await this.gatesLoading
+      gate = await loading
     } catch {
-      this.gate = null // No checks: the shutter, the timers and "Choose a photo" still work.
+      // No checks: the shutter, the timers and "Choose a photo" still work.
     }
+    if (this.gatesLoading !== loading) return gate?.close() // The page was left meanwhile.
+    this.gate = gate
+    if (gate) this.watch()
+    else if (!worker && this.state === "live") this.say(NO_CHECKS)
   }
 
-  // Each frame: check the gates, and take the photo after a second of stillness.
-  loop() {
-    this.frame = requestAnimationFrame((now) => {
-      if (this.state !== "live") return
-      if (this.gate && this.videoTarget.readyState >= 2 && now - (this.lastDetect || 0) >= DETECT_EVERY_MS && !this.counting) {
-        this.lastDetect = now
-        this.check(now)
-      }
-      this.loop()
-    })
+  // The checks failed for good (a worker that stopped), or kept failing or getting empty frames (a camera or browser
+  // fault): close them. The worker gives way to the page's own checks; when those fail too, the checks stop and the
+  // page says to use the shutter.
+  giveWay(gate) {
+    gate.close()
+    this.gate = null
+    this.misses = 0
+    if (gate.kind === "worker") return this.loadGates({ worker: false })
+    this.gatesLoading = null
+    if (this.state === "live") this.say(NO_CHECKS)
   }
 
-  check(now) {
-    let result
+  // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
+  // the countdown, the burst or the review, or while the page is hidden.
+  watch(delay = 0) {
+    clearTimeout(this.watchTimer)
+    if (this.watching) this.watchTimer = setTimeout(() => this.look(), delay)
+  }
+
+  get watching() {
+    return this.state === "live" && this.gate && !this.counting && !document.hidden
+  }
+
+  async look() {
+    const gate = this.gate
+    if (!this.watching) return
+    if (this.videoTarget.readyState < 2) return this.watch(CHECK_GAP_MS[gate.kind])
+    const attempt = this.attempt
+    const started = performance.now()
+    let summary = null
+    let failed = false
     try {
-      result = this.gate.detectForVideo(this.videoTarget, now)
+      summary = await gate.video(this.videoTarget, started)
     } catch {
-      return
+      failed = true // This frame couldn't be checked; the next one may be.
     }
-    const verdict = evaluate(result)
-    const landmarks = result.faceLandmarks?.[0]
-    const moved = movement(this.lastLandmarks, landmarks)
-    this.lastLandmarks = landmarks
+    if (attempt !== this.attempt || gate !== this.gate || !this.watching) return
+    if (gate.broken) return this.giveWay(gate)
+    if (failed || summary?.blank) this.misses += 1
+    else if (summary) this.misses = 0
+    if (this.misses >= MISSES_TO_GIVE_WAY) return this.giveWay(gate)
+    if (summary) this.check(summary, started)
+    const took = performance.now() - started
+    const gap = CHECK_GAP_MS[gate.kind] + Math.random() * CHECK_JITTER_MS
+    this.watch(Math.max(gap, CHECK_SHARE[gate.kind] * took) - took)
+  }
+
+  // One frame's checks: say what to change, or take the photo after a second of stillness.
+  check(summary, now) {
+    const verdict = evaluate(summary)
+    const moved = movement(this.lastPoints, summary.points, now - this.lastCheckAt)
+    this.lastPoints = summary.points
+    this.lastCheckAt = now
+    // Since when the face has held still, alone and facing the phone, with nothing wrong but perhaps the eyes.
+    const steady = (verdict.ok || verdict.eyesOnly) && moved <= LIMITS.maxMove
+    this.steadySince = steady ? (this.steadySince ?? now) : null
 
     if (!verdict.ok) {
       this.stillSince = null
+      // Smiling and older eyes can read as closed: after holding still a while, the photo is taken anyway, saying so.
+      if (steady && now - this.steadySince >= LIMITS.eyesWaitFor) return this.burst({ eyes: true })
       return this.propose(verdict.message, now)
     }
     if (moved > LIMITS.maxMove || !this.stillSince) {
@@ -151,8 +220,10 @@ export default class extends Controller {
     if (now - this.stillSince >= LIMITS.stillFor) this.burst()
   }
 
-  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo.
-  async burst() {
+  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo. eyes: taken although
+  // the eyes looked closed (the 4 second fallback): spoken help says so at once, and the review screen's message
+  // carries the note, so the message changes once with it and a screen reader reads it whole.
+  async burst({ eyes = false } = {}) {
     if (this.state !== "live") return
     this.state = "taking"
     let best = null
@@ -165,9 +236,9 @@ export default class extends Controller {
       if (!best || score > best.score) best = { canvas, score }
       await new Promise((resolve) => setTimeout(resolve, BURST_GAP_MS))
     }
-    this.say(MESSAGES.done)
+    this.say(MESSAGES.done, eyes ? { spoken: MESSAGES.doneEyes, force: true } : {})
     this.stopCamera()
-    await this.review(best.canvas, "camera")
+    await this.review(best.canvas, "camera", null, eyes ? MESSAGES.eyesNote : null)
   }
 
   // Buttons ------------------------------------------------------------------------------------------------------
@@ -239,7 +310,8 @@ export default class extends Controller {
 
   // Review and send ----------------------------------------------------------------------------------------------
 
-  async review(source, origin, landmarks) {
+  // note: said before the question, such as why the photo was taken anyway.
+  async review(source, origin, landmarks, note = null) {
     landmarks ||= (await this.detectStill(source))?.[0]
     const sampled = landmarks ? sampleRegions(pixels(source), landmarks, this.regionsValue) : {}
     const blob = await toJpeg(source)
@@ -248,7 +320,7 @@ export default class extends Controller {
     this.liveControlsTarget.hidden = true
     this.reviewTarget.hidden = false
     this.state = "review"
-    this.show("Is this photo all right?")
+    this.show(note ? `${note} Is this photo all right?` : "Is this photo all right?")
     this.messageTarget.scrollIntoView({ block: "start" })
   }
 
@@ -293,12 +365,9 @@ export default class extends Controller {
     }
     if (!this.gate) return null
     try {
-      await this.gate.setOptions({ runningMode: "IMAGE" })
-      return this.gate.detect(source).faceLandmarks || []
+      return await this.gate.still(source)
     } catch {
       return null
-    } finally {
-      await this.gate.setOptions({ runningMode: "VIDEO" }).catch(() => {})
     }
   }
 
@@ -319,28 +388,29 @@ export default class extends Controller {
     }
   }
 
-  // Shows a message and speaks it. A message being spoken is never cut off: the newest one waits and is spoken
-  // when it ends. force (the countdown, a rejected photo) speaks at once.
-  say(message, { force = false } = {}) {
+  // Shows a message and speaks it (or spoken, when that says more). A message being spoken is never cut off: the
+  // newest one waits and is spoken when it ends. force (the countdown, a rejected photo) speaks at once.
+  say(message, { force = false, spoken = message } = {}) {
     this.show(message)
     const speech = window.speechSynthesis
     if (!this.spoken || !speech) return
     const now = Date.now()
-    if (!force && message === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
+    if (!force && spoken === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
     if (!force && speech.speaking) {
-      this.queued = message
+      this.queued = { message, spoken }
       return
     }
     this.queued = null
-    this.lastSpoken = message
+    this.lastSpoken = spoken
     this.lastSpokenAt = now
     if (force) speech.cancel()
-    const utterance = new SpeechSynthesisUtterance(message)
+    const utterance = new SpeechSynthesisUtterance(spoken)
     utterance.rate = 0.9
     utterance.onend = () => {
       const next = this.queued
       this.queued = null
-      if (next && next !== this.lastSpoken && next === this.messageTarget.textContent) this.say(next)
+      const current = next?.message === this.messageTarget.textContent
+      if (next && current && next.spoken !== this.lastSpoken) this.say(next.message, next)
     }
     speech.speak(utterance)
   }

@@ -30,6 +30,86 @@ class CaptureTest < ApplicationSystemTestCase
     assert_operator photo.height, :<, 1080
   end
 
+  test "checks that keep failing give way: the worker to the page's checks, those to the shutter" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    # A worker whose frames come out empty (no face, no picture), and page checks that fail on every frame.
+    execute_script <<~JS
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const worker = fakeChecks("worker", async () => ({ ...noFace, blank: true }))
+      const page = fakeChecks("page", async () => { throw new Error("lost") })
+      capture.loadGates = async (options) => {
+        log.push(`load page checks: ${!options.worker}`)
+        capture.gate = page
+        capture.watch()
+      }
+      capture.show("Look straight at the phone")
+      capture.gate = worker
+      capture.watch()
+    JS
+
+    assert_selector "[data-capture-target=message]", text: "Tap Take the photo when you're ready", wait: 15
+    assert_equal [ "worker closed", "load page checks: true", "page closed" ], evaluate_script("window.log")
+    assert evaluate_script("captureController().gate === null")
+    click_on "Take the photo"
+    assert_selector "[data-capture-state=review]", wait: 10
+  end
+
+  test "a worker that stops after starting gives way at once, and no face in view isn't a failure" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    execute_script <<~JS
+      #{FAKE_CHECKS}
+      window.log = []
+      const capture = captureController()
+      const page = fakeChecks("page", async () => noFace)
+      capture.loadGates = async () => {
+        log.push("load page checks")
+        capture.gate = page
+        capture.watch()
+      }
+      const worker = fakeChecks("worker", async () => {
+        worker.broken = new Error("The face checks stopped")
+        throw worker.broken
+      })
+      capture.gate = worker
+      capture.watch()
+    JS
+
+    page.document.synchronize(3) do
+      raise Capybara::ExpectationNotMet, "worker still in use" unless evaluate_script("window.log.length") == 2
+    end
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    sleep 4 # well past ten checks of the page's, each finding no face in a real picture
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    assert_equal "page", evaluate_script("captureController().gate.kind")
+  end
+
+  test "a worker that doesn't answer is stopped, and the photo goes on without colours" do
+    visit privacy_path
+    outcome = using_wait_time(15) do
+      evaluate_async_script(<<~JS)
+        const done = arguments[arguments.length - 1]
+        import("capture/checks").then(async ({ WorkerChecks }) => {
+          const log = []
+          const checks = new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") })
+          const photo = document.createElement("canvas")
+          photo.width = photo.height = 8
+          const started = performance.now()
+          const answer = await checks.still(photo).then(() => "answered", (error) => error.message)
+          done({ answer, waited: performance.now() - started, broken: !!checks.broken, log })
+        })
+      JS
+    end
+
+    assert_equal "The face checks stopped answering", outcome["answer"]
+    assert_in_delta 5000, outcome["waited"], 1000
+    assert outcome["broken"]
+    assert_equal [ "still", "terminated" ], outcome["log"]
+  end
+
   test "camera denied shows choose photo" do
     page.driver.browser # start the browser before talking to it
     script = page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: <<~JS)
@@ -111,15 +191,103 @@ class CaptureTest < ApplicationSystemTestCase
     }
     cases["Look straight at the phone (no face)"] = { faceLandmarks: [] }
     cases["Look straight at the phone (nodding)"] = FaceResults.result(FaceResults.face(pitch: -15))
-    cases["Open your eyes wide (squinting)"] = FaceResults.result(FaceResults.face(eyeSquintRight: 0.5))
+    cases["Open your eyes wide (squinting hard)"] = FaceResults.result(FaceResults.face(eyeSquintRight: 0.8))
+    good = {
+      straight: FaceResults.result(FaceResults.face),
+      smiling: FaceResults.result(FaceResults.face(eyeSquintLeft: 0.6, eyeSquintRight: 0.7, eyeBlinkLeft: 0.25, eyeBlinkRight: 0.2))
+    }
+    eyes = {
+      closed: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65)),
+      closed_mouth_open: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65, jawOpen: 0.6)),
+      shut: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.8)),
+      one_shut: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.3))
+    }
 
-    verdicts = evaluate_async_script(<<~JS, cases.values, FaceResults.result(FaceResults.face))
-      const [results, good, done] = arguments
-      import("capture/gate").then((gate) => done({ messages: results.map((result) => gate.evaluate(result).message), good: gate.evaluate(good) }))
+    verdicts = evaluate_async_script(<<~JS, cases.values, good, eyes)
+      const [results, good, eyes, done] = arguments
+      import("capture/gate").then((gate) => {
+        const evaluate = (result) => gate.evaluate(gate.summarize(result))
+        const each = (results) => Object.fromEntries(Object.entries(results).map(([name, result]) => [name, evaluate(result)]))
+        done({ messages: results.map((result) => evaluate(result).message), good: each(good), eyes: each(eyes) })
+      })
     JS
 
     assert_equal cases.keys.map { |key| key.sub(/ \(.*\)\z/, "") }, verdicts["messages"]
-    assert_equal({ "ok" => true }, verdicts["good"])
+    assert_equal({ "ok" => true }, verdicts["good"]["straight"])
+    assert_equal({ "ok" => true }, verdicts["good"]["smiling"], "smiling eyes read as squinting, and pass")
+    assert_equal({ "ok" => false, "message" => "Open your eyes wide", "eyesOnly" => true }, verdicts["eyes"]["closed"])
+    assert_equal false, verdicts["eyes"]["closed_mouth_open"]["eyesOnly"], "the eyes aren't the only problem"
+    assert_equal({ "ok" => false, "message" => "Open your eyes wide", "eyesOnly" => false }, verdicts["eyes"]["shut"])
+    assert_equal true, verdicts["eyes"]["one_shut"]["eyesOnly"], "one eye shut is a wink or a droopy lid"
+  end
+
+  test "a still face whose only problem is the eyes is taken after 4 seconds, saying so" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    closed = { eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65 }
+    results = [
+      FaceResults.result(FaceResults.face(**closed)),
+      FaceResults.result(FaceResults.face(centre: [ 0.55, 0.5 ], **closed)),
+      FaceResults.result(FaceResults.face(jawOpen: 0.6, **closed)),
+      FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.85))
+    ]
+
+    # Checks every 200 ms, as the camera would make them.
+    states = evaluate_async_script(<<~JS, *results)
+      const [closed, closedMoved, closedMouthOpen, shut, done] = arguments
+      import("capture/gate").then((gate) => {
+        const capture = window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
+        const message = document.querySelector("[data-capture-target=message]")
+        window.shown = []
+        new MutationObserver(() => window.shown.push(message.textContent))
+          .observe(message, { childList: true, characterData: true, subtree: true })
+        const states = {}
+        let t = 1000000
+        const look = (result, ms) => { for (const end = t + ms; t <= end; t += 200) capture.check(gate.summarize(result), t) }
+        look(closedMouthOpen, 5000)
+        states.mouthOpen = capture.state
+        look(shut, 5000)
+        states.shut = capture.state
+        for (let i = 0; i <= 25; i++) look(i % 2 ? closedMoved : closed, 0)
+        states.moving = capture.state
+        look(closed, 3800)
+        states.before = capture.state
+        states.message = document.querySelector("[data-capture-target=message]").textContent
+        look(closed, 400)
+        states.after = capture.state
+        done(states)
+      })
+    JS
+
+    assert_equal "live", states["mouthOpen"], "not when the mouth is open too"
+    assert_equal "live", states["shut"], "not when the eyes are shut"
+    assert_equal "live", states["moving"], "not while the head moves"
+    assert_equal "live", states["before"], "not before 4 seconds"
+    assert_equal "Open your eyes wide", states["message"]
+    assert_equal "taking", states["after"]
+    assert_selector "[data-capture-state=review]", wait: 10
+    note = "Your eyes looked a little closed, so the preview may show softer liner. Is this photo all right?"
+    assert_selector "[data-capture-target=message]", exact_text: note
+    shown = evaluate_script("window.shown")
+    assert_equal [ "Got it", note ], shown.last(2), "the note reaches the live region once, whole"
+    assert_equal 1, shown.count { it.include?("Your eyes") }
+  end
+
+  test "stillness is measured per 100 ms" do
+    visit privacy_path
+    moved = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      import("capture/gate").then((gate) => {
+        const at = (x) => [0, 1, 2, 3].map(() => ({ x, y: 0.5 }))
+        done([gate.movement(at(0.5), at(0.51), 100), gate.movement(at(0.5), at(0.52), 200), gate.movement(at(0.5), at(0.51), 50),
+          gate.movement(at(0.5), at(0.52), 1000)])
+      })
+    JS
+
+    assert_in_delta 0.01, moved[0], 1e-9
+    assert_in_delta 0.01, moved[1], 1e-9, "twice as far in twice the time is the same speed"
+    assert_in_delta 0.01, moved[2], 1e-9, "checks closer together aren't scaled up"
+    assert_in_delta 0.01, moved[3], 1e-9, "a longer gap counts as 200 ms"
   end
 
   test "sampler returns lip colour" do
@@ -150,6 +318,15 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal 0, sampled["size"]["width"] % 8
     assert_operator sampled["size"]["height"], :<, 1080
   end
+
+  # Stand-ins for capture/checks.js, put on the page by the tests above.
+  FAKE_CHECKS = <<~JS.freeze
+    window.captureController = () =>
+      window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
+    window.noFace = { faces: 0, width: 0, angles: null, points: null,
+      scores: { eyeBlinkLeft: 0, eyeBlinkRight: 0, eyeSquintLeft: 0, eyeSquintRight: 0, jawOpen: 0 } }
+    window.fakeChecks = (kind, video) => ({ kind, video, still: async () => [], close: () => log.push(`${kind} closed`) })
+  JS
 
   private
     def wait_for_guard

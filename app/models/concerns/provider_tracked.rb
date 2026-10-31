@@ -104,7 +104,7 @@ module ProviderTracked
   # Downloads a done outcome (outside any transaction), then stores it once even if two polls race, and finishes
   # the renders that waited. A failed download raises, so the poll job can ask again for a fresh link.
   def finish_from!(outcome, provider)
-    image = provider.download(outcome)
+    image = provider.download(outcome, operation:)
     finished = with_lock do
       next false unless running?
 

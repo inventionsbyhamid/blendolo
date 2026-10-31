@@ -1,8 +1,11 @@
-// The capture gates: is this frame a good photo for a makeup preview? Works on Face Landmarker results, so it can be
-// checked with recorded results as well as the live camera.
+// The capture gates: is this frame a good photo for a makeup preview? Works on a summary of a Face Landmarker result
+// (summarize), so it can be checked with recorded results as well as the live camera, and the worker that runs the
+// landmarker (workers/face_checks.js) only has to send back a few numbers per frame.
 //
-// One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink and
-// squint under 0.4), mouth relaxed (jawOpen under 0.3), then still for a second.
+// One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink under
+// 0.4; squint under 0.75, as smiling and older eyes read as squinting), mouth relaxed (jawOpen under 0.3), then still
+// for a second. When only the eyes fail, the photo is taken anyway after 4 seconds of stillness, saying so, unless
+// they are shut.
 
 export const MESSAGES = {
   manyFaces: "Try a photo of just you",
@@ -11,33 +14,59 @@ export const MESSAGES = {
   straight: "Look straight at the phone",
   eyes: "Open your eyes wide",
   still: "Hold still",
-  done: "Got it"
+  done: "Got it",
+  doneEyes: "Got it. Your eyes looked a little closed, so the preview may show softer liner.",
+  eyesNote: "Your eyes looked a little closed, so the preview may show softer liner."
 }
 
-export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxEyes: 0.4, maxJaw: 0.3, stillFor: 1000, maxMove: 0.012 }
+// maxMove: a share of the frame per 100 ms (movement). eyesWaitFor: how long a still face whose only problem is the
+// eyes is checked before the photo is taken anyway; never when both eyes blink at shutBlink or more (shut).
+export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxBlink: 0.4, maxSquint: 0.75, maxJaw: 0.3,
+  stillFor: 1000, maxMove: 0.012, eyesWaitFor: 4000, shutBlink: 0.75 }
+
+const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
+
+// Points that show the head moving: nose tip, eye corners, chin.
+const STILL_POINTS = [1, 33, 263, 152]
 
 // result: { faceLandmarks: [[{x, y}]], faceBlendshapes: [{ categories: [{ categoryName, score }] }],
 //           facialTransformationMatrixes: [{ data: [16 numbers, column-major] }] }
-// -> { ok: true } or { ok: false, message }
-export function evaluate(result) {
+// -> { faces: how many, width: the first face's, angles: { yaw, pitch } or null,
+//      scores: { eyeBlinkLeft, ..., jawOpen }, points: the first face's STILL_POINTS as [{x, y}] or null }
+export function summarize(result) {
   const faces = result?.faceLandmarks || []
-  if (faces.length > 1) return fail(MESSAGES.manyFaces)
-  if (faces.length === 0) return fail(MESSAGES.straight)
-
-  const width = faceWidth(faces[0])
-  if (width < LIMITS.minWidth) return fail(MESSAGES.closer)
-  if (width > LIMITS.maxWidth) return fail(MESSAGES.back)
-
-  const matrix = result.facialTransformationMatrixes?.[0]?.data
-  if (matrix) {
-    const { yaw, pitch } = headAngles(matrix)
-    if (Math.abs(yaw) > LIMITS.maxAngle || Math.abs(pitch) > LIMITS.maxAngle) return fail(MESSAGES.straight)
-  }
-
+  const face = faces[0]
+  const matrix = result?.facialTransformationMatrixes?.[0]?.data
   const scores = blendshapes(result)
-  const eyes = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"].map((name) => scores[name] || 0)
-  if (Math.max(...eyes) >= LIMITS.maxEyes) return fail(MESSAGES.eyes)
-  if ((scores.jawOpen || 0) >= LIMITS.maxJaw) return fail(MESSAGES.still)
+  return {
+    faces: faces.length,
+    width: face ? faceWidth(face) : 0,
+    angles: matrix ? headAngles(matrix) : null,
+    scores: Object.fromEntries([...EYES, "jawOpen"].map((name) => [name, scores[name] || 0])),
+    points: face ? STILL_POINTS.map((index) => ({ x: face[index].x, y: face[index].y })) : null
+  }
+}
+
+// summary (from summarize) -> { ok: true } or { ok: false, message }, with eyesOnly: true when the eyes are the
+// only problem and they aren't shut.
+export function evaluate(summary) {
+  if (summary.faces > 1) return fail(MESSAGES.manyFaces)
+  if (summary.faces === 0) return fail(MESSAGES.straight)
+
+  if (summary.width < LIMITS.minWidth) return fail(MESSAGES.closer)
+  if (summary.width > LIMITS.maxWidth) return fail(MESSAGES.back)
+
+  const { angles } = summary
+  const turned = angles && (Math.abs(angles.yaw) > LIMITS.maxAngle || Math.abs(angles.pitch) > LIMITS.maxAngle)
+  if (turned) return fail(MESSAGES.straight)
+
+  const { scores } = summary
+  const eyesOpen = Math.max(scores.eyeBlinkLeft, scores.eyeBlinkRight) < LIMITS.maxBlink &&
+    Math.max(scores.eyeSquintLeft, scores.eyeSquintRight) < LIMITS.maxSquint
+  const mouthRelaxed = scores.jawOpen < LIMITS.maxJaw
+  const shut = Math.min(scores.eyeBlinkLeft, scores.eyeBlinkRight) >= LIMITS.shutBlink
+  if (!eyesOpen) return { ...fail(MESSAGES.eyes), eyesOnly: mouthRelaxed && !shut }
+  if (!mouthRelaxed) return fail(MESSAGES.still)
 
   return { ok: true }
 }
@@ -60,14 +89,14 @@ export function blendshapes(result) {
   return Object.fromEntries(categories.map((category) => [category.categoryName, category.score]))
 }
 
-// Points that show the head moving: nose tip, eye corners, chin.
-const STILL_POINTS = [1, 33, 263, 152]
-
-// How far the face moved between two frames, as a share of the frame.
-export function movement(previous, current) {
+// How far the face moved between two checks (their summaries' points, elapsed ms apart), as a share of the frame per
+// 100 ms. Checks run every 200 ms, so a drift counts the same as it did when they ran every 100 ms. A slow phone
+// checks less often; the gap counts as 200 ms at most there, so a sway between two far-apart checks still shows.
+export function movement(previous, current, elapsed = 100) {
   if (!previous || !current) return Infinity
-  const distances = STILL_POINTS.map((index) => Math.hypot(previous[index].x - current[index].x, previous[index].y - current[index].y))
-  return distances.reduce((sum, distance) => sum + distance, 0) / distances.length
+  const distances = previous.map((point, index) => Math.hypot(point.x - current[index].x, point.y - current[index].y))
+  const average = distances.reduce((sum, distance) => sum + distance, 0) / distances.length
+  return average * 100 / Math.min(200, Math.max(100, elapsed))
 }
 
 function fail(message) {
@@ -75,9 +104,10 @@ function fail(message) {
 }
 
 // Loads MediaPipe's Face Landmarker from the pinned package and model (the content security policy allows only these).
-export async function loadLandmarker(packageUrl, modelUrl) {
+// module: load MediaPipe's WebAssembly glue as an ES module, as a module worker needs (it can't use importScripts).
+export async function loadLandmarker(packageUrl, modelUrl, { module = false } = {}) {
   const vision = await import(`${packageUrl}vision_bundle.mjs`)
-  const fileset = await vision.FilesetResolver.forVisionTasks(`${packageUrl}wasm`)
+  const fileset = await vision.FilesetResolver.forVisionTasks(`${packageUrl}wasm`, module)
   const options = (delegate) => ({
     baseOptions: { modelAssetPath: modelUrl, delegate },
     runningMode: "VIDEO",
@@ -90,4 +120,37 @@ export async function loadLandmarker(packageUrl, modelUrl) {
   } catch {
     return await vision.FaceLandmarker.createFromOptions(fileset, options("CPU"))
   }
+}
+
+// True when a frame has no picture in it, all one colour: the black or empty frames a camera or browser can hand over
+// when it fails. No face can be found there, and it isn't the person's doing. source: an image, bitmap or canvas.
+export function blankFrame(source) {
+  const size = 16
+  const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(size, size) : document.createElement("canvas")
+  canvas.width = canvas.height = size
+  const context = canvas.getContext("2d", { willReadFrequently: true })
+  context.drawImage(source, 0, 0, size, size)
+  const { data } = context.getImageData(0, 0, size, size)
+  let darkest = Infinity
+  let lightest = -Infinity
+  for (let i = 0; i < data.length; i += 4) {
+    const value = data[i] + data[i + 1] + data[i + 2]
+    darkest = Math.min(darkest, value)
+    lightest = Math.max(lightest, value)
+  }
+  return lightest - darkest < BLANK_RANGE
+}
+
+// A frame whose 16 x 16 copy varies less than this (red + green + blue, 0 to 765) has no picture in it.
+const BLANK_RANGE = 12
+
+// Runs the landmarker once on a blank frame, so its slow first run (setting up the model) happens while it loads, not
+// on the first frame of the camera it checks. Returns the timestamp it used (video mode needs later ones after it).
+export function warm(landmarker) {
+  try {
+    landmarker.detectForVideo(new ImageData(64, 64), 1)
+  } catch {
+    // The first real frame sets it up instead.
+  }
+  return 1
 }

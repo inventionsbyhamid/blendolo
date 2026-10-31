@@ -53,7 +53,7 @@ Around the API:
 
 ## How it is built
 
-Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active Storage (Cloudflare R2 in production), MediaPipe Face Landmarker in the browser for capture checks and colour sampling, and the Web Speech API for reading cards aloud.
+Rails 8.1, Hotwire, Tailwind, Postgres with Solid Queue, Cache and Cable, Active Storage (Cloudflare R2 in production), MediaPipe Face Landmarker in the browser (in a Web Worker) for capture checks and colour sampling, and the Web Speech API for reading cards aloud.
 
 | Where | What |
 |---|---|
@@ -116,7 +116,7 @@ bin/ci                  # everything CI checks
 
 `bin/ci` runs RuboCop (Rails omakase style), Brakeman, the tests, the system tests and the seeds. The steps live in `config/ci.rb`.
 
-At the last CI run there were 316 unit and integration tests and 42 system tests in headless Chrome, all passing.
+At the last CI run there were 322 unit and integration tests and 48 system tests in headless Chrome, all passing.
 
 `bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine over ssh, so the full suite doesn't load your laptop. It copies the working tree, builds a CI image with Chromium (`script/ci/Dockerfile`), starts a throwaway Postgres 18 beside it and cleans up afterwards. Set `BLENDOLO_CI_HOST` to the ssh host, which needs Docker, rsync and flock. Lanes let several worktrees run at once:
 
