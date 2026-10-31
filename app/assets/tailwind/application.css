@@ -308,7 +308,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .foot { padding: 48px 0 64px; color: var(--muted); font-size: 1.125rem; }
   .foot__row { display: grid; gap: 8px; }
   .foot p { margin: 0; }
-  .foot__links { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0 0 16px; padding: 0; }
+  .foot__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--gap); margin: 0 0 16px; padding: 0; }
   .foot__links a {
     display: inline-flex; align-items: center; min-height: var(--landing-tap); padding: 0 4px;
     color: var(--ink); font-weight: 700;
@@ -337,11 +337,12 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     transition: background-color 160ms ease-out;
     user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   }
+  /* App primary buttons use the darker red: white on it is 8.75:1 (the landing's own .button keeps #B02A45). */
   .btn--primary {
     min-height: max(var(--tap-primary), var(--tap)); font-size: 1.375rem;
-    background: var(--primary); color: var(--on-primary); box-shadow: 0 10px 22px rgb(176 42 69 / 26%);
+    background: var(--primary-hover); color: var(--on-primary); box-shadow: 0 10px 22px rgb(142 31 55 / 26%);
   }
-  .btn--primary:hover { background: var(--primary-hover); color: var(--on-primary); }
+  .btn--primary:hover { background: var(--ink); color: var(--on-primary); }
   .btn--secondary { background: var(--surface); color: var(--ink); border-color: var(--ink); }
   .btn--secondary:hover { background: var(--rose); color: var(--ink); }
   .btn--quiet { background: transparent; color: var(--ink); border-color: var(--line); }
@@ -376,6 +377,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .tile__label { display: block; }
   .tile__hint { display: block; font-size: 1.125rem; font-weight: 700; color: var(--muted); }
   .tile--chosen { border-width: 6px; border-color: var(--ink); background: var(--sun-soft); }
+  .tile--chosen .tile__hint { color: var(--ink); }
   .tile__chosen {
     display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; border-radius: 999px;
     background: var(--ink); color: var(--surface); font-size: 1.125rem; font-weight: 800;
@@ -392,7 +394,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     background: var(--sun-soft); color: var(--ink); font-size: 1.125rem; font-weight: 800; line-height: 1.3;
   }
   .honest::before {
-    content: "i"; display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%;
+    content: "i" / ""; display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%;
     background: var(--ink); color: var(--sun-soft); font-size: 1rem; font-weight: 900; font-style: normal;
   }
 
@@ -404,7 +406,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .compare__side { margin: 0; display: grid; gap: 8px; }
   .compare__side img { display: block; width: 100%; height: auto; border-radius: 16px; background: var(--color-canvas); }
   .compare__caption { font-size: 1.125rem; font-weight: 800; text-align: center; }
-  .compare__toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .compare__toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
   .toggle {
     min-height: var(--tap); padding: 8px 12px; border-radius: 18px; border: 3px solid var(--ink);
     background: var(--surface); color: var(--ink); font-family: inherit; font-size: 1.125rem; font-weight: 800; line-height: 1.2;
@@ -438,7 +440,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .card > :last-child { margin-bottom: 0; }
 
   /* Link cards: lists of links in prose become full-width targets. */
-  .linklist { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: 12px; }
+  .linklist { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: var(--gap); }
   .linklist a {
     display: flex; flex-direction: column; justify-content: center; min-height: var(--tap); padding: 12px 20px;
     background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
@@ -464,7 +466,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .menu[open] > summary { background: var(--ink); color: var(--surface); }
   .menu__panel {
     position: absolute; right: 0; top: calc(100% + 12px); z-index: 30; width: min(360px, calc(100vw - 32px));
-    display: grid; gap: 16px; padding: 20px; background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow);
+    display: grid; gap: var(--gap); padding: 20px; background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow);
   }
   .menu__panel h2 { font-size: 1.25rem; margin: 0; }
 }
@@ -565,6 +567,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .page { width: auto; padding: 0; }
   .print-card { border: 0; padding: 0; font-size: 24pt; }
   .print-card .instruction { font-size: 32pt; }
+  .print-card .tags li { font-size: 24pt; }
 }
 
 @layer components {
@@ -572,12 +575,19 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .qr { display: block; width: min(240px, 70vw); height: auto; padding: 16px; border-radius: 18px; background: var(--color-white); }
   .product { display: grid; gap: 6px; padding: 16px 20px; border-radius: 18px; background: var(--soft); }
   .product__name { margin: 0; font-weight: 800; }
-  .tags .tags__match { background: var(--ink); color: var(--surface); }
-  .tags .tags__match::before { border-color: var(--surface); }
+  .tags__heading { margin: 0; font-size: 1.125rem; font-weight: 800; }
 }
 
 @layer components {
   /* A picture's own label ("AI generated"), just under the picture so it never hides the face. */
   .tile__media { position: relative; display: block; width: 100%; }
   .tile__note { display: block; margin-top: 4px; color: var(--muted); font-size: 0.95rem; font-weight: 700; }
+}
+
+@layer components {
+  /* App screens: the header, footer and skip link grow with "My hands today" like every other target, and tags on
+     mint use ink so their text reaches 7:1. The landing page keeps its own 64 px and leaf green. */
+  body:not(.landing) :is(.skip, .brand, .foot__links a) { min-height: var(--tap); }
+  body:not(.landing) .tags li { color: var(--ink); }
+  body:not(.landing) .tags li::before { border-color: var(--ink); }
 }
