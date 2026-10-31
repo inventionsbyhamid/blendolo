@@ -96,6 +96,7 @@ export default class extends Controller {
     this.stopCamera()
     if (!navigator.mediaDevices?.getUserMedia) return this.noCamera()
     const attempt = ++this.attempt
+    if (this.gaveWay) this.restartChecks()
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -150,16 +151,31 @@ export default class extends Controller {
     else if (!worker && this.state === "live") this.say(NO_CHECKS)
   }
 
-  // The checks failed for good (a worker that stopped), or kept failing or getting empty frames (a camera or browser
-  // fault): close them. The worker gives way to the page's own checks; when those fail too, the checks stop and the
-  // page says to use the shutter.
+  // The checks failed for good (a worker that stopped), or kept failing (or getting empty copies of the camera's
+  // frames: a browser fault). The worker is closed and the page runs its own checks. When those keep failing on the
+  // camera's frames too, they stop looking at the camera and the page says to use the shutter; they stay loaded, so
+  // "Choose a photo" still checks its photo.
   giveWay(gate) {
-    gate.close()
-    this.gate = null
     this.misses = 0
-    if (gate.kind === "worker") return this.loadGates({ worker: false })
-    this.gatesLoading = null
+    this.gaveWay = true
+    if (gate.kind === "worker") {
+      gate.close()
+      this.gate = null
+      return this.loadGates({ worker: false })
+    }
+    this.checksOff = true
     if (this.state === "live") this.say(NO_CHECKS)
+  }
+
+  // A new start of the camera ("Take it again", "A helper is taking it", coming back to the page) brings back checks
+  // that gave way, from scratch: whatever stopped them (a covered lens, a browser hiccup) may be gone.
+  restartChecks() {
+    this.gaveWay = false
+    this.checksOff = false
+    this.misses = 0
+    this.gate?.close()
+    this.gate = null
+    this.loadGates()
   }
 
   // While the camera is live: check a frame, wait (CHECK_GAP_MS), check the next. One frame at a time, never during
@@ -170,7 +186,7 @@ export default class extends Controller {
   }
 
   get watching() {
-    return this.state === "live" && this.gate && !this.counting && !document.hidden
+    return this.state === "live" && this.gate && !this.checksOff && !this.counting && !document.hidden
   }
 
   async look() {

@@ -30,29 +30,40 @@ class CaptureTest < ApplicationSystemTestCase
     assert_operator photo.height, :<, 1080
   end
 
-  test "checks that keep failing give way: the worker to the page's checks, those to the shutter" do
+  test "checks that keep failing give way to the page's, then the shutter, until the camera starts again" do
     on_phone { visit new_kit_photo_path(@kit) }
     assert_selector "[data-capture-state=live]", wait: 10
-    # A worker whose frames come out empty (no face, no picture), and page checks that fail on every frame.
+    # A worker whose copies of the frames come out empty, and page checks that fail on every camera frame but still
+    # check a chosen photo (they find no face in it).
     execute_script <<~JS
       #{FAKE_CHECKS}
       window.log = []
       const capture = captureController()
       const worker = fakeChecks("worker", async () => ({ ...noFace, blank: true }))
       const page = fakeChecks("page", async () => { throw new Error("lost") })
-      capture.loadGates = async (options) => {
-        log.push(`load page checks: ${!options.worker}`)
+      capture.loadGates = async ({ worker = true } = {}) => {
+        log.push(worker ? "load worker checks" : "load page checks")
         capture.gate = page
         capture.watch()
       }
+      const message = document.querySelector("[data-capture-target=message]")
+      window.shown = []
+      new MutationObserver(() => window.shown.push(message.textContent))
+        .observe(message, { childList: true, characterData: true, subtree: true })
       capture.show("Look straight at the phone")
       capture.gate = worker
       capture.watch()
     JS
 
     assert_selector "[data-capture-target=message]", text: "Tap Take the photo when you're ready", wait: 15
-    assert_equal [ "worker closed", "load page checks: true", "page closed" ], evaluate_script("window.log")
-    assert evaluate_script("captureController().gate === null")
+    assert_equal [ "worker closed", "load page checks" ], evaluate_script("window.log")
+    assert_equal "page", evaluate_script("captureController().gate.kind"), "kept for a chosen photo"
+
+    # "Choose a photo" still checks its photo; turning it down starts the camera again, and the checks afresh.
+    find("input[data-capture-target=choose]", visible: :all).attach_file(file_fixture("face.jpg"))
+    assert_selector "[data-capture-state=live]", wait: 10
+    assert_includes evaluate_script("window.shown"), "We couldn't find a face in that photo. Please choose another."
+    assert_equal [ "worker closed", "load page checks", "page closed", "load worker checks" ], evaluate_script("window.log").first(4)
     click_on "Take the photo"
     assert_selector "[data-capture-state=review]", wait: 10
   end
