@@ -11,8 +11,7 @@ module Examples
 
   class UnknownExample < KeyError; end
 
-  # The sizes the example pages show (RendersHelper#proxied_image_path), made when a kit is built so the first visit
-  # to an example doesn't wait for them.
+  # The sizes the example pages show (RendersHelper#proxied_image_path), made in the background when a kit is built.
   VARIANT_SIZES = [ 900, 600 ].freeze
 
   Person = Data.define(:key, :name, :blurb, :hands, :hands_today, :chosen_look, :photos, :renders, :digest)
@@ -32,6 +31,14 @@ module Examples
         .order(created_at: :desc).first || build_kit(person, now)
     end
 
+    # Makes the picture sizes the example pages show, so the first visit to a new example kit doesn't wait for them.
+    def prepare_variants(kit)
+      attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
+      attachments.select(&:attached?).product(VARIANT_SIZES).each do |attachment, size|
+        attachment.variant(resize_to_limit: [ size, size ]).processed
+      end
+    end
+
     # A new kit for the example even if a current one lives (the newest wins in kit_for).
     def rebuild!(key, now: Time.current)
       build_kit(fetch(key), now)
@@ -39,7 +46,7 @@ module Examples
 
     private
       def build_kit(person, now)
-        build_records(person, now).tap { |kit| prepare_variants(kit) }
+        build_records(person, now).tap { |kit| PrepareExampleVariantsJob.perform_later(kit) }
       end
 
       def build_records(person, now)
@@ -62,16 +69,6 @@ module Examples
           kit.building_example = false
           kit
         end
-      end
-
-      # A failure here only means the first visit makes them instead.
-      def prepare_variants(kit)
-        attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
-        attachments.product(VARIANT_SIZES).each do |attachment, size|
-          attachment.variant(resize_to_limit: [ size, size ]).processed
-        end
-      rescue StandardError => error
-        Rails.error.report(error, handled: true, context: { example: kit.example_key })
       end
 
       def attachable(file)

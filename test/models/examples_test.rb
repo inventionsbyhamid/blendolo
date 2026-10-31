@@ -2,6 +2,7 @@ require "test_helper"
 require "rake"
 
 class ExamplesTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
   SEED = Rails.root.join("db/seeds/examples.rb")
 
   test "examples seed is idempotent" do
@@ -25,7 +26,9 @@ class ExamplesTest < ActiveSupport::TestCase
   end
 
   test "building an example kit makes the picture sizes its pages show" do
-    kit = Examples.rebuild!(:rosa)
+    kit = nil
+    assert_enqueued_with(job: PrepareExampleVariantsJob) { kit = Examples.rebuild!(:rosa) }
+    perform_enqueued_jobs(only: PrepareExampleVariantsJob)
 
     attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
     assert_equal 6, attachments.size
