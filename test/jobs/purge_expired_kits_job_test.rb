@@ -9,15 +9,27 @@ class PurgeExpiredKitsJobTest < ActiveJob::TestCase
     recent_month = travel_to(8.days.ago) { Kit.create!(retention_days: 30) }
     came_back = travel_to(40.days.ago) { Kit.create!(retention_days: 30) }
     came_back.touch_activity!
-    expired_month.photos.create!(source: "camera",
+    photo = expired_month.photos.create!(source: "camera",
       image: { io: StringIO.new("jpeg"), filename: "today.jpg", content_type: "image/jpeg" })
+    blob = photo.image.blob
 
     PurgeExpiredKitsJob.perform_now
 
-    assert_equal [ came_back, recent_month, recent_week ].map(&:id).sort, Kit.pluck(:id).sort
-    assert_not Kit.exists?(expired_month.id)
-    assert_not Kit.exists?(expired_week.id)
-    assert_equal 0, ActiveStorage::Blob.count
+    kits = [ expired_month, expired_week, recent_week, recent_month, came_back ]
+    assert_equal [ recent_week, recent_month, came_back ].map(&:id), Kit.where(id: kits).order(:id).ids
+    assert_not ActiveStorage::Blob.exists?(blob.id)
+  end
+
+  test "keeps provider calls of deleted kits two days for the daily cap, then deletes them" do
+    kit = Kit.create!
+    owned = ProviderCall.create!(kit:, operation: "makeup", input_hash: "owned", day: 5.days.ago.to_date)
+    today = ProviderCall.create!(operation: "makeup", input_hash: "today", day: Date.current)
+    yesterday = ProviderCall.create!(operation: "makeup", input_hash: "yesterday", day: Date.yesterday)
+    old = ProviderCall.create!(operation: "makeup", input_hash: "old", day: 2.days.ago.to_date)
+
+    PurgeExpiredKitsJob.perform_now
+
+    assert_equal [ owned, today, yesterday ].map(&:id).sort, ProviderCall.where(id: [ owned, today, yesterday, old ]).ids.sort
   end
 
   test "runs every day at 3 am UTC in production" do
