@@ -37,8 +37,9 @@ module Blendolo
     config.action_dispatch.default_headers["Permissions-Policy"] =
       "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()"
 
-    # Links to stored photos and previews work for 5 minutes, both our signed redirect links and the storage URLs.
-    config.active_storage.urls_expire_in = 5.minutes
+    # Storage URLs (never sent to browsers in proxy mode) work for 5 minutes. Our proxy links, the only image links
+    # pages carry, last an hour: a page left open still shows its pictures, and a revoked share's stop within the hour.
+    config.active_storage.urls_expire_in = 1.hour
     config.active_storage.service_urls_expire_in = 5.minutes
 
     # Photos and previews are served through our own origin (Active Storage proxy mode), never as redirects to the

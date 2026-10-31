@@ -52,9 +52,9 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_match(/^\s*LOG_REQUESTS="false"$/, Rails.root.join("Dockerfile").read)
   end
 
-  test "file links expire after five minutes" do
+  test "storage links expire after five minutes and our proxy links after an hour" do
     assert_equal 5.minutes, ActiveStorage.service_urls_expire_in
-    assert_equal 5.minutes, ActiveStorage.urls_expire_in
+    assert_equal 1.hour, ActiveStorage.urls_expire_in
   end
 
   test "the jobs page needs a password" do
