@@ -35,7 +35,7 @@ Production reads its settings from environment variables and refuses to boot whi
 
 ## Production image
 
-The `Dockerfile` builds one image for both processes: the web server (Thruster in front of Puma, on port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker. The web container prepares the databases when it starts. Health checks use `GET /up`, which answers on any host.
+The `Dockerfile` builds one image for both processes: the web server (Thruster in front of Puma, on port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker. The web container prepares the databases when it starts. Health checks use `GET /up`, which answers on any host. [docs/deploy.md](docs/deploy.md) covers running it in production: settings, storage, deploys, checks and backups.
 
 ## License
 
