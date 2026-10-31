@@ -28,8 +28,10 @@ module Ease
       end
 
       private
+        # Deeply frozen (Ractor.make_shareable freezes every nested hash, array and string), so no caller can
+        # change the shared catalogue by accident.
         def by_id
-          @by_id ||= YAML.load_file(PATH).to_h { |id, attributes| [ id, build(id, attributes) ] }.freeze
+          @by_id ||= Ractor.make_shareable(YAML.load_file(PATH).to_h { |id, attributes| [ id, build(id, attributes) ] })
         end
 
         def build(id, attributes)
@@ -43,15 +45,15 @@ module Ease
             name: attributes.fetch("name"),
             layer: layer,
             instruction: attributes.fetch("instruction"),
-            dims: attributes.fetch("dims").transform_keys(&:to_sym).freeze,
+            dims: attributes.fetch("dims").transform_keys(&:to_sym),
             swap: (swap unless swap == NO_SWAP),
             swap_why: attributes["swap_why"],
             no_swap_why: attributes["no_swap_why"],
             why_easier: attributes["why_easier"],
-            tips: Array(attributes["tips"]).freeze,
+            tips: Array(attributes["tips"]),
             product_type: attributes.fetch("product_type"),
-            ease_tags: Array(attributes["ease_tags"]).freeze,
-            effect: attributes["effect"]&.deep_symbolize_keys&.freeze
+            ease_tags: Array(attributes["ease_tags"]),
+            effect: attributes["effect"]&.deep_symbolize_keys
           )
         end
     end

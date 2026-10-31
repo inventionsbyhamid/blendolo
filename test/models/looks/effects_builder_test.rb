@@ -116,6 +116,15 @@ class Looks::EffectsBuilderTest < ActiveSupport::TestCase
     end
   end
 
+  def test_built_effects_are_independent_of_the_catalogue
+    effect = Looks::EffectsBuilder.build(%w[brow_pencil]).sole
+
+    effect[:shape][:thickness] += 10
+
+    assert_equal 10, Ease::StepCatalogue.fetch("brow_pencil").effect[:shape][:thickness]
+    assert_equal 10, Looks::EffectsBuilder.build(%w[brow_pencil]).sole[:shape][:thickness]
+  end
+
   def test_stored_routine_reads_back_the_same
     steps = @red_lip.easy_steps(@default)
     stored = JSON.parse(steps.map(&:to_h).to_json)

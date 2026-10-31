@@ -23,8 +23,9 @@ module Looks
       end
 
       private
+        # Deeply frozen, like the step catalogue, so no caller can change a shared look by accident.
         def by_key
-          @by_key ||= YAML.load_file(PATH).to_h { |key, attributes| [ key, build(key, attributes) ] }.freeze
+          @by_key ||= Ractor.make_shareable(YAML.load_file(PATH).to_h { |key, attributes| [ key, build(key, attributes) ] })
         end
 
         def build(key, attributes)

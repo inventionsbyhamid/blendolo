@@ -56,6 +56,14 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
     assert_nil Ease::StepCatalogue.fetch("mascara_upper").swap
   end
 
+  def test_catalogue_is_deeply_frozen
+    brow = Ease::StepCatalogue.fetch("brow_pencil")
+
+    assert_predicate brow.effect[:shape], :frozen?
+    assert_predicate brow.tips.first, :frozen?
+    assert_raises(FrozenError) { brow.effect[:shape][:thickness] = 99 }
+  end
+
   def test_steps_without_a_number_are_swap_targets_or_the_fixup
     targets = @steps.filter_map(&:swap_id)
 

@@ -51,7 +51,7 @@ module Looks
         texture: fragment[:texture],
         pattern: fragment[:pattern],
         mode: fragment[:mode]
-      }.merge(fragment.slice(*Vocabulary::OPTIONAL_KEYS))
+      }.merge(fragment.slice(*Vocabulary::OPTIONAL_KEYS).deep_dup)
     end
 
     # A pattern takes as many colours as its default has. Extra colours drop off the end; missing ones repeat
