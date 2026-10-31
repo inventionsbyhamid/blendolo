@@ -15,11 +15,14 @@ class TapGuardTest < ApplicationSystemTestCase
         </form>
         <button id="toggle" type="button" class="btn" data-controller="tap-guard" data-action="click->tap-guard#guard"
           data-tap-guard-commit-value="false">Toggle</button>`)
-      document.getElementById("probe").addEventListener("submit", (event) => { event.preventDefault(); window.submits++ })
-      document.getElementById("toggle").addEventListener("click", () => window.clicks++)
     JS
     wait_for_controller "#commit"
     wait_for_controller "#toggle"
+    # Added after the guard, like any action listed after it in data-action.
+    execute_script <<~JS
+      document.getElementById("probe").addEventListener("submit", (event) => { event.preventDefault(); window.submits++ })
+      document.getElementById("toggle").addEventListener("click", () => window.clicks++)
+    JS
   end
 
   test "repeat tap guard blocks second submit" do
