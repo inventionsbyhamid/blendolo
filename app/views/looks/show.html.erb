@@ -1,3 +1,5 @@
+<%# The fallback reload (refresh_controller.js) keeps the reader's place on the page. %>
+<% content_for :head, tag.meta(name: "turbo-refresh-scroll", content: "preserve") %>
 <%= turbo_stream_from @kit %>
 <div class="page stack">
   <%= render "components/button", label: "All looks", href: kit_looks_path(@kit), variant: :quiet, icon: :back %>

@@ -31,7 +31,8 @@
     <a class="skip" href="#main">Skip to content</a>
     <%= render "shared/header" %>
 
-    <main id="main">
+    <%# refresh: reloads the page while a preview is on its way, in case live updates can't reach it. %>
+    <main id="main" data-controller="refresh">
       <% if notice.present? %><p class="flash" role="status"><%= notice %></p><% end %>
       <%= yield %>
     </main>

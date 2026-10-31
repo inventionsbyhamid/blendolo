@@ -47,6 +47,27 @@ class LooksSystemTest < ApplicationSystemTestCase
     shot "look"
   end
 
+  test "a preview on its way shows up without a live update" do
+    photo = @kit.photos.today.sole
+    look = LookForKit.find(@kit, "red_lip")
+    renders = { classic: look.classic_effects(photo), easy: look.easy_effects(photo) }.map do |kind, effects|
+      @kit.renders.create!(Previews.attributes(photo, "red_lip", kind, effects, nil).merge(status: :running, started_at: Time.current))
+    end
+    visit kit_look_path(@kit, "red_lip")
+    assert_selector ".render--running", text: "This takes about a minute", count: 2
+    history = evaluate_script("history.length")
+
+    # Done, with no broadcast: only the page's own reload (every 20 s) can show it.
+    renders.each do |render|
+      render.result.attach(io: file_fixture("face.jpg").open, filename: "#{render.kind}.jpg", content_type: "image/jpeg")
+      render.update!(status: :done)
+    end
+    assert_selector "img.render__image", count: 2, wait: 30
+    assert_equal history, evaluate_script("history.length"), "the reload replaces the page in history"
+    assert_nil evaluate_script("window.Stimulus.getControllerForElementAndIdentifier(document.querySelector('main'), 'refresh').timer"),
+      "nothing left on its way, so no more reloads"
+  end
+
   test "swaps listed in plain words" do
     visit kit_look_path(@kit, "red_lip")
     look = LookForKit.find(@kit, "red_lip")
