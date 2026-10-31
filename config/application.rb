@@ -17,6 +17,12 @@ module Tressolo
     # required_env.rb is required by its initializer, which runs before autoloading.
     config.autoload_lib(ignore: %w[assets tasks required_env.rb])
 
+    # The health check answers any host and plain http: container health checks ask for http://localhost/up.
+    # Production limits hosts and forces SSL (config/environments/production.rb); these keep /up out of both. They're
+    # set here, for every environment, so test/integration/health_test.rb exercises the same rules.
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+    config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
