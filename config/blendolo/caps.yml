@@ -1,0 +1,6 @@
+# Live provider calls one kit may make, per operation. Cached results, failed calls and example kits don't count.
+# The daily cap and the balance floor for the whole app come from YOUCAM_DAILY_UNIT_CAP and YOUCAM_UNIT_FLOOR.
+shared:
+  per_kit:
+    makeup: 10
+    transfer: 2
