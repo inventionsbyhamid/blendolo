@@ -39,14 +39,7 @@ class Appearance::Youcam::Provider < Appearance::Provider
   end
 
   def start(operation, inputs)
-    validate!(operation, inputs)
-    effects = mapped_effects(inputs[:effects]) if operation == :makeup
-    key = active_key
-
-    body = case operation
-    when :makeup then { src_file_id: upload(key, inputs[:photo]).first, version: "1.0", effects: }
-    when :transfer then upload(key, inputs[:photo], inputs[:reference]).then { |src, ref| { src_file_id: src, ref_file_id: ref } }
-    end
+    key, body = prepare(operation, inputs)
     task_id = create(operation, body, key)
     @cache.write(task_key(task_id), fingerprint(key), expires_in: 1.day)
 
@@ -114,6 +107,24 @@ class Appearance::Youcam::Provider < Appearance::Provider
       raise Appearance::Error.new(:provider_error, message: "no balance for any key") unless known
 
       raise Appearance::Error.new(:out_of_units, message: "every key is below the unit floor")
+    end
+
+    # Everything before the task is created: checks, the effects, the photos made into JPEGs and uploaded. Nothing
+    # is charged yet, so an unexpected error of ours here (a photo vips can't read, an odd upload answer) is a
+    # definite non-charge, not a maybe.
+    def prepare(operation, inputs)
+      validate!(operation, inputs)
+      effects = mapped_effects(inputs[:effects]) if operation == :makeup
+      key = active_key
+      body = case operation
+      when :makeup then { src_file_id: upload(key, inputs[:photo]).first, version: "1.0", effects: }
+      when :transfer then upload(key, inputs[:photo], inputs[:reference]).then { |src, ref| { src_file_id: src, ref_file_id: ref } }
+      end
+      [ key, body ]
+    rescue Appearance::Error
+      raise
+    rescue StandardError => error
+      raise Appearance::Error.new(:provider_error, maybe_charged: false, message: "before the task: #{error.class}")
     end
 
     # Creates the task. A server or network error leaves it unclear whether the task started (and was charged), so

@@ -132,6 +132,18 @@ class Appearance::Youcam::ProviderTest < ActiveSupport::TestCase
     assert_not_predicate assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }, :maybe_charged?
   end
 
+  test "our own error before the task is created was not charged" do
+    stub_balance("test-key-a", 1000)
+    # An upload answer of a shape we don't expect: no requests to send the file with.
+    stub_request(:post, "#{BASE}/s2s/v2.0/file").to_return(body: { status: 200, data: { files: [ { file_id: "x" } ] } }.to_json)
+    create = stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto")
+
+    error = assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }
+
+    assert_equal [ :provider_error, false ], [ error.reason, error.maybe_charged? ]
+    assert_not_requested create
+  end
+
   test "a create answer without a task id is an error" do
     stub_balance("test-key-a", 1000)
     stub_register
