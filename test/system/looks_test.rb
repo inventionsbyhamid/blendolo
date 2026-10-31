@@ -73,10 +73,13 @@ class LooksSystemTest < ApplicationSystemTestCase
   test "the page waits to reload while a tap is on its way or the device is offline" do
     photo = @kit.photos.today.sole
     look = LookForKit.find(@kit, "red_lip")
-    @kit.renders.create!(Previews.attributes(photo, "red_lip", :classic, look.classic_effects(photo), nil)
-      .merge(status: :running, started_at: Time.current))
+    # Both previews asked for already, so the page doesn't ask (and move on) by itself.
+    { classic: look.classic_effects(photo), easy: look.easy_effects(photo) }.each do |kind, effects|
+      @kit.renders.create!(Previews.attributes(photo, "red_lip", kind, effects, nil).merge(status: :running, started_at: Time.current))
+    end
     visit kit_look_path(@kit, "red_lip")
-    assert_selector ".render--running", text: "This takes about half a minute"
+    assert_selector ".render--running", text: "This takes about half a minute", count: 2
+    assert_no_selector "form[data-controller=autostart]"
     refresh = "window.Stimulus.getControllerForElementAndIdentifier(document.querySelector('main'), 'refresh')"
     execute_script %(document.querySelector("main").insertAdjacentHTML("beforeend", '<p id="before-reload">here</p>'))
 
@@ -96,7 +99,7 @@ class LooksSystemTest < ApplicationSystemTestCase
     # Back online with nothing held: it reloads.
     execute_script "delete navigator.onLine; #{refresh}.refresh()"
     assert_no_selector "#before-reload"
-    assert_selector ".render--running", text: "This takes about half a minute"
+    assert_selector ".render--running", text: "This takes about half a minute", count: 2
   end
 
   test "swaps listed in plain words" do
