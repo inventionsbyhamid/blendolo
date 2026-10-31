@@ -17,7 +17,7 @@ module Billing
 
     # The lowest price that keeps min_margin for this plan's credits and fees, in whole cents.
     def floor_price_cents(plan, provider: Billing.provider)
-      (plan.price_cents..).find do |cents|
+      (1..).find do |cents|
         Margin.for(plan.with(price_cents: cents), provider:).share >= min_margin
       end
     end
