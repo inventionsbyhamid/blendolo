@@ -17,7 +17,7 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 0, KitHelpers::CountRequests.count
     assert_select "form[action=?][data-controller=autostart] button", previews_kit_look_path(kit, "red_lip"), text: /Show it on my face/
-    assert_select ".render", text: /Getting your photo ready/, count: 2
+    assert_select ".render", text: /Getting your photo ready. This takes about half a minute.\s*\z/, count: 2
   end
 
   test "hover prefetch disabled meta present" do

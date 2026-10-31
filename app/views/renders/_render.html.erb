@@ -17,7 +17,8 @@
   <% else %>
     <div class="render__message" role="status">
       <span class="render__dot" aria-hidden="true"></span>
-      <p><%= render.running? ? "Putting the #{kind_words} on your photo." : "Getting your photo ready." %> This takes about a minute.</p>
+      <%# A preview already asked for is checked again by the page itself (refresh_controller.js) if live updates can't reach it. %>
+      <p><%= render.running? ? "Putting the #{kind_words} on your photo." : "Getting your photo ready." %> This takes about half a minute.<% if render.persisted? %> If it takes longer, this page checks again by itself.<% end %></p>
     </div>
   <% end %>
 </div>

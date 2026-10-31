@@ -27,7 +27,7 @@ class LooksSystemTest < ApplicationSystemTestCase
     assert_no_selector "form[data-controller=autostart]"
     classic, easy = @kit.renders.order(:id).to_a
     assert_equal %w[classic easy], [ classic.kind, easy.kind ]
-    assert_selector "##{dom_id(classic)}", text: "This takes about a minute"
+    assert_selector "##{dom_id(classic)}", text: "This takes about half a minute. If it takes longer, this page checks again by itself."
 
     [ classic, easy ].each do |render|
       render.result.attach(io: file_fixture("face.jpg").open, filename: "#{render.kind}.jpg", content_type: "image/jpeg")
@@ -54,7 +54,7 @@ class LooksSystemTest < ApplicationSystemTestCase
       @kit.renders.create!(Previews.attributes(photo, "red_lip", kind, effects, nil).merge(status: :running, started_at: Time.current))
     end
     visit kit_look_path(@kit, "red_lip")
-    assert_selector ".render--running", text: "This takes about a minute", count: 2
+    assert_selector ".render--running", text: "This takes about half a minute", count: 2
     history = evaluate_script("history.length")
 
     # Done, with no broadcast: only the page's own reload (every 20 s) can show it.
