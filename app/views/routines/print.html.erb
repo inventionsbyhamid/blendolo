@@ -2,7 +2,7 @@
   <header class="stack no-print">
     <h1 class="m-0">Your step cards</h1>
     <p class="lead m-0">One card per page, in large print. Keep them by the mirror, or give them to someone who helps.</p>
-    <button type="button" class="btn btn--primary" data-action="print#print"><span class="btn__label">Print the cards</span></button>
+    <button type="button" class="btn btn--primary" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->print#print"><span class="btn__label">Print the cards</span></button>
     <%= render "components/button", label: "Back to the routine", href: kit_routine_path(@kit), variant: :secondary, icon: :back %>
   </header>
   <% @steps.each.with_index(1) do |step, number| %>

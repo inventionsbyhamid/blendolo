@@ -8,7 +8,7 @@
     <%= share_qr(url) %>
   <% else %>
     <details class="faq-lite">
-      <summary class="btn btn--quiet">Show the QR code</summary>
+      <summary class="btn btn--quiet" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">Show the QR code</summary>
       <%= share_qr(url) %>
     </details>
   <% end %>

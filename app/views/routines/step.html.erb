@@ -11,13 +11,14 @@
       <%= image_tag proxied_image_path(picture, 900), alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image" %>
       <canvas class="step-zoom__glow" data-glow-target="canvas" hidden aria-hidden="true"></canvas>
     </figure>
+    <% if @with %><%= render "components/honest_label" %><% end %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
   <% end %>
 
   <%= render "routines/card_text", step: @step, speak: true %>
 
   <%= render "components/button", label: (last ? "Done, all finished" : "Done, next step"), href: (last ? kit_path(@kit) : step_kit_routine_path(@kit, @number + 1)), variant: :primary, icon: :check %>
-  <button type="button" class="btn btn--secondary" aria-pressed="false" data-speak-target="button" data-action="speak#toggle">
+  <button type="button" class="btn btn--secondary" aria-pressed="false" data-speak-target="button" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->speak#toggle">
     <%= render "components/icon", name: :speaker %><span data-speak-target="label">Read it to me</span>
   </button>
   <p class="muted m-0" data-speak-target="status" role="status"></p>
