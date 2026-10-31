@@ -81,7 +81,7 @@ class HardeningTest < ActionDispatch::IntegrationTest
 
     assert_includes response.body, "jsDelivr"
     assert_includes response.body, "Google Cloud Storage"
-    assert_match(/backups keep your answers and links, not your photos, for up to 2 days after that/, response.body)
+    assert_match(/backups keep your answers, links and account details, not your photos, for up to 2 days after that/, response.body)
     # The same two hosts the content security policy lets the capture page reach.
     assert_equal %w[cdn.jsdelivr.net storage.googleapis.com], [ MEDIAPIPE, MODEL ].map { URI(it).host }
   end
