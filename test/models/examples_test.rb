@@ -24,6 +24,16 @@ class ExamplesTest < ActiveSupport::TestCase
     Examples.all.each { |person| assert Looks::Catalogue.key?(person.chosen_look), person.key }
   end
 
+  test "building an example kit makes the picture sizes its pages show" do
+    kit = Examples.rebuild!(:rosa)
+
+    attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
+    assert_equal 6, attachments.size
+    attachments.product(Examples::VARIANT_SIZES).each do |attachment, size|
+      assert attachment.variant(resize_to_limit: [ size, size ]).send(:processed?), "#{attachment.filename} at #{size}"
+    end
+  end
+
   test "an example kit carries the person's hands, photos and finished renders" do
     kit = Examples.kit_for(:rosa)
 

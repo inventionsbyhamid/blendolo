@@ -10,6 +10,10 @@ module Examples
 
   class UnknownExample < KeyError; end
 
+  # The sizes the example pages show (RendersHelper#proxied_image_path), made when a kit is built so the first visit
+  # to an example doesn't wait for them.
+  VARIANT_SIZES = [ 900, 600 ].freeze
+
   Person = Data.define(:key, :name, :blurb, :hands, :hands_today, :chosen_look, :photos, :renders, :digest)
 
   class << self
@@ -34,6 +38,10 @@ module Examples
 
     private
       def build_kit(person, now)
+        build_records(person, now).tap { |kit| prepare_variants(kit) }
+      end
+
+      def build_records(person, now)
         Kit.transaction do
           kit = Kit.new(path: :example, example_key: person.key, example_digest: person.digest, consented_at: now,
             chosen_look_key: person.chosen_look, hands_today: person.hands_today, **person.hands)
@@ -51,6 +59,16 @@ module Examples
           kit.building_example = false
           kit
         end
+      end
+
+      # A failure here only means the first visit makes them instead.
+      def prepare_variants(kit)
+        attachments = kit.photos.map(&:image) + kit.renders.map(&:result)
+        attachments.product(VARIANT_SIZES).each do |attachment, size|
+          attachment.variant(resize_to_limit: [ size, size ]).processed
+        end
+      rescue StandardError => error
+        Rails.error.report(error, handled: true, context: { example: kit.example_key })
       end
 
       def attachable(file)
