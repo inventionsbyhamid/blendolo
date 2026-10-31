@@ -23,6 +23,24 @@ module Blendolo
     config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
     config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
+    # The one host production answers (config/environments/production.rb), also read by the health test.
+    config.x.canonical_host = "blendolo.dijmo.com"
+
+    # MediaPipe Tasks Vision for hands-free capture: the pinned package (script and wasm) and the face model file.
+    # The content security policy allows exactly these; the capture code should load from the same values.
+    config.x.mediapipe = ActiveSupport::OrderedOptions.new.merge!(
+      package_url: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/",
+      model_url: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+    )
+
+    # Only the camera, and only for us. Rails' permissions_policy still sends the older Feature-Policy header.
+    config.action_dispatch.default_headers["Permissions-Policy"] =
+      "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()"
+
+    # Links to stored photos and previews work for 5 minutes, both our signed redirect links and the storage URLs.
+    config.active_storage.urls_expire_in = 5.minutes
+    config.active_storage.service_urls_expire_in = 5.minutes
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
