@@ -1,4 +1,4 @@
-# The public pages: the landing page, privacy, accessibility, sources, guides and the sitemap.
+# The public pages: the landing page, pricing, terms, refunds, privacy, accessibility, sources, guides and the sitemap.
 class PagesController < ApplicationController
   GUIDES = {
     "makeup-with-parkinsons" => {
@@ -22,6 +22,15 @@ class PagesController < ApplicationController
   end
 
   def privacy
+  end
+
+  def pricing
+  end
+
+  def terms
+  end
+
+  def refunds
   end
 
   def accessibility
@@ -48,7 +57,7 @@ class PagesController < ApplicationController
   end
 
   def sitemap
-    @paths = [ root_path, guides_path, *GUIDES.keys.map { |slug| guide_path(slug) }, brands_path, privacy_path,
-      accessibility_path, sources_path ]
+    @paths = [ root_path, guides_path, *GUIDES.keys.map { |slug| guide_path(slug) }, brands_path, pricing_path,
+      privacy_path, terms_path, refunds_path, accessibility_path, sources_path ]
   end
 end

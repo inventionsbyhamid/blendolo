@@ -1,0 +1,49 @@
+<% seo title: "Terms", description: "Blendolo's terms in plain words: credits, the Look Pack, the Clinic plan, how payments work through Dodo Payments, and what previews are." %>
+<div class="page prose">
+  <%= render "pages/page_header", chip: "Terms", title: "Terms, in plain words",
+        lead: "What you get when you use Blendolo or buy credits. Last updated 31 October 2026." %>
+
+  <h2>What Blendolo is</h2>
+  <p>Blendolo helps people whose hands shake or are stiff do their makeup. Previews show a look on your photo. They are a guide, not a promise. Blendolo gives no medical advice.</p>
+
+  <h2>Free to use</h2>
+  <p>The example people, hand questions, ease scores, step cards, your routine, the shopping list and share links are free. Signing in with Google gives a new account free credits once.</p>
+
+  <h2>Credits</h2>
+  <ul>
+    <li>One credit makes one preview of a look on your photo. A look on your face takes two: the classic look and the easier one.</li>
+    <li>Credits stay in your account until you use them. They have no cash value and can't be moved to another account.</li>
+    <li>If the preview service turns a preview down, you get its credits back.</li>
+    <li>Deleting your account deletes its credits.</li>
+  </ul>
+
+  <h2>The Look Pack</h2>
+  <p>A one-time payment for a pack of credits. No subscription.</p>
+
+  <h2>The Clinic plan</h2>
+  <ul>
+    <li>A monthly subscription that adds credits each month you pay for, plus a client list.</li>
+    <li>It renews each month until you cancel. Cancel any time with "Manage" on your account page.</li>
+    <li>After you cancel, it runs to the end of the month you paid for, and nothing more is charged.</li>
+    <li>Credits from earlier months stay.</li>
+  </ul>
+
+  <h2>Payments</h2>
+  <p>Dodo Payments is the merchant of record for every purchase. It sells to you on our behalf, takes the payment, handles tax and sends your receipt. Your card details go to Dodo Payments, never to us. Their own terms apply to the payment.</p>
+  <p>Prices are in US dollars. Tax is added at checkout where it applies.</p>
+
+  <h2>Refunds</h2>
+  <p>See our <%= link_to "refund policy", refunds_path %>.</p>
+
+  <h2>Fair use</h2>
+  <p>To keep previews running for everyone, there is a daily limit on previews across the site. If we reach it, previews pause until the next day and no credits are spent.</p>
+
+  <h2>Your photos</h2>
+  <p>How we keep and delete your photos is on our <%= link_to "privacy page", privacy_path %>.</p>
+
+  <h2>Changes</h2>
+  <p>If we change these terms or our prices, we say so on this page first. A change never touches what you already paid for.</p>
+
+  <h2>Questions</h2>
+  <%= render "pages/contact" %>
+</div>

@@ -587,3 +587,26 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   body:not(.landing) .tags li { color: var(--ink); }
   body:not(.landing) .tags li::before { border-color: var(--ink); }
 }
+
+@layer components {
+  /* Pricing: one card per plan, side by side on wide screens, each with its button at the bottom. */
+  .plans { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); grid-template-columns: 1fr; }
+  @media (min-width: 960px) { .plans { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .plan { display: grid; gap: 16px; grid-template-rows: auto auto auto 1fr auto; scroll-margin-top: 24px; }
+  .plan > * { margin: 0; }
+  .plan--featured { border: 3px solid var(--ink); }
+  .plan__name { font-size: 1.75rem; }
+  .plan__price { font-size: 2.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; }
+  .plan__per { font-size: 1.25rem; font-weight: 800; color: var(--muted); letter-spacing: 0; }
+  .plan__credits { font-size: 1.25rem; font-weight: 800; }
+  .plan .ticks { margin: 0; }
+  .notice { display: grid; gap: 4px; padding: 16px 20px; border-radius: 18px; background: var(--sun-soft); color: var(--ink); font-weight: 800; }
+  .notice > * { margin: 0; }
+
+  /* The account's purchases and the clinic's client kits. */
+  .purchases { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .purchases li { display: grid; gap: 2px; padding: 14px 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); }
+  .purchases__what { font-weight: 800; }
+  .purchases__when { color: var(--muted); }
+  .clients { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap); }
+}

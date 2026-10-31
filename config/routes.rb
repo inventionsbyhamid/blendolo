@@ -26,6 +26,17 @@ Rails.application.routes.draw do
     get :delete
   end
 
+  # Prices, buying credits, the payment provider's portal, and the Clinic plan's client list. Terms and refunds are
+  # what the payment provider asks every seller to publish.
+  get "pricing" => "pages#pricing"
+  get "terms" => "pages#terms"
+  get "refunds" => "pages#refunds"
+  post "checkout" => "checkouts#create", as: :checkout
+  get "billing/success" => "checkouts#success", as: :billing_success
+  post "billing/portal" => "billing_portals#create", as: :billing_portal
+  get "clinic" => "clinics#show", as: :clinic
+  post "clinic/kits" => "clinics#create_kit", as: :clinic_kits
+
   get "privacy" => "pages#privacy"
   get "accessibility" => "pages#accessibility"
   get "sources" => "pages#sources"

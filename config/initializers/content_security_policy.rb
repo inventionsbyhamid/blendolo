@@ -6,12 +6,17 @@
 
 mediapipe = Rails.application.config.x.mediapipe
 
+# Dodo Payments' hosted checkout and customer portal, in test mode and live.
+dodo_pages = %w[https://test.checkout.dodopayments.com https://checkout.dodopayments.com
+  https://test.customer.dodopayments.com https://customer.dodopayments.com].freeze
+
 Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src :self
     policy.base_uri :self
-    # Sign in with Google is a form POST that redirects to Google's sign in page.
-    policy.form_action :self, "https://accounts.google.com"
+    # Sign in with Google is a form POST that redirects to Google's sign in page; buying and "Manage" are form POSTs
+    # that redirect to the payment provider's checkout and customer portal (Dodo Payments, test and live).
+    policy.form_action :self, "https://accounts.google.com", *dodo_pages
     policy.frame_ancestors :none
     policy.object_src :none
     policy.font_src :self, :data

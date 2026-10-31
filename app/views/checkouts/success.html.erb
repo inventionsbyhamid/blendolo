@@ -1,0 +1,33 @@
+<% page_title "Thank you" %>
+<div class="page stack">
+  <%= turbo_frame_tag "billing-status", target: "_top", class: "stack", data: { controller: ("poll" unless @failed || @arrived) } do %>
+    <% if @failed %>
+      <header class="stack" data-done>
+        <h1 class="m-0">The payment didn't go through</h1>
+        <p class="lead m-0" role="status">Nothing was added. You can try again.</p>
+      </header>
+      <%= render "components/button", label: "Back to prices", href: pricing_path, variant: :primary %>
+    <% elsif @arrived %>
+      <header class="stack" data-done>
+        <h1 class="m-0">Thank you</h1>
+        <p class="instruction m-0" role="status">
+          <% if @arrived.plan_record&.subscription? %>Your Clinic plan is on. <% end %><%= pluralize(@arrived.credits, "credit") %> added. You have <%= pluralize(@credits, "credit") %>.
+        </p>
+      </header>
+      <% if @arrived.plan_record&.subscription? %>
+        <%= render "components/button", label: "Open your clients", href: clinic_path, variant: :primary %>
+      <% else %>
+        <%= render "components/button", label: "See a look on your face", href: @next_path, variant: :primary %>
+      <% end %>
+      <%= render "components/button", label: "Your account", href: account_path, variant: :secondary %>
+    <% else %>
+      <header class="stack">
+        <h1 class="m-0">Thank you</h1>
+        <p class="instruction m-0" role="status">Your credits arrive in a few seconds.</p>
+        <p class="m-0">This page checks for them by itself. You have <%= pluralize(@credits, "credit") %> now.</p>
+      </header>
+      <%= render "components/button", label: "Check again", href: billing_success_path(plan: @plan&.key), variant: :secondary %>
+      <%= render "components/button", label: "Your account", href: account_path, variant: :secondary %>
+    <% end %>
+  <% end %>
+</div>

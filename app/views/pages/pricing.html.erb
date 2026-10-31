@@ -1,0 +1,79 @@
+<% pack = Billing::Plan.fetch(:look_pack); clinic = Billing::Plan.fetch(:clinic) %>
+<% seo title: "Pricing",
+       description: "Blendolo is free to try. Credits pay for previews of a look on your own face: a Look Pack is " \
+         "#{pack.price} for #{pack.credits} credits, and the Clinic plan is #{clinic.price} a month for #{clinic.credits}." %>
+<div class="page page--wide stack">
+  <%= render "pages/page_header", chip: "Pricing", title: "Free to try. Credits for your own face.",
+        lead: "Step cards, your routine, the shopping list and sharing are always free." %>
+
+  <% if Billing.test_mode? %>
+    <div class="notice" role="note">
+      <p><%= BillingHelper::TEST_MODE %></p>
+      <p><%= BillingHelper::TEST_CARD %></p>
+    </div>
+  <% end %>
+
+  <ul class="plans">
+    <li class="card plan" id="free">
+      <h2 class="plan__name">Free</h2>
+      <p class="plan__price">$0</p>
+      <p class="plan__credits"><%= Credits.signup_amount %> credits when you sign in with Google: one look on your own face.</p>
+      <ul class="ticks">
+        <li>Rosa, June and Amara, our example people</li>
+        <li>Hand questions, ease scores and easier swaps</li>
+        <li>Step cards read aloud, the shopping list and sharing</li>
+      </ul>
+      <%= render "components/button", label: "Start free", href: start_path, variant: :secondary %>
+    </li>
+
+    <li class="card plan plan--featured" id="look-pack">
+      <h2 class="plan__name"><%= pack.name %></h2>
+      <p class="plan__price"><%= pack.price %> <span class="plan__per"><%= plan_period_words(pack) %></span></p>
+      <p class="plan__credits"><%= pack.credits %> credits: <%= pack.credits / look_credits %> looks on your face, or mix in signature looks.</p>
+      <ul class="ticks">
+        <li>Pay once. No subscription.</li>
+        <li>Your credits stay until you use them</li>
+        <li>A refund within 14 days if you haven't used it</li>
+      </ul>
+      <%= buy_button(pack, "Buy the #{pack.name}") %>
+    </li>
+
+    <li class="card plan" id="clinic">
+      <h2 class="plan__name"><%= clinic.name %></h2>
+      <p class="plan__price"><%= clinic.price %> <span class="plan__per"><%= plan_period_words(clinic) %></span></p>
+      <p class="plan__credits"><%= clinic.credits %> credits every month: <%= clinic.credits / look_credits %> looks on a client's face.</p>
+      <ul class="ticks">
+        <li>For occupational therapists and care teams</li>
+        <li>A kit for each client, with their name or initials</li>
+        <li>Share and print each client's routine</li>
+        <li>Cancel any time</li>
+      </ul>
+      <% if signed_in? && current_user.clinic? %>
+        <%= render "components/button", label: "Open your clients", href: clinic_path, variant: :primary %>
+      <% else %>
+        <%= buy_button(clinic, "Start the #{clinic.name} plan") %>
+      <% end %>
+    </li>
+  </ul>
+
+  <section class="stack prose" aria-labelledby="credit-title">
+    <h2 id="credit-title">What is a credit?</h2>
+    <p>One credit makes one preview of a look on your photo.</p>
+    <ul class="ticks">
+      <li>A look on your face takes <%= look_credits %> credits: the classic look and the easier one, side by side.</li>
+      <li>Your signature look, from an old photo, takes <%= signature_credits %> credits.</li>
+      <li>Opening a preview you already made is free.</li>
+      <li>Credits stay in your account until you use them.</li>
+    </ul>
+  </section>
+
+  <section class="stack prose" aria-labelledby="paying-title">
+    <h2 id="paying-title">Paying</h2>
+    <p>Prices are in US dollars. Tax is added at checkout where it applies.</p>
+    <p>Dodo Payments takes the payment as our merchant of record. Your card details go to them, never to us.</p>
+    <ul class="linklist">
+      <li><%= link_to terms_path do %>Terms<small>What you get, and how the Clinic plan renews.</small><% end %></li>
+      <li><%= link_to refunds_path do %>Refunds<small>Unused packs within 14 days.</small><% end %></li>
+    </ul>
+  </section>
+</div>

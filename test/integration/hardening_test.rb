@@ -16,7 +16,9 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_equal [ "'self'", "data:", "blob:" ], csp["img-src"]
     assert_equal [ "'none'" ], csp["object-src"]
     assert_equal [ "'none'" ], csp["frame-ancestors"]
-    assert_equal [ "'self'", "https://accounts.google.com" ], csp["form-action"]
+    assert_equal [ "'self'", "https://accounts.google.com", "https://test.checkout.dodopayments.com",
+      "https://checkout.dodopayments.com", "https://test.customer.dodopayments.com", "https://customer.dodopayments.com" ],
+      csp["form-action"]
     assert_no_match(/unsafe-inline|unsafe-eval'|\*/, response.headers["Content-Security-Policy"].gsub("'wasm-unsafe-eval'", ""))
 
     policy = response.headers["Permissions-Policy"]
