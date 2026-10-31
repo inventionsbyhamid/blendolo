@@ -47,7 +47,7 @@ class Appearance::Youcam::Provider < Appearance::Provider
     when :makeup then { src_file_id: upload(key, inputs[:photo]).first, version: "1.0", effects: }
     when :transfer then upload(key, inputs[:photo], inputs[:reference]).then { |src, ref| { src_file_id: src, ref_file_id: ref } }
     end
-    task_id = translate { @client.post("/s2s/v2.0/task/#{TASKS.fetch(operation)}", body, key:) }.dig("data", "task_id")
+    task_id = create(operation, body, key)
     @cache.write(task_key(task_id), fingerprint(key), expires_in: 1.day)
 
     Appearance::Job.new(operation:, external_id: task_id, started_at: Time.current)
@@ -101,12 +101,28 @@ class Appearance::Youcam::Provider < Appearance::Provider
   end
 
   private
+    # The first key at or above the floor, reading balances only until one is found.
     def active_key
-      balances = @keys.index_with { |key| balance_for(key) }
-      raise Appearance::Error.new(:provider_error, message: "no balance for any key") if balances.values.none?
+      known = false
+      @keys.each do |key|
+        units = balance_for(key)
+        known ||= !units.nil?
+        return key if units && units >= @floor
+      end
+      raise Appearance::Error.new(:provider_error, message: "no balance for any key") unless known
 
-      balances.find { |_key, units| units.to_f >= @floor }&.first ||
-        raise(Appearance::Error.new(:out_of_units, message: "every key is below the unit floor"))
+      raise Appearance::Error.new(:out_of_units, message: "every key is below the unit floor")
+    end
+
+    # Creates the task. A server or network error leaves it unclear whether the task started (and was charged), so
+    # that error is marked maybe_charged; a refusal (4xx, rate limit) is not.
+    def create(operation, body, key)
+      task_id = @client.post("/s2s/v2.0/task/#{TASKS.fetch(operation)}", body, key:).dig("data", "task_id")
+      task_id.presence ||
+        raise(Appearance::Error.new(:provider_error, maybe_charged: true, message: "create answered without a task id"))
+    rescue Client::HttpError => error
+      raise Appearance::Error.new(reason_for(error), message: error.message,
+        maybe_charged: error.status.zero? || error.status >= 500)
     end
 
     # Units on a key, or nil when the provider won't say (that key is skipped).

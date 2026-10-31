@@ -113,6 +113,46 @@ class Appearance::Youcam::ProviderTest < ActiveSupport::TestCase
     assert_equal 900.0, provider.balance
   end
 
+  test "a server or network error on create may have been charged, a refusal was not" do
+    stub_balance("test-key-a", 1000)
+    stub_register
+    stub_uploads
+
+    stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto").to_return(status: 502, body: "")
+    error = assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }
+    assert_equal [ :provider_error, true ], [ error.reason, error.maybe_charged? ]
+
+    stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto").to_timeout
+    assert_predicate assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }, :maybe_charged?
+
+    stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto")
+      .to_return(status: 400, body: { status: 400, error_code: "CreditInsufficiency" }.to_json)
+    assert_not_predicate assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }, :maybe_charged?
+  end
+
+  test "a create answer without a task id is an error" do
+    stub_balance("test-key-a", 1000)
+    stub_register
+    stub_uploads
+    stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto").to_return(body: { status: 200, data: {} }.to_json)
+
+    error = assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }
+    assert_equal [ :provider_error, true ], [ error.reason, error.maybe_charged? ]
+  end
+
+  test "stops at the first key above the floor" do
+    provider = provider(keys: [ "test-key-a", "test-key-b" ])
+    stub_balance("test-key-a", 900)
+    stub_balance("test-key-b", 900)
+    stub_register
+    stub_uploads
+    stub_request(:post, "#{BASE}/s2s/v2.0/task/makeup-vto")
+      .to_return(body: response_body("makeup_vto_7effects_create.json").to_json)
+
+    provider.start(:makeup, photo: @photo, effects: FULL_LOOK)
+    assert_not_requested :get, "#{BASE}/s2s/v1.0/client/credit", headers: { "Authorization" => "Bearer test-key-b" }
+  end
+
   test "refuses to start when every key is below the floor" do
     stub_balance("test-key-a", 149)
     error = assert_raises(Appearance::Error) { @provider.start(:makeup, photo: @photo, effects: FULL_LOOK) }
