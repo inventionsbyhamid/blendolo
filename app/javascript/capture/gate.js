@@ -4,7 +4,8 @@
 //
 // One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink under
 // 0.4; squint under 0.75, as smiling and older eyes read as squinting), mouth relaxed (jawOpen under 0.3), then still
-// for a second. When only the eyes fail, the photo is taken anyway after 4 seconds of stillness, saying so.
+// for a second. When only the eyes fail, the photo is taken anyway after 4 seconds of stillness, saying so, unless
+// they are shut.
 
 export const MESSAGES = {
   manyFaces: "Try a photo of just you",
@@ -18,9 +19,9 @@ export const MESSAGES = {
 }
 
 // maxMove: a share of the frame per 100 ms (movement). eyesWaitFor: how long a still face whose only problem is the
-// eyes is checked before the photo is taken anyway.
+// eyes is checked before the photo is taken anyway; never when both eyes blink at shutBlink or more (shut).
 export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxBlink: 0.4, maxSquint: 0.75, maxJaw: 0.3,
-  stillFor: 1000, maxMove: 0.012, eyesWaitFor: 4000 }
+  stillFor: 1000, maxMove: 0.012, eyesWaitFor: 4000, shutBlink: 0.75 }
 
 const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
 
@@ -46,7 +47,7 @@ export function summarize(result) {
 }
 
 // summary (from summarize) -> { ok: true } or { ok: false, message }, with eyesOnly: true when the eyes are the
-// only problem.
+// only problem and they aren't shut.
 export function evaluate(summary) {
   if (summary.faces > 1) return fail(MESSAGES.manyFaces)
   if (summary.faces === 0) return fail(MESSAGES.straight)
@@ -62,7 +63,8 @@ export function evaluate(summary) {
   const eyesOpen = Math.max(scores.eyeBlinkLeft, scores.eyeBlinkRight) < LIMITS.maxBlink &&
     Math.max(scores.eyeSquintLeft, scores.eyeSquintRight) < LIMITS.maxSquint
   const mouthRelaxed = scores.jawOpen < LIMITS.maxJaw
-  if (!eyesOpen) return { ...fail(MESSAGES.eyes), eyesOnly: mouthRelaxed }
+  const shut = Math.min(scores.eyeBlinkLeft, scores.eyeBlinkRight) >= LIMITS.shutBlink
+  if (!eyesOpen) return { ...fail(MESSAGES.eyes), eyesOnly: mouthRelaxed && !shut }
   if (!mouthRelaxed) return fail(MESSAGES.still)
 
   return { ok: true }

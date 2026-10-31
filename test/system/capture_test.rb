@@ -198,7 +198,9 @@ class CaptureTest < ApplicationSystemTestCase
     }
     eyes = {
       closed: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65)),
-      closed_mouth_open: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65, jawOpen: 0.6))
+      closed_mouth_open: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.7, eyeBlinkRight: 0.65, jawOpen: 0.6)),
+      shut: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.8)),
+      one_shut: FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.3))
     }
 
     verdicts = evaluate_async_script(<<~JS, cases.values, good, eyes)
@@ -215,6 +217,8 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal({ "ok" => true }, verdicts["good"]["smiling"], "smiling eyes read as squinting, and pass")
     assert_equal({ "ok" => false, "message" => "Open your eyes wide", "eyesOnly" => true }, verdicts["eyes"]["closed"])
     assert_equal false, verdicts["eyes"]["closed_mouth_open"]["eyesOnly"], "the eyes aren't the only problem"
+    assert_equal({ "ok" => false, "message" => "Open your eyes wide", "eyesOnly" => false }, verdicts["eyes"]["shut"])
+    assert_equal true, verdicts["eyes"]["one_shut"]["eyesOnly"], "one eye shut is a wink or a droopy lid"
   end
 
   test "a still face whose only problem is the eyes is taken after 4 seconds, saying so" do
@@ -224,12 +228,13 @@ class CaptureTest < ApplicationSystemTestCase
     results = [
       FaceResults.result(FaceResults.face(**closed)),
       FaceResults.result(FaceResults.face(centre: [ 0.55, 0.5 ], **closed)),
-      FaceResults.result(FaceResults.face(jawOpen: 0.6, **closed))
+      FaceResults.result(FaceResults.face(jawOpen: 0.6, **closed)),
+      FaceResults.result(FaceResults.face(eyeBlinkLeft: 0.9, eyeBlinkRight: 0.85))
     ]
 
     # Checks every 200 ms, as the camera would make them.
     states = evaluate_async_script(<<~JS, *results)
-      const [closed, closedMoved, closedMouthOpen, done] = arguments
+      const [closed, closedMoved, closedMouthOpen, shut, done] = arguments
       import("capture/gate").then((gate) => {
         const capture = window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
         const states = {}
@@ -237,6 +242,8 @@ class CaptureTest < ApplicationSystemTestCase
         const look = (result, ms) => { for (const end = t + ms; t <= end; t += 200) capture.check(gate.summarize(result), t) }
         look(closedMouthOpen, 5000)
         states.mouthOpen = capture.state
+        look(shut, 5000)
+        states.shut = capture.state
         for (let i = 0; i <= 25; i++) look(i % 2 ? closedMoved : closed, 0)
         states.moving = capture.state
         look(closed, 3800)
@@ -249,6 +256,7 @@ class CaptureTest < ApplicationSystemTestCase
     JS
 
     assert_equal "live", states["mouthOpen"], "not when the mouth is open too"
+    assert_equal "live", states["shut"], "not when the eyes are shut"
     assert_equal "live", states["moving"], "not while the head moves"
     assert_equal "live", states["before"], "not before 4 seconds"
     assert_equal "Open your eyes wide", states["message"]
