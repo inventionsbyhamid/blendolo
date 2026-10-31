@@ -11,7 +11,7 @@ module RequiresSignIn
     def require_sign_in
       return if signed_in?
 
-      redirect_to sign_in_path(origin: request.get? ? request.fullpath : sign_in_origin)
+      redirect_to sign_in_path(origin: request.get? || request.head? ? request.fullpath : sign_in_origin)
     end
 
     def sign_in_origin
