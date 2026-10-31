@@ -121,27 +121,105 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal "page", evaluate_script("captureController().gate.kind")
   end
 
-  test "a worker that doesn't answer is stopped, and the photo goes on without colours" do
-    visit privacy_path
-    outcome = using_wait_time(15) do
+  test "the checks worker's reply wait" do
+    on_phone { visit new_kit_photo_path(@kit) }
+    assert_selector "[data-capture-state=live]", wait: 10
+    outcome = using_wait_time(40) do
       evaluate_async_script(<<~JS)
         const done = arguments[arguments.length - 1]
         import("capture/checks").then(async ({ WorkerChecks }) => {
-          const log = []
-          const checks = new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") })
+          const outcome = {}
+          const camera = document.querySelector("video[data-capture-target=video]")
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
           const photo = document.createElement("canvas")
           photo.width = photo.height = 8
-          const started = performance.now()
-          const answer = await checks.still(photo).then(() => "answered", (error) => error.message)
-          done({ answer, waited: performance.now() - started, broken: !!checks.broken, log })
+          // A worker that never answers, and one that answers each frame after a while with the summary given.
+          const silent = () => {
+            const log = []
+            return { log, checks: new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") }) }
+          }
+          const answering = (summary, after = 10) => {
+            const checks = new WorkerChecks({
+              postMessage: (message) => setTimeout(() => checks.receive({ type: "video", id: message.id, summary: { ...summary } }), after),
+              terminate: () => {}
+            })
+            return checks
+          }
+          const timed = async (promise) => {
+            const started = performance.now()
+            const answer = await promise.then(() => "answered", (error) => error.message)
+            return { answer, waited: performance.now() - started }
+          }
+          const noFace = { faces: 0, width: 0, angles: null, points: null, scores: {} }
+
+          // 5 s, or ten times the slowest check, but at most 15 s.
+          const { checks } = silent()
+          outcome.waits = [ 0, 800, 60000 ].map((slowest) => { checks.slowest = slowest; return checks.replyWait() })
+
+          // No answer to a still photo, and a frame's bitmap that never comes: both stop the worker after 5 s.
+          const still = silent()
+          const frame = silent()
+          const stillWaiting = timed(still.checks.still(photo))
+          const makeBitmap = window.createImageBitmap
+          window.createImageBitmap = () => new Promise(() => {})
+          const frameWaiting = timed(frame.checks.video(camera, 1))
+          window.createImageBitmap = makeBitmap
+          const [ stillWait, frameWait ] = await Promise.all([ stillWaiting, frameWaiting ])
+          Object.assign(outcome, { stillWait, stillLog: still.log, frameWait, frameLog: frame.log, frameBusy: !!frame.checks.busy })
+
+          // Hidden for a moment during the wait (a locked phone): the wait starts again from then.
+          let hidden = false
+          Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden })
+          const asleep = silent()
+          const asleepWait = timed(asleep.checks.still(photo))
+          await sleep(1000)
+          hidden = true
+          document.dispatchEvent(new Event("visibilitychange"))
+          await sleep(1000)
+          hidden = false
+          document.dispatchEvent(new Event("visibilitychange"))
+          outcome.asleepWait = await asleepWait
+
+          // A check that spanned hidden time doesn't count as the slowest.
+          const slow = answering(noFace, 300)
+          const check = slow.video(camera, 2)
+          await sleep(100)
+          document.dispatchEvent(new Event("visibilitychange"))
+          await check
+          outcome.slowestAfterHidden = slow.slowest
+          await slow.video(camera, 3)
+          outcome.slowestAwake = slow.slowest
+          delete document.hidden
+
+          // An empty copy of a frame counts while the camera shows a picture, not when the camera itself is dark.
+          outcome.pictureBlank = (await answering({ ...noFace, blank: true }).video(camera, 4)).blank
+          const dark = document.createElement("canvas")
+          dark.width = dark.height = 64
+          const paint = setInterval(() => dark.getContext("2d").fillRect(0, 0, 64, 64), 50)
+          const darkVideo = Object.assign(document.createElement("video"), { muted: true, srcObject: dark.captureStream(10) })
+          await darkVideo.play()
+          for (let i = 0; i < 40 && !(darkVideo.readyState >= 2 && darkVideo.videoWidth); i++) await sleep(50)
+          outcome.darkBlank = (await answering({ ...noFace, blank: true }).video(darkVideo, 5)).blank
+          clearInterval(paint)
+          done(outcome)
         })
       JS
     end
 
-    assert_equal "The face checks stopped answering", outcome["answer"]
-    assert_in_delta 5000, outcome["waited"], 1000
-    assert outcome["broken"]
-    assert_equal [ "still", "terminated" ], outcome["log"]
+    assert_equal [ 5000, 8000, 15000 ], outcome["waits"]
+    assert_equal "The face checks stopped answering", outcome["stillWait"]["answer"]
+    assert_in_delta 5000, outcome["stillWait"]["waited"], 1000
+    assert_equal [ "still", "terminated" ], outcome["stillLog"]
+    assert_equal "The face checks stopped answering", outcome["frameWait"]["answer"], "the wait covers making the bitmap"
+    assert_in_delta 5000, outcome["frameWait"]["waited"], 1000
+    assert_equal [ "terminated" ], outcome["frameLog"]
+    assert_not outcome["frameBusy"]
+    assert_equal "The face checks stopped answering", outcome["asleepWait"]["answer"]
+    assert_in_delta 10_000, outcome["asleepWait"]["waited"], 1500, "the first wait saw the page hidden, so a second one ran"
+    assert_equal 0, outcome["slowestAfterHidden"]
+    assert_operator outcome["slowestAwake"], :>=, 250
+    assert outcome["pictureBlank"]
+    assert_not outcome["darkBlank"], "a dark camera isn't the worker's doing"
   end
 
   test "camera denied shows choose photo" do

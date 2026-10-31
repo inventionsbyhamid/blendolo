@@ -18,10 +18,16 @@ import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
 // The width of the frames checked: plenty for a face a quarter of the frame wide, and quick to look at.
 const FRAME_WIDTH = 384
 // A worker that hasn't answered within this long, or 10 times its slowest frame check so far (a slow phone's still
-// photo check takes several frame checks' time), hangs: it is stopped, and what it was asked fails. A photo being
-// reviewed is then kept without sampled colours, rather than leaving the screen waiting.
+// photo check takes several frame checks' time) but never more than 15 s, hangs: it is stopped, and what it was asked
+// fails. A photo being reviewed is then kept without sampled colours, rather than leaving the screen waiting. The
+// wait starts before the frame's bitmap is made, and time the page spends hidden (a locked phone) never counts.
 const REPLY_WAIT_MS = 5000
 const REPLY_WAIT_CHECKS = 10
+const REPLY_WAIT_MAX_MS = 15000
+
+// How many times the page has been hidden or shown: a wait or a timing that saw it change was partly asleep.
+let visibilityChanges = 0
+document.addEventListener("visibilitychange", () => { visibilityChanges += 1 })
 
 export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) {
   if (workerUrl && gateUrl && typeof Worker === "function" && typeof createImageBitmap === "function" &&
@@ -78,9 +84,13 @@ export class WorkerChecks {
     this.busy = true
     try {
       const started = performance.now()
-      const frame = await smallBitmap(video)
-      const { summary } = await this.request({ type: "video", frame, timestamp }, [frame])
-      this.slowest = Math.max(this.slowest, performance.now() - started)
+      const changes = visibilityChanges
+      const { summary } = await this.within(async () => {
+        const frame = await smallBitmap(video)
+        return this.request({ type: "video", frame, timestamp }, [frame])
+      })
+      const awake = changes === visibilityChanges && !document.hidden
+      if (awake) this.slowest = Math.max(this.slowest, performance.now() - started)
       // The worker's copy was empty, but so is the camera's own picture (the phone lies face down, a finger covers the
       // lens): not the worker's doing.
       if (summary.blank && blankFrame(video)) summary.blank = false
@@ -91,9 +101,45 @@ export class WorkerChecks {
   }
 
   async still(source) {
-    const image = await createImageBitmap(source, { imageOrientation: "from-image" })
-      .catch(() => createImageBitmap(source))
-    return (await this.request({ type: "still", image }, [image])).faces
+    const { faces } = await this.within(async () => {
+      const image = await createImageBitmap(source, { imageOrientation: "from-image" })
+        .catch(() => createImageBitmap(source))
+      return this.request({ type: "still", image }, [image])
+    })
+    return faces
+  }
+
+  // How long to wait for an answer (REPLY_WAIT_MS).
+  replyWait() {
+    return Math.min(REPLY_WAIT_MAX_MS, Math.max(REPLY_WAIT_MS, REPLY_WAIT_CHECKS * this.slowest))
+  }
+
+  // Runs work (making a bitmap, then asking the worker) against the reply wait. When the wait runs out the worker is
+  // stopped and work fails, unless the page was hidden meanwhile or the timer came late (the phone slept): then it
+  // waits again from now.
+  within(work) {
+    return new Promise((resolve, reject) => {
+      let timer
+      const wait = () => {
+        const changes = visibilityChanges
+        const armedAt = Date.now()
+        const limit = this.replyWait()
+        timer = setTimeout(() => {
+          const slept = changes !== visibilityChanges || document.hidden || Date.now() - armedAt > limit + 1000
+          if (slept) return wait()
+          this.hung()
+          reject(this.broken)
+        }, limit)
+      }
+      wait()
+      work().then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      }, (error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+    })
   }
 
   close() {
@@ -109,18 +155,13 @@ export class WorkerChecks {
     }
     const id = this.nextId++
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => this.hung(), Math.max(REPLY_WAIT_MS, REPLY_WAIT_CHECKS * this.slowest))
-      const settled = (then) => (value) => {
-        clearTimeout(timer)
-        then(value)
-      }
-      this.requests.set(id, { resolve: settled(resolve), reject: settled(reject) })
+      this.requests.set(id, { resolve, reject })
       try {
         this.worker.postMessage({ ...message, id }, transfer)
       } catch (error) {
-        this.requests.get(id).reject(error)
         this.requests.delete(id)
         transfer.forEach((bitmap) => bitmap.close())
+        reject(error)
       }
     })
   }
