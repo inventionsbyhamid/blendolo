@@ -76,6 +76,7 @@ class BillingEvent < ApplicationRecord
 
     def unmatched(why)
       self.status = :unmatched
+      self.user = nil
       why
     end
 
@@ -116,7 +117,10 @@ class BillingEvent < ApplicationRecord
 
     def start_subscription
       Checkout.where(token: reference, provider:).update_all(status: Checkout.statuses[:paid], updated_at: Time.current)
-      BillingSubscription.create!(provider:, subscription_id:, user:, plan:, status: event.subscription_status || "active")
+      # A savepoint of its own, so losing the insert race to a second delivery leaves this transaction usable.
+      BillingSubscription.transaction(requires_new: true) do
+        BillingSubscription.create!(provider:, subscription_id:, user:, plan:, status: event.subscription_status || "active")
+      end
     rescue ActiveRecord::RecordNotUnique
       BillingSubscription.find_by!(provider:, subscription_id:)
     end
