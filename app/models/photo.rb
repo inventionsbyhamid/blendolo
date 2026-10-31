@@ -5,6 +5,9 @@ class Photo < ApplicationRecord
   SAMPLED_REGIONS = %w[lips lids cheeks skin].freeze
 
   belongs_to :kit
+  has_many :renders, dependent: :destroy
+  has_many :renders_as_reference, class_name: "Render", foreign_key: :reference_photo_id,
+    inverse_of: :reference_photo, dependent: :destroy
 
   enum :kind, { today: 0, reference: 1 }, validate: true
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_080100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_080200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -77,7 +77,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080100) do
     t.index ["kit_id"], name: "index_photos_on_kit_id"
   end
 
+  create_table "renders", force: :cascade do |t|
+    t.bigint "kit_id", null: false
+    t.bigint "photo_id", null: false
+    t.bigint "reference_photo_id"
+    t.integer "kind", default: 0, null: false
+    t.string "look_key"
+    t.jsonb "effects", default: [], null: false
+    t.integer "status", default: 0, null: false
+    t.string "failure_reason"
+    t.string "external_id"
+    t.datetime "started_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_renders_on_external_id"
+    t.index ["kit_id"], name: "index_renders_on_kit_id"
+    t.index ["photo_id"], name: "index_renders_on_photo_id"
+    t.index ["reference_photo_id"], name: "index_renders_on_reference_photo_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "photos", "kits"
+  add_foreign_key "renders", "kits"
+  add_foreign_key "renders", "photos"
+  add_foreign_key "renders", "photos", column: "reference_photo_id"
 end

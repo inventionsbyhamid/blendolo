@@ -9,6 +9,8 @@ class Kit < ApplicationRecord
 
   has_secure_token :token
 
+  # Renders before photos: renders point at photos.
+  has_many :renders, dependent: :destroy
   has_many :photos, dependent: :destroy
 
   enum :path, { self_use: 0, helper: 1, example: 2 }, validate: true
