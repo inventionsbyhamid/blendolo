@@ -56,6 +56,41 @@ class Looks::CatalogueTest < ActiveSupport::TestCase
     assert_raises(Looks::Catalogue::UnknownLook) { Looks::Catalogue.fetch("glitter") }
   end
 
+  OPTIONAL = %w[mascara_upper mascara_lower eyelash_curler strip_lashes magnetic_liner_lashes setting_spray].freeze
+  WORDS = %w[Hard Tricky Some\ care Easy].freeze
+
+  def test_mascara_lashes_curler_and_setting_spray_are_optional_in_every_look
+    Looks::Catalogue.all.flat_map(&:steps).each do |look_step|
+      assert_equal OPTIONAL.include?(look_step.step_id), look_step.optional, look_step.step_id
+      assert_equal look_step.optional, look_step.step.optional?
+    end
+  end
+
+  def test_red_lip_easy_for_tremor_is_better_than_hard
+    rosa = YAML.load_file(Rails.root.join("config/blendolo/examples.yml")).dig("people", "rosa")
+    profile = Ease::HandProfile.new(**rosa.fetch("hands").symbolize_keys)
+    look = Looks::Catalogue.fetch(rosa.fetch("chosen_look"))
+    assert_equal "red_lip", look.key
+
+    classic = Ease::Words.for(Ease::Scorer.look(look.ease_steps, profile)[:ease])
+    easy_result = Ease::Scorer.look(look.easy_steps(profile).map(&:step), profile)
+    easy = Ease::Words.for(easy_result[:ease])
+
+    assert_equal "Hard", classic
+    assert_operator WORDS.index(easy), :>=, WORDS.index(classic) + 1, "#{classic} -> #{easy}"
+    assert_equal %w[mascara_upper], easy_result[:optional].map { it[:step].id }, "mascara is reported, not graded"
+  end
+
+  def test_optional_survives_a_stored_routine_and_a_swap
+    wedding = Looks::Catalogue.fetch(:wedding_guest)
+    easy = wedding.easy_steps(Ease::HandProfile.new)
+    mascara = easy.find { it.step_id == "mascara_upper" }
+
+    assert mascara.optional, "strip lashes swapped for mascara stay optional"
+    stored = JSON.parse(easy.map(&:to_h).to_json)
+    assert_equal easy, stored.map { Looks::LookStep.wrap(it) }
+  end
+
   def test_easy_versions_are_easier_for_every_look_and_profile
     answers = [ 0, 1, 2 ]
     profiles = answers.product(answers, answers, answers, answers).map do |tremor, pinch, one_hand, fatigue, near_vision|

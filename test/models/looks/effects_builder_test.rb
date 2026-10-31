@@ -147,7 +147,7 @@ class Looks::EffectsBuilderTest < ActiveSupport::TestCase
 
     easy = by_category(Looks::EffectsBuilder.build(Looks::Look.easy_steps(steps, @default)))
     assert_equal [ "sheer", "#8E1F2F" ], easy["lip_color"].values_at(:texture, :colour)
-    assert_equal "Smoke4", easy["eye_liner"][:pattern]
+    assert_equal [ "Smoke19", 88 ], easy["eye_liner"].values_at(:pattern, :intensity), "shadow liner for the default hands"
   end
 
   def test_signature_answers_choose_the_steps

@@ -56,7 +56,7 @@ Then, only when the effect uses them:
 
 | Classic step | Easier step | Effect change |
 |---|---|---|
-| Winged liquid liner | Smudged pencil | `eye_liner` pattern `OpenWings2` to `Smoke4`, near-black brown at 88 |
+| Winged liquid liner | Shadow liner or smudged pencil, whichever is easier for the person's hands | `eye_liner` pattern `OpenWings2` to `Smoke19` (shadow) or `Smoke4` (pencil), near-black brown at 88 |
 | Liquid matte lipstick and lip liner | Tinted balm | `lip_color` `matte` to `sheer`, intensity 45, gloss 35, transparency 60; no `lip_liner` |
 | Strip lashes | Mascara | `eyelashes` `UpperDense1` to `Natural2` at 75 |
 | Brow pencil or powder | Tinted brow gel | `eyebrows` mode `shape` to `color` |
@@ -86,7 +86,7 @@ Easy version for the default hand profile:
 ```ruby
 [
   { category: "eyebrows", colour: "#3B2A20", intensity: 45, texture: "matte", pattern: nil, mode: "color" },
-  { category: "eye_liner", colour: "#2B1D16", intensity: 88, texture: "matte", pattern: "Smoke4", mode: nil },
+  { category: "eye_liner", colour: "#2B1D16", intensity: 88, texture: "matte", pattern: "Smoke19", mode: nil },
   { category: "eyelashes", colour: "#000000", intensity: 85, texture: nil, pattern: "Natural2", mode: nil },
   { category: "lip_color", colour: "#B0182A", intensity: 45, texture: "sheer", pattern: "original", mode: "full",
     gloss: 35, transparency: 60 }
