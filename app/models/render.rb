@@ -14,4 +14,11 @@ class Render < ApplicationRecord
   has_one_attached :result
 
   validates :reference_photo, presence: true, if: :transfer?
+
+  # Refusals that signing in or more credits lift: the next "Show it on my face" asks again (Previews.for).
+  PAYMENT_REFUSALS = %w[sign_in no_credits].freeze
+
+  def awaiting_payment?
+    failed? && PAYMENT_REFUSALS.include?(failure_reason)
+  end
 end
