@@ -1,6 +1,6 @@
 // The capture gates: is this frame a good photo for a makeup preview? Works on a summary of a Face Landmarker result
-// (summarize), so it can be checked with recorded results as well as the live camera, and only a few numbers per
-// frame have to be kept.
+// (summarize), so it can be checked with recorded results as well as the live camera, and the worker that runs the
+// landmarker (workers/face_checks.js) only has to send back a few numbers per frame.
 //
 // One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink and
 // squint under 0.4), mouth relaxed (jawOpen under 0.3), then still for a second.
@@ -15,6 +15,7 @@ export const MESSAGES = {
   done: "Got it"
 }
 
+// maxMove: a share of the frame per 100 ms (movement).
 export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxEyes: 0.4, maxJaw: 0.3, stillFor: 1000, maxMove: 0.012 }
 
 const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
@@ -24,8 +25,8 @@ const STILL_POINTS = [1, 33, 263, 152]
 
 // result: { faceLandmarks: [[{x, y}]], faceBlendshapes: [{ categories: [{ categoryName, score }] }],
 //           facialTransformationMatrixes: [{ data: [16 numbers, column-major] }] }
-// -> { faces: how many, width: of the first face, angles: { yaw, pitch } or null, scores: { eyeBlinkLeft, ..., jawOpen },
-//      points: the first face's STILL_POINTS as [{x, y}] or null }
+// -> { faces: how many, width: the first face's, angles: { yaw, pitch } or null,
+//      scores: { eyeBlinkLeft, ..., jawOpen }, points: the first face's STILL_POINTS as [{x, y}] or null }
 export function summarize(result) {
   const faces = result?.faceLandmarks || []
   const face = faces[0]
@@ -49,7 +50,8 @@ export function evaluate(summary) {
   if (summary.width > LIMITS.maxWidth) return fail(MESSAGES.back)
 
   const { angles } = summary
-  if (angles && (Math.abs(angles.yaw) > LIMITS.maxAngle || Math.abs(angles.pitch) > LIMITS.maxAngle)) return fail(MESSAGES.straight)
+  const turned = angles && (Math.abs(angles.yaw) > LIMITS.maxAngle || Math.abs(angles.pitch) > LIMITS.maxAngle)
+  if (turned) return fail(MESSAGES.straight)
 
   if (Math.max(...EYES.map((name) => summary.scores[name])) >= LIMITS.maxEyes) return fail(MESSAGES.eyes)
   if (summary.scores.jawOpen >= LIMITS.maxJaw) return fail(MESSAGES.still)
@@ -75,11 +77,14 @@ export function blendshapes(result) {
   return Object.fromEntries(categories.map((category) => [category.categoryName, category.score]))
 }
 
-// How far the face moved between two frames (their summaries' points), as a share of the frame.
-export function movement(previous, current) {
+// How far the face moved between two checks (their summaries' points, elapsed ms apart), as a share of the frame per
+// 100 ms. Checks run every 200 ms or so, less often on a slow phone; per 100 ms, a slow drift counts the same however
+// often they run.
+export function movement(previous, current, elapsed = 100) {
   if (!previous || !current) return Infinity
   const distances = previous.map((point, index) => Math.hypot(point.x - current[index].x, point.y - current[index].y))
-  return distances.reduce((sum, distance) => sum + distance, 0) / distances.length
+  const average = distances.reduce((sum, distance) => sum + distance, 0) / distances.length
+  return average * 100 / Math.max(100, elapsed)
 }
 
 function fail(message) {
@@ -87,9 +92,10 @@ function fail(message) {
 }
 
 // Loads MediaPipe's Face Landmarker from the pinned package and model (the content security policy allows only these).
-export async function loadLandmarker(packageUrl, modelUrl) {
+// module: load MediaPipe's WebAssembly glue as an ES module, as a module worker needs (it can't use importScripts).
+export async function loadLandmarker(packageUrl, modelUrl, { module = false } = {}) {
   const vision = await import(`${packageUrl}vision_bundle.mjs`)
-  const fileset = await vision.FilesetResolver.forVisionTasks(`${packageUrl}wasm`)
+  const fileset = await vision.FilesetResolver.forVisionTasks(`${packageUrl}wasm`, module)
   const options = (delegate) => ({
     baseOptions: { modelAssetPath: modelUrl, delegate },
     runningMode: "VIDEO",
