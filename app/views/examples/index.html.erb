@@ -3,7 +3,7 @@
   <header class="stack">
     <h1 class="m-0">Try with an example person</h1>
     <p class="lead m-0">Their answers and photos are ready, so you can see everything without a photo of you.</p>
-    <%= render "components/honest_label", text: "Example people. #{Examples.photo_label}s" %>
+    <%= render "components/honest_label", text: "Example people. #{Examples.photo_label.pluralize}" %>
   </header>
   <ul class="tiles">
     <% @people.each do |person| %>
