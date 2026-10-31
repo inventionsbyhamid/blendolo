@@ -1,4 +1,6 @@
 module RendersHelper
+  # Live previews held by the app's own limits (today's units, the balance we keep back, the provider's balance).
+  PAUSED = "Live previews are paused for now. Try again later, or see an example person.".freeze
   # What to say when a preview can't be made, by Render#failure_reason, and what to do next.
   FAILURES = {
     "no_face" => "We couldn't find a face in the photo.",
@@ -9,17 +11,18 @@ module RendersHelper
     "bad_image" => "We couldn't read that photo.",
     "too_large" => "That photo is too big for us.",
     "rate_limited" => "Lots of people are trying looks right now. Try again in a minute.",
-    "out_of_units" => "We've made all the previews we can today. Please come back tomorrow.",
-    "daily_cap" => "We've made all the previews we can today. Please come back tomorrow.",
-    "floor" => "We've made all the previews we can today. Please come back tomorrow.",
+    "out_of_units" => PAUSED,
+    "daily_cap" => PAUSED,
+    "floor" => PAUSED,
     "kit_cap" => "You've made all the previews this kit can make. Your routine and step cards still work.",
     "timeout" => "That took too long on our side. Try again.",
     "provider_error" => "Something went wrong on our side. Try again.",
     "example" => "This preview isn't stored for the example person. Start your own kit to see it on you."
   }.freeze
   PHOTO_REASONS = %w[no_face many_faces face_too_small eyes_closed bad_pose bad_image too_large].freeze
-  # Failures on our side or the provider's that another go can fix.
-  TRY_AGAIN = %w[timeout provider_error rate_limited].freeze
+  # Failures on our side or the provider's that another go can fix. A pause is asked again too: Render#request! checks
+  # the unit guard again, and a refusal costs nothing.
+  TRY_AGAIN = %w[timeout provider_error rate_limited out_of_units daily_cap floor].freeze
 
   def render_failure_message(render)
     FAILURES.fetch(render.failure_reason.to_s, FAILURES["provider_error"])

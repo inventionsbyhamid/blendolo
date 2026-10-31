@@ -1,6 +1,7 @@
-# "Try again" on a preview that failed on our side (took too long, provider error, too busy). Asking again goes
-# through Render#request! like the first time: the cache, the unit guard and the jobs. Safe to tap twice: a render
-# that is already on its way again isn't asked twice.
+# "Try again" on a preview that failed on our side (took too long, provider error, too busy) or was paused by the
+# unit limits. Asking again goes through Render#request! like the first time: the cache, the unit guard and the jobs,
+# so a pause that still holds fails again at no cost. Safe to tap twice: a render that is already on its way again
+# isn't asked twice.
 class RendersController < ApplicationController
   include KitScoped
 

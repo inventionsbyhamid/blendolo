@@ -3,6 +3,7 @@ require "support/kit_helpers"
 
 class LooksTest < ActionDispatch::IntegrationTest
   include KitHelpers
+  include ActiveJob::TestHelper
 
   setup { KitHelpers::CountRequests.count = 0 }
 
@@ -118,6 +119,31 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_redirected_to kit_look_path(kit, "red_lip")
     assert_equal 1, KitHelpers::CountRequests.count
     assert render.reload.pending?
+  end
+
+  test "a preview paused by the daily cap is made after try again on a new day" do
+    kit = make_kit(tremor: 2)
+    ProviderCall.create!(operation: "makeup", input_hash: "spent today", units: UnitGuard.daily_cap)
+    post previews_kit_look_path(kit, "red_lip")
+    render = kit.renders.classic.sole
+    assert_equal "daily_cap", render.failure_reason
+
+    get kit_look_path(kit, "red_lip")
+    id = "##{ActionView::RecordIdentifier.dom_id(render)}"
+    assert_select id, /Live previews are paused for now. Try again later, or see an example person./
+    assert_select "#{id} form[action=?] button", try_again_kit_render_path(kit, render), text: /Try again/
+    assert_no_match(/tomorrow/, response.body)
+
+    post try_again_kit_render_path(kit, render)
+    assert_equal "daily_cap", render.reload.failure_reason, "still paused today, and nothing was spent"
+    assert_equal 0, kit.provider_calls.count
+
+    travel 1.day do
+      perform_enqueued_jobs(only: ProviderStartJob) { post try_again_kit_render_path(kit, render) }
+      perform_enqueued_jobs(only: ProviderPollJob)
+    end
+    assert render.reload.done?
+    assert render.result.attached?
   end
 
   test "try again leaves a photo problem alone" do
