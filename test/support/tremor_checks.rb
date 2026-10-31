@@ -4,11 +4,12 @@ require "axe/api/run"
 # Browser checks shared by system tests: axe (WCAG 2.2 AA rules), and the size of every control.
 module TremorChecks
   PHONE = [ 390, 844 ].freeze
-  # Buttons, links and form controls a person can aim at. Links inside a sentence (display: inline) are left out, as
-  # WCAG 2.5.8 does; everything else must be at least 64 px tall and wide.
+  # Buttons, links and form controls a person can aim at: visible ones only (a closed details element keeps its
+  # content laid out but hidden). Links inside a sentence (display: inline) are left out, as WCAG 2.5.8 does;
+  # everything else must be at least 64 px tall and wide.
   TARGETS_SCRIPT = <<~JS.freeze
     return Array.from(document.querySelectorAll("a[href], button, summary, input:not([type=hidden]), select, textarea, [role=button]"))
-      .filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden")
+      .filter((el) => el.checkVisibility({ visibilityProperty: true }) && el.getClientRects().length > 0)
       .filter((el) => getComputedStyle(el).display !== "inline")
       .map((el) => {
         const box = el.getBoundingClientRect()
@@ -27,7 +28,7 @@ module TremorChecks
   GAPS_SCRIPT = <<~JS.freeze
     const gap = arguments[0]
     const targets = Array.from(document.querySelectorAll("a[href], button, summary, input:not([type=hidden]), select, textarea, [role=button]"))
-      .filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden")
+      .filter((el) => el.checkVisibility({ visibilityProperty: true }) && el.getClientRects().length > 0)
       .filter((el) => getComputedStyle(el).display !== "inline")
     const label = (el) => (el.innerText || el.getAttribute("aria-label") || el.tagName).trim().slice(0, 40)
     const close = []
