@@ -7,7 +7,8 @@
      data-capture-package-url-value="<%= urls[:package_url] %>" data-capture-model-url-value="<%= urls[:model_url] %>"
      data-capture-worker-url-value="<%= urls[:worker_url] %>" data-capture-gate-url-value="<%= urls[:gate_url] %>"
      data-capture-regions-value="<%= regions.to_json %>" data-capture-camera-value="<%= !reference %>"
-     data-capture-choose-prompt-value="Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look.">
+     data-capture-choose-prompt-value="Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look."
+     data-capture-voices-value="<%= Voice.versions(Voice.capture_lines).to_json %>">
   <% if reference %>
     <%= render "components/step_header", step: 1, of: 3, back: kit_path(@kit), finish_later: kit_path(@kit) %>
     <h1 class="instruction m-0">Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look</h1>

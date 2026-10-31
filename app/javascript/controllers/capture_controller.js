@@ -2,12 +2,14 @@ import { Controller } from "@hotwired/stimulus"
 import { blankFrame, evaluate, movement, LIMITS, MESSAGES } from "capture/gate"
 import { startChecks } from "capture/checks"
 import { sampleRegions, sharpness, toJpeg, pixels } from "capture/sampler"
+import * as voice from "voice/player"
 
 // Hands-free photo. The phone stands on its own; a few times a second the page checks the camera's picture (one face,
 // close enough, looking straight, eyes open) and takes the photo by itself after a second of stillness: a burst of
 // five frames, keeping the sharpest. The checks run in a worker where the browser allows it (capture/checks.js), so
 // the page stays quick to answer taps. There's always a big shutter, 3 and 10 second timers, "Choose a photo", and
-// "A helper is taking it". Messages are shown large and, unless switched off, spoken. Everything happens on this one
+// "A helper is taking it". Messages are shown large and, unless switched off, spoken in Blendolo's recorded voice
+// (voice/player.js; the phone's own voice where a line has no recording). Everything happens on this one
 // page: the chosen photo is re-encoded (JPEG, width a multiple of 8, height under 1080), its colours sampled, and sent
 // with the form.
 const BURST = 5
@@ -23,6 +25,8 @@ const CHECK_JITTER_MS = 80
 // the checks give way: the worker to the page's own checks, those to the shutter and timers alone (giveWay).
 const MISSES_TO_GIVE_WAY = 10
 const NO_CHECKS = "Tap Take the photo when you're ready"
+const CHECKING = "Checking the photo"
+const NO_FACE = "We couldn't find a face in that photo. Please choose another."
 const SAY_AGAIN_AFTER_MS = 4000
 // A new check message shows (and is spoken) only after it has held this long, so a head near a limit doesn't make
 // the words flicker between two messages.
@@ -35,13 +39,16 @@ export default class extends Controller {
   static targets = ["video", "message", "count", "review", "reviewImage", "form", "file", "sampled", "source",
     "choose", "speech", "helper", "liveControls"]
   static values = { packageUrl: String, modelUrl: String, workerUrl: String, gateUrl: String, regions: Array,
-    camera: { type: Boolean, default: true }, choosePrompt: String }
+    camera: { type: Boolean, default: true }, choosePrompt: String, voices: Object }
 
   connect() {
     this.attempt = 0
     this.spoken = this.readSpokenSetting()
     this.facing = "user"
     this.renderSpeech()
+    // Hashed now, so the countdown's first number, said in the tap on a timer, plays inside that tap.
+    for (const line of [...Object.values(MESSAGES), NO_CHECKS, CHECKING, NO_FACE, this.choosePromptValue]) voice.key(line)
+    for (let second = 1; second <= 10; second++) voice.key(String(second))
     this.loadGates()
     this.leave = () => this.stopCamera()
     // Back from another site restores this page from the browser's cache with the camera off: start it again.
@@ -68,7 +75,7 @@ export default class extends Controller {
     window.removeEventListener("pagehide", this.leave)
     window.removeEventListener("pageshow", this.restore)
     clearTimeout(this.countdownTimer)
-    window.speechSynthesis?.cancel()
+    voice.stop(this.line)
     this.gatesLoading = null
     this.gate?.close()
     this.gate = null
@@ -302,7 +309,7 @@ export default class extends Controller {
   toggleSpeech() {
     this.spoken = !this.spoken
     try { localStorage.setItem(SPEECH_KEY, this.spoken ? "on" : "off") } catch {}
-    if (!this.spoken) window.speechSynthesis?.cancel()
+    if (!this.spoken) voice.stop(this.line)
     this.renderSpeech()
   }
 
@@ -312,7 +319,7 @@ export default class extends Controller {
     const file = this.chooseTarget.files[0]
     if (!file) return
     this.stopCamera()
-    this.say("Checking the photo")
+    this.say(CHECKING)
     const image = new Image()
     image.src = URL.createObjectURL(file)
     try {
@@ -323,7 +330,7 @@ export default class extends Controller {
     }
     const faces = await this.detectStill(image)
     if (faces && faces.length !== 1) {
-      const message = faces.length > 1 ? MESSAGES.manyFaces : "We couldn't find a face in that photo. Please choose another."
+      const message = faces.length > 1 ? MESSAGES.manyFaces : NO_FACE
       this.fresh()
       return this.say(message, { force: true })
     }
@@ -420,27 +427,23 @@ export default class extends Controller {
   // newest one waits and is spoken when it ends. force (the countdown, a rejected photo) speaks at once.
   say(message, { force = false, spoken = message } = {}) {
     this.show(message)
-    const speech = window.speechSynthesis
-    if (!this.spoken || !speech) return
+    if (!this.spoken) return
     const now = Date.now()
     if (!force && spoken === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
-    if (!force && speech.speaking) {
+    if (!force && voice.speaking()) {
       this.queued = { message, spoken }
       return
     }
     this.queued = null
     this.lastSpoken = spoken
     this.lastSpokenAt = now
-    if (force) speech.cancel()
-    const utterance = new SpeechSynthesisUtterance(spoken)
-    utterance.rate = 0.9
-    utterance.onend = () => {
+    // Speaking stops the line before, which only a forced message can still be in the middle of.
+    this.line = voice.speak(spoken, { voices: this.voicesValue, onend: () => {
       const next = this.queued
       this.queued = null
       const current = next?.message === this.messageTarget.textContent
       if (next && current && next.spoken !== this.lastSpoken) this.say(next.message, next)
-    }
-    speech.speak(utterance)
+    } })
   }
 
   show(message) {
