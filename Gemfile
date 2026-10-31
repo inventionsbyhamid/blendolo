@@ -42,6 +42,11 @@ gem "image_processing", "~> 1.2"
 # Active Storage's S3 service, used for Cloudflare R2 in production
 gem "aws-sdk-s3", require: false
 
+# Payments: Dodo Payments (merchant of record) for checkout and the customer portal, and Standard Webhooks to check
+# the signature on its webhooks. Only Billing::Dodo uses them.
+gem "dodopayments", "~> 2.34"
+gem "standardwebhooks", "~> 1.1"
+
 # QR codes for share links, drawn as SVG on the server so they print and need no script.
 gem "rqrcode", "~> 3.1"
 
