@@ -171,14 +171,23 @@ class ProviderJobsTest < ActiveJob::TestCase
   end
 
   test "a guard refusal fails the render at once" do
-    kit = Kit.create!(path: :example)
-    photo = kit.photos.create!(source: "example", image: jpeg("rosa.jpg"))
-    render = kit.renders.create!(photo:, kind: :classic, effects: EFFECTS)
+    10.times { |n| ProviderCall.create!(kit: @kit, operation: "makeup", input_hash: "used-#{n}", units: 1, status: :done) }
+    render = makeup_render
+
+    assert_no_enqueued_jobs only: ProviderStartJob do
+      assert_equal :kit_cap, render.request!
+    end
+    assert_equal [ "failed", "kit_cap" ], render.reload.then { [ it.status, it.failure_reason ] }
+  end
+
+  test "an example kit's render is never requested or changed" do
+    render = Examples.kit_for(:rosa).renders.classic.sole
 
     assert_no_enqueued_jobs only: ProviderStartJob do
       assert_equal :example, render.request!
     end
-    assert_equal [ "failed", "example" ], render.reload.then { [ it.status, it.failure_reason ] }
+    assert render.reload.done?
+    assert_nil render.input_hash
   end
 
   test "a transfer sends both photos" do
@@ -194,7 +203,130 @@ class ProviderJobsTest < ActiveJob::TestCase
     assert_equal "image/jpeg", render.reload.result.content_type
   end
 
+  test "an unexpected error in the start job fails the render and keeps the units" do
+    Appearance.provider = provider_with(start: -> { raise ActiveStorage::FileNotFoundError })
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+
+    assert_equal [ "failed", "provider_error" ], render.reload.then { [ it.status, it.failure_reason ] }
+    assert_equal [ "failed", 1.0 ], render.provider_call.then { [ it.status, it.units.to_f ] }
+  end
+
+  test "a start that may have been charged keeps its units, a definite refusal is refunded" do
+    Appearance.provider = provider_with(start: -> { raise Appearance::Error.new(:provider_error, maybe_charged: true) })
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    assert_equal 1.0, render.provider_call.units.to_f
+
+    Appearance.provider = provider_with(start: -> { raise Appearance::Error.new(:out_of_units) })
+    other = makeup_render(effects: [ EFFECTS.first.merge("intensity" => 10) ]).tap(&:request!)
+    ProviderStartJob.perform_now(other)
+    assert_equal 0.0, other.provider_call.units.to_f
+  end
+
+  test "an unexpected error while polling keeps polling, then times out" do
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    Appearance.provider = provider_with(fetch: -> { raise JSON::ParserError, "not json" })
+
+    assert_enqueued_with(job: ProviderPollJob) { ProviderPollJob.perform_now(render.reload) }
+    assert render.reload.running?
+
+    travel 181.seconds
+    assert_no_enqueued_jobs(only: ProviderPollJob) { ProviderPollJob.perform_now(render.reload) }
+    assert_equal [ "failed", "timeout" ], render.reload.then { [ it.status, it.failure_reason ] }
+    assert_equal 1.0, render.provider_call.units.to_f
+  end
+
+  test "a failed result download polls again for a fresh link until the deadline" do
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    Appearance.provider = provider_with(download: -> { raise Appearance::Error.new(:provider_error) })
+
+    assert_enqueued_with(job: ProviderPollJob) { ProviderPollJob.perform_now(render.reload) }
+    assert render.reload.running?
+    assert_not render.result.attached?
+  end
+
+  test "two starts of one render call the provider once" do
+    starts = 0
+    Appearance.provider = provider_with(start: -> { starts += 1 })
+    render = makeup_render.tap(&:request!)
+    first = Render.find(render.id)
+    second = Render.find(render.id)
+
+    ProviderStartJob.perform_now(first)
+    ProviderStartJob.perform_now(second)
+    assert_equal 1, starts
+  end
+
+  test "a stale copy of a call row can't claim it again" do
+    Appearance.provider = Appearance::FakeProvider.new(fail_with: :no_face)
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    ProviderPollJob.perform_now(render.reload)
+    stale = ProviderCall.find(render.provider_call.id)
+
+    assert_enqueued_jobs 1, only: ProviderStartJob do
+      assert_equal :queued, makeup_render.request!
+      assert_not stale.claim!(kit: @kit, units: 1)
+    end
+  end
+
+  test "asking again for a running render leaves it running" do
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+
+    assert_equal :waiting, render.reload.request!
+    assert render.reload.running?
+  end
+
+  test "a timed out call keeps counting its units and the kit's call" do
+    Appearance.provider = Appearance::FakeProvider.new(ready_after: 600)
+    render = makeup_render.tap(&:request!)
+    ProviderStartJob.perform_now(render)
+    travel 181.seconds
+    ProviderPollJob.perform_now(render.reload)
+
+    assert_equal 1, UnitGuard.live_calls(@kit, :makeup)
+    Appearance.provider = Appearance::FakeProvider.new
+    assert_equal :queued, makeup_render.request!
+    assert_equal 2.0, render.provider_call.units.to_f
+  end
+
+  test "the start is broadcast as running" do
+    render = makeup_render.tap(&:request!)
+    assert_enqueued_with(job: Turbo::Streams::ActionBroadcastJob) { ProviderStartJob.perform_now(render) }
+  end
+
+  test "provider jobs run on the single-thread youcam worker; every other job has a worker" do
+    workers = ActiveSupport::ConfigurationFile.parse(Rails.root.join("config/queue.yml")).dig("production", "workers")
+    youcam = workers.find { Array(it["queues"]) == [ "youcam" ] }
+    assert_equal 1, youcam["threads"]
+    assert_equal "youcam", ProviderStartJob.queue_name
+    assert_equal "youcam", ProviderPollJob.queue_name
+
+    served = workers.flat_map { Array(it["queues"]) }
+    [ PurgeExpiredKitsJob, ActiveStorage::AnalyzeJob, ActiveStorage::PurgeJob, Turbo::Streams::ActionBroadcastJob,
+      SolidQueue::RecurringJob ].each do |job|
+      assert_includes served, job.new.queue_name, job.name
+    end
+    assert_includes served, ActionMailer::Base.deliver_later_queue_name || ActiveJob::Base.default_queue_name
+  end
+
   private
+    # The fake provider, running a lambda first in the named steps (to raise, or to count calls).
+    def provider_with(**steps)
+      Class.new(Appearance::FakeProvider) do
+        steps.each do |name, step|
+          define_method(name) do |*args|
+            step.call
+            super(*args)
+          end
+        end
+      end.new
+    end
+
     def makeup_render(photo: @photo, effects: EFFECTS)
       @kit.renders.create!(photo:, kind: :easy, look_key: "red_lip", effects:)
     end

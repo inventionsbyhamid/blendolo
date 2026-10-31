@@ -1,9 +1,17 @@
+# Provider jobs (ProviderStartJob, ProviderPollJob) run one at a time on their own worker, so paid calls never race
+# and the API rate limit holds. Every other job runs on the default worker: the app's and Active Storage's jobs,
+# mail and broadcasts use "default", and Solid Queue's recurring commands use "solid_queue_recurring". A job on any
+# other queue would never run; test/jobs/provider_jobs_test.rb checks the list.
 default: &default
   dispatchers:
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "*"
+    - queues: youcam
+      threads: 1
+      processes: 1
+      polling_interval: 1
+    - queues: [ default, solid_queue_recurring ]
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 1
