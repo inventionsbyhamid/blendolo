@@ -184,13 +184,15 @@ class CaptureTest < ApplicationSystemTestCase
       const done = arguments[arguments.length - 1]
       import("capture/gate").then((gate) => {
         const at = (x) => [0, 1, 2, 3].map(() => ({ x, y: 0.5 }))
-        done([gate.movement(at(0.5), at(0.51), 100), gate.movement(at(0.5), at(0.52), 200), gate.movement(at(0.5), at(0.51), 50)])
+        done([gate.movement(at(0.5), at(0.51), 100), gate.movement(at(0.5), at(0.52), 200), gate.movement(at(0.5), at(0.51), 50),
+          gate.movement(at(0.5), at(0.52), 1000)])
       })
     JS
 
     assert_in_delta 0.01, moved[0], 1e-9
     assert_in_delta 0.01, moved[1], 1e-9, "twice as far in twice the time is the same speed"
     assert_in_delta 0.01, moved[2], 1e-9, "checks closer together aren't scaled up"
+    assert_in_delta 0.01, moved[3], 1e-9, "a longer gap counts as 200 ms"
   end
 
   test "sampler returns lip colour" do

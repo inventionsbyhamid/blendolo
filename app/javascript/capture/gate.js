@@ -87,13 +87,13 @@ export function blendshapes(result) {
 }
 
 // How far the face moved between two checks (their summaries' points, elapsed ms apart), as a share of the frame per
-// 100 ms. Checks run every 200 ms or so, less often on a slow phone; per 100 ms, a slow drift counts the same however
-// often they run.
+// 100 ms. Checks run every 200 ms, so a drift counts the same as it did when they ran every 100 ms. A slow phone
+// checks less often; the gap counts as 200 ms at most there, so a sway between two far-apart checks still shows.
 export function movement(previous, current, elapsed = 100) {
   if (!previous || !current) return Infinity
   const distances = previous.map((point, index) => Math.hypot(point.x - current[index].x, point.y - current[index].y))
   const average = distances.reduce((sum, distance) => sum + distance, 0) / distances.length
-  return average * 100 / Math.max(100, elapsed)
+  return average * 100 / Math.min(200, Math.max(100, elapsed))
 }
 
 function fail(message) {
