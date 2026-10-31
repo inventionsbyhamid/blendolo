@@ -16,6 +16,11 @@ import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
 
 // The width of the frames checked: plenty for a face a quarter of the frame wide, and quick to look at.
 const FRAME_WIDTH = 384
+// A worker that hasn't answered within this long, or 10 times its slowest frame check so far (a slow phone's still
+// photo check takes several frame checks' time), hangs: it is stopped, and what it was asked fails. A photo being
+// reviewed is then kept without sampled colours, rather than leaving the screen waiting.
+const REPLY_WAIT_MS = 5000
+const REPLY_WAIT_CHECKS = 10
 
 export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) {
   if (workerUrl && gateUrl && typeof Worker === "function" && typeof OffscreenCanvas === "function" &&
@@ -29,7 +34,8 @@ export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) 
   return PageChecks.start(packageUrl, modelUrl)
 }
 
-class WorkerChecks {
+// Exported for its tests; pages use startChecks.
+export class WorkerChecks {
   kind = "worker"
 
   // The worker starts from a blob: URL that imports workers/face_checks.js. A worker started from our assets' URL
@@ -38,7 +44,14 @@ class WorkerChecks {
   static start(urls, workerUrl) {
     const script = `import ${JSON.stringify(new URL(workerUrl, location.href).href)}`
     const blobUrl = URL.createObjectURL(new Blob([script], { type: "text/javascript" }))
-    const checks = new WorkerChecks(new Worker(blobUrl, { type: "module" }))
+    let worker
+    try {
+      worker = new Worker(blobUrl, { type: "module" })
+    } catch (error) {
+      URL.revokeObjectURL(blobUrl)
+      throw error
+    }
+    const checks = new WorkerChecks(worker)
     checks.blobUrl = blobUrl
     return new Promise((resolve, reject) => {
       checks.loading = { resolve, reject }
@@ -53,6 +66,7 @@ class WorkerChecks {
     this.worker = worker
     this.requests = new Map()
     this.nextId = 1
+    this.slowest = 0
     worker.onmessage = ({ data }) => this.receive(data)
     worker.onerror = (event) => this.stopped(new Error(event.message || "The face checks stopped"))
   }
@@ -62,8 +76,11 @@ class WorkerChecks {
     if (this.busy) return null
     this.busy = true
     try {
+      const started = performance.now()
       const frame = await smallBitmap(video)
-      return (await this.request({ type: "video", frame, timestamp }, [frame])).summary
+      const { summary } = await this.request({ type: "video", frame, timestamp }, [frame])
+      this.slowest = Math.max(this.slowest, performance.now() - started)
+      return summary
     } finally {
       this.busy = false
     }
@@ -88,9 +105,26 @@ class WorkerChecks {
     }
     const id = this.nextId++
     return new Promise((resolve, reject) => {
-      this.requests.set(id, { resolve, reject })
-      this.worker.postMessage({ ...message, id }, transfer)
+      const timer = setTimeout(() => this.hung(), Math.max(REPLY_WAIT_MS, REPLY_WAIT_CHECKS * this.slowest))
+      const settled = (then) => (value) => {
+        clearTimeout(timer)
+        then(value)
+      }
+      this.requests.set(id, { resolve: settled(resolve), reject: settled(reject) })
+      try {
+        this.worker.postMessage({ ...message, id }, transfer)
+      } catch (error) {
+        this.requests.get(id).reject(error)
+        this.requests.delete(id)
+        transfer.forEach((bitmap) => bitmap.close())
+      }
     })
+  }
+
+  // No answer in time: the worker is stuck, say on a GPU call that never returns.
+  hung() {
+    this.stopped(new Error("The face checks stopped answering"))
+    this.worker.terminate()
   }
 
   receive(message) {

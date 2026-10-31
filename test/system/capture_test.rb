@@ -87,6 +87,29 @@ class CaptureTest < ApplicationSystemTestCase
     assert_equal "page", evaluate_script("captureController().gate.kind")
   end
 
+  test "a worker that doesn't answer is stopped, and the photo goes on without colours" do
+    visit privacy_path
+    outcome = using_wait_time(15) do
+      evaluate_async_script(<<~JS)
+        const done = arguments[arguments.length - 1]
+        import("capture/checks").then(async ({ WorkerChecks }) => {
+          const log = []
+          const checks = new WorkerChecks({ postMessage: (message) => log.push(message.type), terminate: () => log.push("terminated") })
+          const photo = document.createElement("canvas")
+          photo.width = photo.height = 8
+          const started = performance.now()
+          const answer = await checks.still(photo).then(() => "answered", (error) => error.message)
+          done({ answer, waited: performance.now() - started, broken: !!checks.broken, log })
+        })
+      JS
+    end
+
+    assert_equal "The face checks stopped answering", outcome["answer"]
+    assert_in_delta 5000, outcome["waited"], 1000
+    assert outcome["broken"]
+    assert_equal [ "still", "terminated" ], outcome["log"]
+  end
+
   test "camera denied shows choose photo" do
     page.driver.browser # start the browser before talking to it
     script = page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: <<~JS)
