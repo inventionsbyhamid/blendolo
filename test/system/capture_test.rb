@@ -53,6 +53,27 @@ class CaptureTest < ApplicationSystemTestCase
     page.driver.browser.execute_cdp("Page.removeScriptToEvaluateOnNewDocument", identifier: script["identifier"]) if script
   end
 
+  test "a double tap on spoken help switches it once" do
+    visit new_kit_photo_path(@kit)
+    assert_selector "[data-capture-state=live]", wait: 10
+    execute_script "const b = document.querySelector('[data-capture-target=speech]'); b.click(); b.click()"
+
+    assert_selector "[data-capture-target=speech][aria-pressed=false]", text: "Spoken help: off"
+  end
+
+  test "leaving the page turns the camera off" do
+    visit new_kit_photo_path(@kit)
+    assert_selector "[data-capture-state=live]", wait: 10
+    execute_script <<~JS
+      const capture = window.Stimulus.getControllerForElementAndIdentifier(document.querySelector("[data-controller~=capture]"), "capture")
+      window.cameraTracks = capture.stream.getTracks()
+    JS
+    click_on "Finish later"
+
+    assert_current_path kit_path(@kit)
+    assert evaluate_script("window.cameraTracks.length > 0 && window.cameraTracks.every((track) => track.readyState === 'ended')")
+  end
+
   test "gate messages" do
     visit privacy_path
     cases = {

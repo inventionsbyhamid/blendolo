@@ -1,9 +1,11 @@
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% reference = @kind == "reference"
    urls = mediapipe_urls
    regions = reference ? %w[lips lids cheeks skin] : %w[skin lips lids cheeks] %>
 <div class="page stack capture" data-controller="capture" data-capture-state="starting"
      data-capture-package-url-value="<%= urls[:package_url] %>" data-capture-model-url-value="<%= urls[:model_url] %>"
-     data-capture-regions-value="<%= regions.to_json %>" data-capture-camera-value="<%= !reference %>">
+     data-capture-regions-value="<%= regions.to_json %>" data-capture-camera-value="<%= !reference %>"
+     data-capture-choose-prompt-value="Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look.">
   <% if reference %>
     <%= render "components/step_header", step: 1, of: 3, back: kit_path(@kit), finish_later: kit_path(@kit) %>
     <h1 class="instruction m-0">Choose an old photo of <%= you_or_they(@kit, "you", "them") %> wearing the look</h1>
@@ -18,7 +20,7 @@
     <p class="flash" role="alert">That photo <%= @upload.errors.full_messages_for(:file).first&.delete_prefix("File ") || "didn't work" %>. Please choose another.</p>
   <% end %>
 
-  <p class="capture__message" data-capture-target="message" role="status" aria-live="polite"><%= reference ? "Choose an old photo of you wearing the look." : "Starting the camera" %></p>
+  <p class="capture__message" data-capture-target="message" role="status" aria-live="polite"><%= reference ? "Choose an old photo of #{you_or_they(@kit, "you", "them")} wearing the look." : "Starting the camera" %></p>
   <div class="capture__stage capture__live">
     <video class="capture__video" data-capture-target="video" playsinline muted autoplay></video>
     <div class="capture__guide" aria-hidden="true"></div>
@@ -31,17 +33,17 @@
         <%= render "components/icon", name: :camera %><span class="btn__label">Take the photo</span>
       </button>
       <div class="button-row button-row--2">
-        <button type="button" class="btn btn--secondary" data-action="capture#timer" data-capture-seconds-param="3"><span class="btn__label">3 second timer</span></button>
-        <button type="button" class="btn btn--secondary" data-action="capture#timer" data-capture-seconds-param="10"><span class="btn__label">10 second timer</span></button>
+        <button type="button" class="btn btn--secondary" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#timer" data-capture-seconds-param="3"><span class="btn__label">3 second timer</span></button>
+        <button type="button" class="btn btn--secondary" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#timer" data-capture-seconds-param="10"><span class="btn__label">10 second timer</span></button>
       </div>
       <div class="button-row button-row--2">
-        <button type="button" class="btn btn--quiet" aria-pressed="true" data-capture-target="speech" data-action="capture#toggleSpeech">
+        <button type="button" class="btn btn--quiet" aria-pressed="true" data-capture-target="speech" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#toggleSpeech">
           <%= render "components/icon", name: :speaker %><span class="btn__label">Spoken help: on</span>
         </button>
-        <button type="button" class="btn btn--quiet" aria-pressed="false" data-capture-target="helper" data-action="capture#helper"><span class="btn__label">A helper is taking it</span></button>
+        <button type="button" class="btn btn--quiet" aria-pressed="false" data-capture-target="helper" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#helper"><span class="btn__label">A helper is taking it</span></button>
       </div>
     </div>
-    <label class="btn btn--secondary capture__choose">
+    <label class="btn btn--secondary capture__choose" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard">
       <span>Choose a photo</span>
       <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" data-capture-target="choose" data-action="change->capture#choose">
     </label>
@@ -57,7 +59,7 @@
       <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard click->capture#usePhoto" } do %>
         <span class="btn__label">Use this photo</span><span class="btn__working">Working on it</span>
       <% end %>
-      <button type="button" class="btn btn--secondary" data-action="capture#again"><span class="btn__label">Take it again</span></button>
+      <button type="button" class="btn btn--secondary" data-controller="tap-guard" data-tap-guard-commit-value="false" data-action="click->tap-guard#guard click->capture#again"><span class="btn__label">Take it again</span></button>
     </div>
   <% end %>
 </div>

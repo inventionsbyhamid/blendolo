@@ -11,41 +11,72 @@ const BURST = 5
 const BURST_GAP_MS = 150
 const DETECT_EVERY_MS = 100
 const SAY_AGAIN_AFTER_MS = 4000
+// A new check message shows (and is spoken) only after it has held this long, so a head near a limit doesn't make
+// the words flicker between two messages.
+const HOLD_MS = 600
+// How long "Choose a photo" waits for the face checks to load before going on without them.
+const CHECKS_WAIT_MS = 8000
 const SPEECH_KEY = "blendolo:spoken-help"
 
 export default class extends Controller {
   static targets = ["video", "message", "count", "review", "reviewImage", "form", "file", "sampled", "source",
     "choose", "speech", "helper", "liveControls"]
-  static values = { packageUrl: String, modelUrl: String, regions: Array, camera: { type: Boolean, default: true } }
+  static values = { packageUrl: String, modelUrl: String, regions: Array, camera: { type: Boolean, default: true },
+    choosePrompt: String }
 
   connect() {
+    this.attempt = 0
     this.spoken = this.readSpokenSetting()
     this.facing = "user"
     this.renderSpeech()
     this.loadGates()
-    if (this.cameraValue) {
-      this.startCamera()
-    } else {
-      this.state = "choose"
-    }
+    this.leave = () => this.stopCamera()
+    document.addEventListener("turbo:before-visit", this.leave)
+    window.addEventListener("pagehide", this.leave)
+    this.fresh()
   }
 
   disconnect() {
+    this.attempt += 1
     this.stopCamera()
+    document.removeEventListener("turbo:before-visit", this.leave)
+    window.removeEventListener("pagehide", this.leave)
     clearTimeout(this.countdownTimer)
     window.speechSynthesis?.cancel()
   }
 
+  // The camera running (or "Choose a photo" for an old photo), nothing chosen.
+  fresh() {
+    this.reviewTarget.hidden = true
+    this.liveControlsTarget.hidden = false
+    this.chooseTarget.value = ""
+    this.pending = null
+    if (this.cameraValue) {
+      this.startCamera()
+    } else {
+      this.state = "choose"
+      this.say(this.choosePromptValue)
+    }
+  }
+
   // Camera -------------------------------------------------------------------------------------------------------
 
+  // Starts the camera. Only the latest start counts: a stream that arrives after another start, or after leaving the
+  // page (say during the permission prompt), is stopped at once, so the camera light never stays on.
   async startCamera() {
     this.stopCamera()
     if (!navigator.mediaDevices?.getUserMedia) return this.noCamera()
+    const attempt = ++this.attempt
 
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: this.facing, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false
       })
+      if (attempt !== this.attempt || !this.element.isConnected) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
+      this.stream = stream
       this.videoTarget.srcObject = this.stream
       this.videoTarget.classList.toggle("capture__video--mirror", this.facing === "user")
       await this.videoTarget.play()
@@ -53,7 +84,7 @@ export default class extends Controller {
       this.say(this.gate ? MESSAGES.straight : "Tap Take the photo when you're ready")
       this.loop()
     } catch {
-      this.noCamera()
+      if (attempt === this.attempt) this.noCamera()
     }
   }
 
@@ -61,6 +92,7 @@ export default class extends Controller {
     cancelAnimationFrame(this.frame)
     this.stream?.getTracks().forEach((track) => track.stop())
     this.stream = null
+    if (this.videoTarget) this.videoTarget.srcObject = null
   }
 
   noCamera() {
@@ -104,11 +136,11 @@ export default class extends Controller {
 
     if (!verdict.ok) {
       this.stillSince = null
-      return this.say(verdict.message)
+      return this.propose(verdict.message, now)
     }
     if (moved > LIMITS.maxMove || !this.stillSince) {
       this.stillSince = moved > LIMITS.maxMove ? null : now
-      return this.say(MESSAGES.still)
+      return this.propose(MESSAGES.still, now)
     }
     if (now - this.stillSince >= LIMITS.stillFor) this.burst()
   }
@@ -171,11 +203,13 @@ export default class extends Controller {
     this.renderSpeech()
   }
 
-  // "Choose a photo": check it has one face, sample its colours, re-encode, then show it to confirm.
+  // "Choose a photo": check it has one face, sample its colours, re-encode, then show it to confirm. A photo that
+  // can't be used says why and leaves the camera (or "Choose a photo") ready for another go.
   async choose() {
     const file = this.chooseTarget.files[0]
     if (!file) return
     this.stopCamera()
+    this.say("Checking the photo")
     const image = new Image()
     image.src = URL.createObjectURL(file)
     try {
@@ -185,21 +219,16 @@ export default class extends Controller {
       return this.send(file, {}, "upload")
     }
     const faces = await this.detectStill(image)
-    if (faces && faces.length > 1) return this.show(MESSAGES.manyFaces)
-    if (faces && faces.length === 0) return this.show("We couldn't find a face in that photo. Please choose another.")
+    if (faces && faces.length !== 1) {
+      const message = faces.length > 1 ? MESSAGES.manyFaces : "We couldn't find a face in that photo. Please choose another."
+      this.fresh()
+      return this.say(message, { force: true })
+    }
     await this.review(image, "upload", faces?.[0])
   }
 
   again() {
-    this.reviewTarget.hidden = true
-    this.liveControlsTarget.hidden = false
-    this.chooseTarget.value = ""
-    if (this.cameraValue) {
-      this.startCamera()
-    } else {
-      this.state = "choose"
-      this.show("Choose an old photo of you wearing the look.")
-    }
+    this.fresh()
   }
 
   // Review and send ----------------------------------------------------------------------------------------------
@@ -240,9 +269,11 @@ export default class extends Controller {
 
   // Helpers ------------------------------------------------------------------------------------------------------
 
-  // Face landmarks of a still image, or null when the checks aren't loaded (yet).
+  // Face landmarks of a still image, or null when the checks aren't there (or take more than 8 s to load).
   async detectStill(source) {
-    if (this.gatesLoading) await this.gatesLoading.catch(() => {})
+    if (this.gatesLoading) {
+      await Promise.race([this.gatesLoading.catch(() => {}), new Promise((resolve) => setTimeout(resolve, CHECKS_WAIT_MS))])
+    }
     if (!this.gate) return null
     try {
       await this.gate.setOptions({ runningMode: "IMAGE" })
@@ -254,17 +285,47 @@ export default class extends Controller {
     }
   }
 
+  // A check's message: shown (and spoken) once it has held for HOLD_MS, so it doesn't flicker near a limit.
+  propose(message, now) {
+    if (message === this.messageTarget.textContent) {
+      this.candidate = null
+      return
+    }
+    if (this.candidate !== message) {
+      this.candidate = message
+      this.candidateSince = now
+      return
+    }
+    if (now - this.candidateSince >= HOLD_MS) {
+      this.candidate = null
+      this.say(message)
+    }
+  }
+
+  // Shows a message and speaks it. A message being spoken is never cut off: the newest one waits and is spoken
+  // when it ends. force (the countdown, a rejected photo) speaks at once.
   say(message, { force = false } = {}) {
     this.show(message)
-    if (!this.spoken || !window.speechSynthesis) return
+    const speech = window.speechSynthesis
+    if (!this.spoken || !speech) return
     const now = Date.now()
     if (!force && message === this.lastSpoken && now - this.lastSpokenAt < SAY_AGAIN_AFTER_MS) return
+    if (!force && speech.speaking) {
+      this.queued = message
+      return
+    }
+    this.queued = null
     this.lastSpoken = message
     this.lastSpokenAt = now
-    window.speechSynthesis.cancel()
+    if (force) speech.cancel()
     const utterance = new SpeechSynthesisUtterance(message)
     utterance.rate = 0.9
-    window.speechSynthesis.speak(utterance)
+    utterance.onend = () => {
+      const next = this.queued
+      this.queued = null
+      if (next && next !== this.lastSpoken && next === this.messageTarget.textContent) this.say(next)
+    }
+    speech.speak(utterance)
   }
 
   show(message) {
