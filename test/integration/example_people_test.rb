@@ -1,7 +1,7 @@
 require "test_helper"
 require "support/kit_helpers"
 
-class ExamplesTest < ActionDispatch::IntegrationTest
+class ExamplePeopleTest < ActionDispatch::IntegrationTest
   include KitHelpers
 
   setup { KitHelpers::CountRequests.count = 0 }

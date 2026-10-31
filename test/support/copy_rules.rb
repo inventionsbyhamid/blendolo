@@ -1,17 +1,22 @@
 require "nokogiri"
 
-# The copy rules from the plan, as a check on rendered HTML: no em or en dashes, none of the banned words. It reads
-# what people see or hear: text, alt and label attributes, meta tags, and the JSON-LD search engines show.
+# House copy rules for words shown to people: no em or en dashes, and none of these words or phrases. Data tests
+# include the module and assert on text; page tests ask CopyRules.problems(html), which reads what people see or
+# hear: text, alt and label attributes, meta tags, and the JSON-LD search engines show.
 module CopyRules
+  BANNED = [ "cure", "heal", "treat", "treatment for", "diagnose", "guarantee", "perfect", "fix your face",
+             "suffering", "sufferer", "victim", "despite", "the shakes", "fight", "battle", "warrior", "journey",
+             "flawless" ].freeze
   DASHES = /[–—]/
-  BANNED = [
-    "cure", "heal", "treat", "treatment for", "diagnose", "guarantee", "perfect", "fix your face", "suffering",
-    "sufferer", "victim", "despite", "the shakes", "fight", "battle", "warrior", "journey"
-  ].freeze
   BANNED_PATTERN = /\b(?:#{BANNED.map { |word| Regexp.escape(word).gsub("\\ ", "\\s+") }.join("|")})\b/i
   # Proper names that contain a banned word.
   ALLOWED_NAMES = [ "Perfect Corp" ].freeze
   READ_ATTRIBUTES = %w[alt title aria-label placeholder content value].freeze
+
+  def assert_copy_follows_house_rules(text, where)
+    assert_no_match DASHES, text, "#{where}: no em or en dashes"
+    BANNED.each { |word| assert_no_match(/\b#{Regexp.escape(word)}\b/i, text, "#{where}: #{word}") }
+  end
 
   def self.problems(html)
     copy = readable_copy(html)
