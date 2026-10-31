@@ -6,17 +6,28 @@ class RoutinesController < ApplicationController
   before_action :keep_example_kits_as_they_are, only: :create
 
   before_action :require_consent
-  before_action :require_routine, only: %i[show step]
+  before_action :require_routine, only: %i[show step print]
 
   def show
     @steps = RoutinePlan.steps(@kit)
   end
 
+  # Every card, one per printed page, in large print.
+  def print
+    @steps = RoutinePlan.steps(@kit)
+  end
+
+  # One step card: the step on the easy preview, zoomed to its part of the face, with a glow where it goes when a
+  # preview without that step exists too.
   def step
     @steps = RoutinePlan.steps(@kit)
     @number = params[:n].to_i
     @step = @steps[@number - 1] if @number.positive?
     raise ActiveRecord::RecordNotFound, "No such step" unless @step
+
+    @with = StepPreview.with(@kit)
+    @without = StepPreview.without(@kit, @with, @step)
+    @photo = today_photo
 
     @entry = RoutinePlan.entries(@kit)[@number - 1]
   end

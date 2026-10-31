@@ -33,6 +33,7 @@ Rails.application.routes.draw do
     end
     resource :routine, only: %i[show create] do
       get "steps/:n" => "routines#step", as: :step, constraints: { n: /\d+/ }
+      get :print
     end
     resource :signature, only: %i[show create]
     resource :shopping, only: :show, controller: :shopping

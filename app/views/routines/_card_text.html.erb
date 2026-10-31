@@ -1,0 +1,9 @@
+<%# The words of a step card. speak: true marks them for "Read it to me". %>
+<% speak = local_assigns[:speak] ? { speak_target: "text" } : {} %>
+<%= tag.p step.instruction, class: "instruction m-0", data: speak %>
+<ul class="tags m-0" aria-label="What to look for">
+  <li><%= step.product_type %></li>
+  <% step.ease_tags.each do |ease_tag| %><li><%= Ease::Words.tag(ease_tag) %></li><% end %>
+</ul>
+<% if step.why_easier.present? %><%= tag.p data: speak, class: "m-0" do %><strong>Why this is easier:</strong> <%= step.why_easier %><% end %><% end %>
+<% if step.tips.any? %><%= tag.p data: speak, class: "m-0" do %><strong>Tip:</strong> <%= step.tips.first %><% end %><% end %>
