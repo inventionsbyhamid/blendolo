@@ -109,3 +109,14 @@ export async function loadLandmarker(packageUrl, modelUrl, { module = false } = 
     return await vision.FaceLandmarker.createFromOptions(fileset, options("CPU"))
   }
 }
+
+// Runs the landmarker once on a blank frame, so its slow first run (setting up the model) happens while it loads, not
+// on the first frame of the camera it checks. Returns the timestamp it used (video mode needs later ones after it).
+export function warm(landmarker) {
+  try {
+    landmarker.detectForVideo(new ImageData(64, 64), 1)
+  } catch {
+    // The first real frame sets it up instead.
+  }
+  return 1
+}

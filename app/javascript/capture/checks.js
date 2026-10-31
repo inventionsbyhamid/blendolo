@@ -1,4 +1,4 @@
-import { loadLandmarker, summarize } from "capture/gate"
+import { loadLandmarker, summarize, warm } from "capture/gate"
 
 // The face checks' landmarker, kept off the page's main thread where the browser allows it, so the page stays quick
 // to answer taps while the camera shows. A module worker (workers/face_checks.js) runs MediaPipe on small copies of
@@ -115,7 +115,7 @@ class PageChecks {
 
   constructor(landmarker) {
     this.landmarker = landmarker
-    this.lastTimestamp = 0
+    this.lastTimestamp = warm(landmarker)
   }
 
   async video(video, timestamp) {

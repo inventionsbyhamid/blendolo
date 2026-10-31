@@ -32,6 +32,7 @@ async function answer(message) {
 async function load({ packageUrl, modelUrl, gateUrl }) {
   gate = await import(gateUrl)
   landmarker = await gate.loadLandmarker(packageUrl, modelUrl, { module: true })
+  lastTimestamp = gate.warm(landmarker)
   self.postMessage({ type: "ready" })
 }
 
