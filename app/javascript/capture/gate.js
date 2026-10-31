@@ -4,7 +4,7 @@
 //
 // One face, 25 to 60% of the frame wide, looking straight on (yaw and pitch within 10 degrees), eyes open (blink under
 // 0.4; squint under 0.75, as smiling and older eyes read as squinting), mouth relaxed (jawOpen under 0.3), then still
-// for a second.
+// for a second. When only the eyes fail, the photo is taken anyway after 4 seconds of stillness, saying so.
 
 export const MESSAGES = {
   manyFaces: "Try a photo of just you",
@@ -13,12 +13,14 @@ export const MESSAGES = {
   straight: "Look straight at the phone",
   eyes: "Open your eyes wide",
   still: "Hold still",
-  done: "Got it"
+  done: "Got it",
+  doneEyes: "Got it. Your eyes looked a little closed, so the preview may show softer liner."
 }
 
-// maxMove: a share of the frame per 100 ms (movement).
+// maxMove: a share of the frame per 100 ms (movement). eyesWaitFor: how long a still face whose only problem is the
+// eyes is checked before the photo is taken anyway.
 export const LIMITS = { minWidth: 0.25, maxWidth: 0.6, maxAngle: 10, maxBlink: 0.4, maxSquint: 0.75, maxJaw: 0.3,
-  stillFor: 1000, maxMove: 0.012 }
+  stillFor: 1000, maxMove: 0.012, eyesWaitFor: 4000 }
 
 const EYES = ["eyeBlinkLeft", "eyeBlinkRight", "eyeSquintLeft", "eyeSquintRight"]
 
@@ -43,7 +45,8 @@ export function summarize(result) {
   }
 }
 
-// summary (from summarize) -> { ok: true } or { ok: false, message }
+// summary (from summarize) -> { ok: true } or { ok: false, message }, with eyesOnly: true when the eyes are the
+// only problem.
 export function evaluate(summary) {
   if (summary.faces > 1) return fail(MESSAGES.manyFaces)
   if (summary.faces === 0) return fail(MESSAGES.straight)
@@ -58,8 +61,9 @@ export function evaluate(summary) {
   const { scores } = summary
   const eyesOpen = Math.max(scores.eyeBlinkLeft, scores.eyeBlinkRight) < LIMITS.maxBlink &&
     Math.max(scores.eyeSquintLeft, scores.eyeSquintRight) < LIMITS.maxSquint
-  if (!eyesOpen) return fail(MESSAGES.eyes)
-  if (scores.jawOpen >= LIMITS.maxJaw) return fail(MESSAGES.still)
+  const mouthRelaxed = scores.jawOpen < LIMITS.maxJaw
+  if (!eyesOpen) return { ...fail(MESSAGES.eyes), eyesOnly: mouthRelaxed }
+  if (!mouthRelaxed) return fail(MESSAGES.still)
 
   return { ok: true }
 }

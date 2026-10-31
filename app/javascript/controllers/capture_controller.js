@@ -175,9 +175,14 @@ export default class extends Controller {
     const moved = movement(this.lastPoints, summary.points, now - this.lastCheckAt)
     this.lastPoints = summary.points
     this.lastCheckAt = now
+    // Since when the face has held still, alone and facing the phone, with nothing wrong but perhaps the eyes.
+    const steady = (verdict.ok || verdict.eyesOnly) && moved <= LIMITS.maxMove
+    this.steadySince = steady ? (this.steadySince ?? now) : null
 
     if (!verdict.ok) {
       this.stillSince = null
+      // Smiling and older eyes can read as closed: after holding still a while, the photo is taken anyway, saying so.
+      if (steady && now - this.steadySince >= LIMITS.eyesWaitFor) return this.burst(MESSAGES.doneEyes)
       return this.propose(verdict.message, now)
     }
     if (moved > LIMITS.maxMove || !this.stillSince) {
@@ -187,8 +192,9 @@ export default class extends Controller {
     if (now - this.stillSince >= LIMITS.stillFor) this.burst()
   }
 
-  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo.
-  async burst() {
+  // Five frames, keep the sharpest: a shake during the second of stillness doesn't blur the photo. message: what to
+  // say once taken, kept on the review screen when it's more than "Got it".
+  async burst(message = MESSAGES.done) {
     if (this.state !== "live") return
     this.state = "taking"
     let best = null
@@ -201,9 +207,10 @@ export default class extends Controller {
       if (!best || score > best.score) best = { canvas, score }
       await new Promise((resolve) => setTimeout(resolve, BURST_GAP_MS))
     }
-    this.say(MESSAGES.done)
+    this.say(message)
     this.stopCamera()
     await this.review(best.canvas, "camera")
+    if (message !== MESSAGES.done) this.show(`${message} Is this photo all right?`)
   }
 
   // Buttons ------------------------------------------------------------------------------------------------------
