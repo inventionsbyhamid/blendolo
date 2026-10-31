@@ -103,16 +103,6 @@ class KitFlowTest < ApplicationSystemTestCase
   end
 
   private
-    # The test environment shows detailed errors; production shows public/404.html.
-    def showing_public_error_pages
-      env_config = Rails.application.env_config
-      detailed = env_config["action_dispatch.show_detailed_exceptions"]
-      env_config["action_dispatch.show_detailed_exceptions"] = false
-      yield
-    ensure
-      env_config["action_dispatch.show_detailed_exceptions"] = detailed
-    end
-
     def button_height(label)
       find("main a.btn, main button.btn", text: label, match: :first).evaluate_script("Math.round(this.getBoundingClientRect().height)")
     end

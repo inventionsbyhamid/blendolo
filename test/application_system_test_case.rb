@@ -25,6 +25,16 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   SCREENS = Rails.root.join("tmp/screenshots/screens")
 
+  # The test environment shows detailed errors; production shows public/404.html.
+  def showing_public_error_pages
+    env_config = Rails.application.env_config
+    detailed = env_config["action_dispatch.show_detailed_exceptions"]
+    env_config["action_dispatch.show_detailed_exceptions"] = false
+    yield
+  ensure
+    env_config["action_dispatch.show_detailed_exceptions"] = detailed
+  end
+
   # Saves a picture of the whole page for a person to look at (kept in tmp/screenshots/screens on the CI host).
   def shot(name)
     SCREENS.mkpath

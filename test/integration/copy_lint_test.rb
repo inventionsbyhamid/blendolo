@@ -4,7 +4,7 @@ require "support/kit_helpers"
 
 class CopyLintTest < ActionDispatch::IntegrationTest
   include KitHelpers
-  PUBLIC_PATHS = [ "/", "/privacy", "/accessibility", "/sources", "/guides", *PagesController::GUIDES.keys.map { |slug| "/guides/#{slug}" } ].freeze
+  PUBLIC_PATHS = [ "/", "/privacy", "/accessibility", "/sources", "/guides", "/brands", *PagesController::GUIDES.keys.map { |slug| "/guides/#{slug}" } ].freeze
   STATIC_PAGES = %w[400.html 404.html 406-unsupported-browser.html 422.html 500.html offline.html].freeze
 
   test "no dashes or banned words in rendered pages" do
@@ -32,6 +32,7 @@ class CopyLintTest < ActionDispatch::IntegrationTest
         kit_looks_path(kit), kit_look_path(kit, "red_lip"), kit_look_path(kit, "red_lip", level: 1), kit_routine_path(kit),
         step_kit_routine_path(kit, 1), step_kit_routine_path(kit, kit.reload.routine.size), print_kit_routine_path(kit), kit_signature_path(kit),
         kit_signature_path(kit, liner: "winged", lips: "matte"), kit_shopping_path(kit), kit_shares_path(kit),
+        kit_shares_path(kit, audience: "helper"), kit_shares_path(kit, made: share.token),
         public_share_path(share.token) ]
       paths.each do |page|
         get page
