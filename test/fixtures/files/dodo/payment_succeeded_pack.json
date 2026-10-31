@@ -57,8 +57,8 @@
       "zipcode": "10000"
     },
     "metadata": {
-      "user_id": "0",
-      "plan": "look_pack"
+      "plan": "look_pack",
+      "ref": "ref_not_ours"
     },
     "disputes": [],
     "refunds": []

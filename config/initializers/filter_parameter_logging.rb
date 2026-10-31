@@ -36,3 +36,6 @@ ActionDispatch::Request.prepend(TokenPathFilter)
 
 # Payment webhooks name the buyer, their address and their card: none of it reaches the log.
 Rails.application.config.filter_parameters += [ :customer, :billing, :card ]
+# A checkout page or a customer portal link at the payment provider opens that person's details (the portal for 24
+# hours): never log where we send people there.
+Rails.application.config.filter_redirect << "dodopayments.com"

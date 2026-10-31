@@ -12,9 +12,9 @@ class CheckoutsController < ApplicationController
 
   def create
     plan = Billing::Plan.find(params[:plan]) or return redirect_to(pricing_path)
-    return redirect_to(clinic_path, notice: "Your Clinic plan is already on.") if plan.subscription? && current_user.clinic?
+    return redirect_to(clinic_path, notice: "Your Clinic plan is already on.") if plan.subscription? && clinic_taken?
 
-    url = Billing.provider.checkout_url(user: current_user, plan:, success_url: billing_success_url(plan: plan.key),
+    url = Billing.start_checkout!(current_user, plan, success_url: billing_success_url(plan: plan.key),
       cancel_url: pricing_url(anchor: plan.key.dasherize))
     session[:checkout_started_at] = Time.current.to_i
     redirect_to url, allow_other_host: true
@@ -24,6 +24,11 @@ class CheckoutsController < ApplicationController
   end
 
   def success
+    # The provider adds the buyer's email and its own ids to this address: drop them from the address bar, history
+    # and every poll.
+    extra = request.query_parameters.keys - %w[plan status]
+    return redirect_to(billing_success_path(params.permit(:plan, :status).to_h.symbolize_keys)) if extra.any?
+
     private_page
     @plan = Billing::Plan.find(params[:plan])
     @failed = params[:status].to_s.in?(%w[failed cancelled])
@@ -36,6 +41,11 @@ class CheckoutsController < ApplicationController
   end
 
   private
+    # One Clinic plan per account: not while one is on, or a subscription of the account still stands.
+    def clinic_taken?
+      current_user.clinic? || BillingSubscription.where(user: current_user).standing.exists?
+    end
+
     def sign_in_origin
       plan = Billing::Plan.find(params[:plan])
       plan ? pricing_path(anchor: plan.key.dasherize) : pricing_path

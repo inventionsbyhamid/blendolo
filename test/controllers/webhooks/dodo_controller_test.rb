@@ -1,19 +1,21 @@
 require "test_helper"
 require "support/dodo_webhooks"
+require "support/account_helpers"
 
 class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
   include DodoWebhooks
+  include AccountHelpers
 
   setup do
     Billing.provider = dodo_provider
-    @user = User.create!(provider: "google_oauth2", uid: "dodo-test-1", email: "clinic@example.com", name: "Test Clinic")
+    @user = make_user(credits: 0, email: "clinic@example.com")
     @period_end = 1.month.from_now.change(usec: 0)
   end
 
   teardown { Billing.provider = nil }
 
   test "rejects a bad signature and stores nothing" do
-    body = dodo_body("payment_succeeded_pack", user: @user)
+    body = dodo_body("payment_succeeded_pack", checkout: checkout_for(@user))
     headers = dodo_headers(body, id: "msg_bad").merge("webhook-signature" => "v1,#{Base64.strict_encode64('x' * 32)}")
 
     assert_no_difference -> { BillingEvent.count } do
@@ -24,7 +26,7 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an old delivery replayed is rejected" do
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_old", at: 10.minutes.ago
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_old", at: 10.minutes.ago
 
     assert_response :unauthorized
     assert_equal 0, Credits.balance(@user)
@@ -32,24 +34,48 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
 
   test "without the webhook secret it asks the provider to retry later" do
     Billing.provider = dodo_provider(webhook_secret: nil)
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_nosecret"
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_nosecret"
 
     assert_response :service_unavailable
     assert_equal 0, BillingEvent.count
   end
 
-  test "a paid pack adds 16 credits" do
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_pack"
+  test "a paid pack from our checkout and the account's own customer adds 16 credits" do
+    checkout = checkout_for(@user)
+    deliver dodo_body("payment_succeeded_pack", checkout:), id: "msg_pack"
 
     assert_response :ok
     assert_equal 16, Credits.balance(@user)
     event = BillingEvent.sole
-    assert_equal [ "pack_paid", "look_pack", 16, @user ], [ event.kind, event.plan, event.credits, event.user ]
-    assert_equal "pack_purchase", @user.credit_entries.last.reason
+    assert_equal [ "pack_paid", "applied", "look_pack", 16, @user ], [ event.kind, event.status, event.plan, event.credits, event.user ]
+    assert checkout.reload.paid?
+  end
+
+  test "credits are times the quantity paid for" do
+    body = dodo_body("payment_succeeded_pack", checkout: checkout_for(@user), product_cart: [ { product_id: "pdt_test_look_pack", quantity: 2 } ])
+    deliver body, id: "msg_two"
+
+    assert_equal 32, Credits.balance(@user)
+  end
+
+  # Static payment links take any metadata_* and email: without our checkout, or with someone else's customer, a
+  # payment is nobody's.
+  test "forged or missing references, and another customer, pay nobody" do
+    victim = make_user(credits: 0, email: "victim@example.com")
+    victims = checkout_for(victim)
+
+    deliver dodo_body("payment_succeeded_pack"), id: "msg_no_ref"
+    deliver dodo_body("payment_succeeded_pack", metadata: { "ref" => victims.token }), id: "msg_other_customer"
+    deliver dodo_body("payment_succeeded_pack", metadata: { "user_id" => victim.id.to_s }), id: "msg_user_id"
+
+    assert_response :ok
+    assert_equal %w[unmatched] * 3, BillingEvent.order(:id).pluck(:status)
+    assert_equal [ 0, 0 ], [ Credits.balance(victim), Credits.balance(@user) ]
+    assert BillingEvent.where(customer_id: "cus_test_0001").all? { it.user_id.nil? }
   end
 
   test "the same delivery twice adds credits once" do
-    body = dodo_body("payment_succeeded_pack", user: @user)
+    body = dodo_body("payment_succeeded_pack", checkout: checkout_for(@user))
     2.times do
       deliver body, id: "msg_twice"
       assert_response :ok
@@ -60,126 +86,184 @@ class Webhooks::DodoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "one payment sent as two events adds credits once" do
-    body = dodo_body("payment_succeeded_pack", user: @user)
+    body = dodo_body("payment_succeeded_pack", checkout: checkout_for(@user))
     deliver body, id: "msg_first"
     deliver body, id: "msg_second"
 
-    assert_response :ok
     assert_equal 2, BillingEvent.count
     assert_equal 16, Credits.balance(@user)
     assert_match "already added", BillingEvent.order(:id).last.note
   end
 
-  test "a clinic subscription adds 40 credits and the clinic plan until the period ends, with a day's grace" do
-    deliver clinic("subscription_active"), id: "msg_active"
+  test "a clinic subscription adds 40 credits and the plan until the period ends, with three days' grace" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
 
     assert_response :ok
     @user.reload
     assert_equal 40, Credits.balance(@user)
     assert @user.clinic?
-    assert_equal @period_end + 1.day, @user.clinic_until
-    assert_equal "clinic_grant", @user.credit_entries.last.reason
+    assert_equal @period_end + 3.days, @user.clinic_until
+    subscription = BillingSubscription.sole
+    assert_equal [ @user, "active", true ], [ subscription.user, subscription.status, subscription.renewing? ]
   end
 
   test "a renewal adds the next month's credits; a period's first payment counts once" do
-    deliver clinic("subscription_active"), id: "msg_active"
-    # Dodo can send subscription.renewed for the first month's payment too.
-    deliver clinic("subscription_renewed"), id: "msg_renewed_first"
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver clinic("subscription_renewed", checkout:), id: "msg_renewed_first"
     assert_equal 40, Credits.balance(@user)
 
     next_end = @period_end + 1.month
-    deliver clinic("subscription_renewed", period_end: next_end), id: "msg_renewed_next"
+    deliver clinic("subscription_renewed", checkout:, period_end: next_end), id: "msg_renewed_next"
 
     assert_equal 80, Credits.balance(@user)
-    assert_equal next_end + 1.day, @user.reload.clinic_until
+    assert_equal next_end + 3.days, @user.reload.clinic_until
   end
 
-  test "cancelled keeps the clinic plan until the paid period ends" do
-    deliver clinic("subscription_active"), id: "msg_active"
-    deliver clinic("subscription_cancelled"), id: "msg_cancelled"
+  test "a renewal without our metadata follows the subscription, if the customer is still the account's" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver dodo_body("subscription_renewed", metadata: {}, customer: { "customer_id" => @user.billing_customer_id },
+      next_billing_date: (@period_end + 1.month).iso8601), id: "msg_renewed"
+    deliver dodo_body("subscription_renewed", metadata: {}, customer: { "customer_id" => "cus_someone" },
+      next_billing_date: (@period_end + 2.months).iso8601), id: "msg_renewed_other"
 
-    @user.reload
-    assert @user.clinic?
-    assert_equal @period_end, @user.clinic_until
-    assert_equal 40, Credits.balance(@user)
+    assert_equal 80, Credits.balance(@user)
+    assert_equal %w[applied applied unmatched], BillingEvent.order(:id).pluck(:status)
   end
 
-  test "expired ends the clinic plan now; credits stay" do
-    deliver clinic("subscription_active"), id: "msg_active"
-    deliver clinic("subscription_expired"), id: "msg_expired"
+  test "a cancellation booked for the period end stops renewing; the plan runs to its end" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver clinic("subscription_active", checkout:, cancel_at_next_billing_date: true).sub('"subscription.active"', '"subscription.updated"'),
+      id: "msg_updated"
 
+    assert_not BillingSubscription.sole.renewing?
+    assert @user.reload.clinic?
+    assert_equal @period_end + 3.days, @user.clinic_until
+  end
+
+  test "cancelled keeps the plan to its paid end; expired ends it now; credits stay" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver clinic("subscription_cancelled", checkout:), id: "msg_cancelled"
+    assert @user.reload.clinic?
+    assert_equal "cancelled", BillingSubscription.sole.status
+
+    deliver clinic("subscription_expired", checkout:), id: "msg_expired"
     assert_not @user.reload.clinic?
     assert_equal 40, Credits.balance(@user)
   end
 
-  test "a late event for an old subscription doesn't end a newer one" do
-    deliver clinic("subscription_active"), id: "msg_old_active"
-    deliver clinic("subscription_active", subscription_id: "sub_test_clinic_0002"), id: "msg_new_active"
-    deliver clinic("subscription_expired"), id: "msg_old_expired"
+  test "past due keeps the plan to the period end plus the grace" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver clinic("subscription_active", checkout:, status: "past_due").sub('"subscription.active"', '"subscription.past_due"'),
+      id: "msg_past_due"
+
+    assert_equal "past_due", BillingSubscription.sole.status
+    assert_equal @period_end + 3.days, @user.reload.clinic_until
+  end
+
+  test "state follows when things happened, not when they arrived" do
+    checkout = checkout_for(@user, :clinic)
+    deliver at_time(clinic("subscription_active", checkout:), 1.hour.ago), id: "msg_active"
+    deliver at_time(clinic("subscription_cancelled", checkout:), 10.minutes.ago), id: "msg_cancelled"
+    # A retry of the start event, sent before the cancellation, arrives after it.
+    deliver at_time(clinic("subscription_active", checkout:), 30.minutes.ago), id: "msg_active_retry"
+
+    assert_equal "cancelled", BillingSubscription.sole.status
+    assert_equal 40, Credits.balance(@user)
+  end
+
+  test "expiry of an old subscription doesn't end a newer one" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_old_active"
+    deliver clinic("subscription_active", checkout:, subscription_id: "sub_test_clinic_0002"), id: "msg_new_active"
+    deliver clinic("subscription_expired", checkout:), id: "msg_old_expired"
 
     assert @user.reload.clinic?
-    assert_equal "not the account's clinic subscription", BillingEvent.order(:id).last.note
+    assert_equal @period_end + 3.days, @user.clinic_until
   end
 
-  test "a renewal without our metadata finds the account from the subscription" do
-    deliver clinic("subscription_active"), id: "msg_active"
-    deliver dodo_body("subscription_renewed", metadata: {}, next_billing_date: (@period_end + 1.month).iso8601), id: "msg_renewed"
+  test "a refund takes back what is left of the pack, once" do
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
+    Credits.debit!(@user, 6, reason: :render, source: "render:1")
+    deliver dodo_body("refund_succeeded", customer: { "customer_id" => @user.billing_customer_id }), id: "msg_refund"
+    deliver dodo_body("refund_succeeded", customer: { "customer_id" => @user.billing_customer_id }), id: "msg_refund_again"
 
-    assert_equal 80, Credits.balance(@user)
-    assert_equal @user, BillingEvent.order(:id).last.user
+    assert_response :ok
+    assert_equal 0, Credits.balance(@user)
+    refund = BillingEvent.refund.order(:id).first
+    assert_equal [ @user, -10 ], [ refund.user, refund.credits ]
+    assert_match "the rest were spent", refund.note
   end
 
-  test "a refund is noted and takes no credits back" do
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_pack"
+  test "a chargeback takes the pack back once, whichever dispute events come" do
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
+    Credits.grant!(@user, 5, reason: :admin, source: nil)
+    deliver dodo_body("dispute_opened"), id: "msg_dispute_opened"
+    deliver dodo_body("dispute_opened").sub('"dispute.opened"', '"dispute.lost"'), id: "msg_dispute_lost"
+
+    assert_equal 5, Credits.balance(@user)
+    assert_equal [ -16, nil ], BillingEvent.dispute.order(:id).pluck(:credits)
+  end
+
+  test "a refunded Clinic month takes its credits back and ends the plan now" do
+    checkout = checkout_for(@user, :clinic)
+    deliver clinic("subscription_active", checkout:), id: "msg_active"
+    deliver dodo_body("payment_succeeded_subscription", customer: { "customer_id" => @user.billing_customer_id }), id: "msg_payment"
+    deliver dodo_body("refund_succeeded", payment_id: "pay_test_clinic_0001", amount: 1900,
+      customer: { "customer_id" => @user.billing_customer_id }), id: "msg_refund"
+
+    assert_not @user.reload.clinic?
+    assert_equal 0, Credits.balance(@user)
+  end
+
+  test "a refund for a payment that isn't ours is unmatched" do
     deliver dodo_body("refund_succeeded"), id: "msg_refund"
 
-    assert_response :ok
-    assert_equal 16, Credits.balance(@user)
-    refund = BillingEvent.refund.sole
-    assert_equal @user, refund.user
-    assert_match "noted", refund.note
+    assert_equal "unmatched", BillingEvent.sole.status
   end
 
-  test "a payment for nobody we know is stored and changes nothing" do
-    deliver dodo_body("payment_succeeded_pack", metadata: { "user_id" => "999999" }), id: "msg_nobody"
+  test "events we don't act on are stored as ignored" do
+    deliver dodo_body("payment_succeeded_subscription"), id: "msg_sub_payment"
+    deliver dodo_body("subscription_active").sub('"subscription.active"', '"dispute.won"'), id: "msg_dispute_won"
 
-    assert_response :ok
-    assert_equal "no account for this payment", BillingEvent.sole.note
-  end
-
-  test "events we don't act on are stored and answered" do
-    deliver dodo_body("payment_succeeded_subscription", user: @user), id: "msg_sub_payment"
-    deliver dodo_body("subscription_active", user: @user).sub('"subscription.active"', '"dispute.opened"'), id: "msg_dispute"
-
-    assert_response :ok
-    assert_equal [ "not an event we act on" ] * 2, BillingEvent.pluck(:note)
+    assert_equal %w[ignored ignored], BillingEvent.pluck(:status)
     assert_equal 0, Credits.balance(@user)
   end
 
   test "another product of the business adds nothing" do
-    deliver dodo_body("payment_succeeded_pack", user: @user, product_cart: [ { product_id: "pdt_other", quantity: 1 } ]), id: "msg_other"
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user), product_cart: [ { product_id: "pdt_other", quantity: 1 } ]), id: "msg_other"
 
-    assert_equal "not one of our products", BillingEvent.sole.note
+    assert_equal [ "unmatched", "not one of our products" ], [ BillingEvent.sole.status, BillingEvent.sole.note ]
     assert_equal 0, Credits.balance(@user)
   end
 
   test "the stored payload keeps no name, email or card" do
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_pack"
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
 
     stored = BillingEvent.sole.payload.to_json
     [ "buyer@example.com", "Test Buyer", "4242", "Test Street" ].each { |detail| assert_not_includes stored, detail }
   end
 
   test "deleting the account keeps the payment record without the link" do
-    deliver dodo_body("payment_succeeded_pack", user: @user), id: "msg_pack"
+    deliver dodo_body("payment_succeeded_pack", checkout: checkout_for(@user)), id: "msg_pack"
     @user.destroy_everything!
 
     assert_nil BillingEvent.sole.reload.user_id
   end
 
   private
-    def clinic(name, period_end: @period_end, **data)
-      dodo_body(name, user: @user, next_billing_date: period_end.utc.iso8601, **data)
+    def clinic(name, checkout:, period_end: @period_end, **data)
+      dodo_body(name, checkout:, next_billing_date: period_end.utc.iso8601, **data)
+    end
+
+    # The body as if the provider sent it at time.
+    def at_time(body, time)
+      JSON.generate(JSON.parse(body).merge("timestamp" => time.utc.iso8601(6)))
     end
 
     def deliver(body, id:, at: Time.current)

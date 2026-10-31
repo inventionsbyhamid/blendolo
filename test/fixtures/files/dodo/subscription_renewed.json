@@ -42,8 +42,8 @@
       "zipcode": "10000"
     },
     "metadata": {
-      "user_id": "0",
-      "plan": "clinic"
+      "plan": "clinic",
+      "ref": "ref_not_ours"
     },
     "addons": [],
     "meters": [],

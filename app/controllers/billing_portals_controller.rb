@@ -6,7 +6,7 @@ class BillingPortalsController < ApplicationController
   rate_limit to: 10, within: 1.minute, with: -> { too_many_requests }
 
   def create
-    redirect_to Billing.provider.portal_url(user: current_user, return_url: account_url), allow_other_host: true
+    redirect_to Billing.portal_url(current_user, return_url: account_url), allow_other_host: true
   rescue Billing::NoCustomer
     redirect_to account_path, notice: "There is nothing to manage yet. Your purchases show here once you buy."
   rescue Billing::Error => e

@@ -50,8 +50,7 @@ class BillingSystemTest < ApplicationSystemTestCase
       assert_axe_clean
       assert_targets_at_least 64
 
-      body = dodo_body("payment_succeeded_pack", user:)
-      BillingEvent.receive!(dodo_provider.parse(body, id: "msg_pack"), provider: "dodo")
+      receive_dodo(dodo_body("payment_succeeded_pack", checkout: checkout_for(user)), id: "msg_pack")
 
       using_wait_time(12) { assert_selector "[role=status]", text: "16 credits added. You have 18 credits." }
       shot("billing-success")
@@ -64,9 +63,8 @@ class BillingSystemTest < ApplicationSystemTestCase
   test "the account's billing sections and the client list pass axe with big targets" do
     user = make_user(credits: 0)
     sign_in_in_browser(user)
-    BillingEvent.receive!(dodo_provider.parse(dodo_body("payment_succeeded_pack", user:), id: "msg_pack"), provider: "dodo")
-    body = dodo_body("subscription_active", user:, next_billing_date: 1.month.from_now.utc.iso8601)
-    BillingEvent.receive!(dodo_provider.parse(body, id: "msg_clinic"), provider: "dodo")
+    receive_dodo(dodo_body("payment_succeeded_pack", checkout: checkout_for(user)), id: "msg_pack")
+    receive_dodo(dodo_body("subscription_active", checkout: checkout_for(user, :clinic), next_billing_date: 1.month.from_now.utc.iso8601), id: "msg_clinic")
     kit = make_kit(path: :helper, hands_today: 0)
     kit.update!(user:, label: "Mrs Patel")
 

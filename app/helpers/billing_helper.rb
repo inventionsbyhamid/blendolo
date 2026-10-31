@@ -15,8 +15,9 @@ module BillingHelper
 
   # A line of the account's purchases list.
   def purchase_words(event)
-    if event.refund?
-      "Refund of #{money(event.amount_cents, event.currency)}"
+    if event.refund? || event.dispute?
+      what = event.refund? ? "Refund of #{money(event.amount_cents, event.currency)}".strip : "Payment taken back by the bank"
+      event.credits.to_i.negative? ? "#{what}: #{pluralize(-event.credits, "credit")} taken back" : what
     elsif (plan = event.plan_record)
       "#{plan.subscription? ? "#{plan.name} plan, one month" : plan.name}: #{pluralize(event.credits, "credit")}"
     else
@@ -33,8 +34,8 @@ module BillingHelper
 
   # "Renews on 1 December 2026." or "Ends on 1 December 2026." for an account whose Clinic plan is on.
   def clinic_status_words(user)
-    renewing = BillingEvent.renewing_subscription_for(user)
-    if renewing&.period_end
+    renewing = BillingSubscription.where(user:).renewing.where.not(period_end: nil).order(:period_end).last
+    if renewing
       "Your Clinic plan is on. It renews on #{l renewing.period_end.to_date, format: :long}."
     else
       "Your Clinic plan is on until #{l user.clinic_until.to_date, format: :long}. It won't renew."

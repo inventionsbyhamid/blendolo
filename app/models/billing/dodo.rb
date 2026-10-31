@@ -1,21 +1,30 @@
 module Billing
   # Dodo Payments, the merchant of record: the one place the app uses the dodopayments and standardwebhooks gems.
   #
-  # Env: DODO_API_KEY (checkout and the portal), DODO_WEBHOOK_SECRET (webhooks), DODO_PRODUCT_LOOK_PACK and
-  # DODO_PRODUCT_CLINIC (a product id per paid plan), DODO_ENVIRONMENT (test_mode unless it says live_mode: the gem
-  # itself defaults to live, so the environment is always passed).
+  # Env: DODO_API_KEY (customers, checkout, the portal, cancelling), DODO_WEBHOOK_SECRET (webhooks),
+  # DODO_PRODUCT_LOOK_PACK and DODO_PRODUCT_CLINIC (a product id per paid plan), DODO_ENVIRONMENT (test_mode unless it
+  # says live_mode: the gem itself defaults to live, so the environment is always passed).
   class Dodo < Provider
     NAME = "dodo".freeze
 
     # Dodo's event names => ours. payment.succeeded is a pack only when it belongs to no subscription (a
-    # subscription's own payments come with subscription events). Anything else is logged and changes nothing.
+    # subscription's own payments come with subscription events). A dispute counts once the money is taken back
+    # (opened, accepted or lost: the first one counts). Anything else is stored and changes nothing.
     EVENT_TYPES = {
       "subscription.active" => :subscription_active,
       "subscription.renewed" => :subscription_renewed,
+      "subscription.updated" => :subscription_updated,
+      "subscription.past_due" => :subscription_past_due,
+      "subscription.on_hold" => :subscription_past_due,
       "subscription.cancelled" => :subscription_cancelled,
       "subscription.expired" => :subscription_expired,
-      "refund.succeeded" => :refund
+      "refund.succeeded" => :refund,
+      "dispute.opened" => :dispute,
+      "dispute.accepted" => :dispute,
+      "dispute.lost" => :dispute
     }.freeze
+    # The webhook events the endpoint asks for (script/billing/dodo_setup.rb).
+    SUBSCRIBED = [ "payment.succeeded", *EVENT_TYPES.keys ].freeze
 
     SIGNATURE_HEADERS = %w[webhook-id webhook-timestamp webhook-signature].freeze
     # One entry of webhook-signature (there may be several, space separated): a version, a comma, then base64.
@@ -23,10 +32,12 @@ module Billing
 
     # What a stored webhook keeps: ids, product, status, amounts and dates, and our own metadata. Never the customer's
     # name, email, phone, address or card.
-    STORED_FIELDS = %w[payload_type payment_id subscription_id refund_id product_id status currency total_amount amount
-      recurring_pre_tax_amount is_partial previous_billing_date next_billing_date cancel_at_next_billing_date
-      cancelled_at expires_at created_at].freeze
-    STORED_METADATA = %w[user_id plan].freeze
+    STORED_FIELDS = %w[payload_type payment_id subscription_id refund_id dispute_id product_id quantity status
+      dispute_status currency total_amount tax amount recurring_pre_tax_amount is_partial previous_billing_date
+      next_billing_date past_due_ends_at cancel_at_next_billing_date cancelled_at expires_at created_at].freeze
+    STORED_METADATA = %w[ref plan].freeze
+    # A subscription is over for good in these states.
+    ENDED = %w[cancelled expired failed].freeze
 
     # Dodo's standard pricing (dodopayments.com/pricing, read 2026-10-31): 4% + 40 cents a payment by US card or
     # wallet, plus 1.5% for a card from outside the US, 0.5% on subscriptions, and 3% for PayPal or pay later. The
@@ -50,14 +61,21 @@ module Billing
       @environment == :test_mode
     end
 
-    def checkout_url(user:, plan:, success_url:, cancel_url:)
+    def create_customer(email:, name:)
+      call_api("customer") { client.customers.create(email:, name:) }.customer_id
+    end
+
+    # Attached to the account's own customer, with the email locked and no discount box, for one of the plan; the
+    # reference comes back on the webhooks.
+    def checkout_url(customer_id:, plan:, reference:, success_url:, cancel_url:)
       product_id = @product_ids[plan.key] or raise NotConfigured, "DODO_PRODUCT_#{plan.key.upcase} is not set"
 
       session = call_api("checkout") do
         client.checkout_sessions.create(
           product_cart: [ { product_id:, quantity: 1 } ],
-          customer: { email: user.email, name: user.name.presence }.compact,
-          metadata: { user_id: user.id.to_s, plan: plan.key },
+          customer: { customer_id: },
+          feature_flags: { allow_customer_editing_email: false, allow_discount_code: false },
+          metadata: { ref: reference, plan: plan.key },
           return_url: success_url,
           cancel_url: cancel_url,
           customization: { theme: :light }
@@ -66,16 +84,21 @@ module Billing
       session.checkout_url.presence or raise Unavailable, "Dodo gave no checkout URL"
     end
 
-    def portal_url(user:, return_url:)
-      customer_id = BillingEvent.customer_id_for(user, provider: NAME) or raise NoCustomer, "No Dodo customer yet"
-
-      call_api("customer portal") do
-        client.customers.customer_portal.create(customer_id, return_url:)
-      end.link
+    def portal_url(customer_id:, return_url:)
+      call_api("customer portal") { client.customers.customer_portal.create(customer_id, return_url:) }.link
     end
 
+    # A 4xx means Dodo won't change it: if it has ended anyway, that is what we wanted.
     def cancel_subscription(subscription_id)
-      call_api("cancel") { client.subscriptions.update(subscription_id, status: :cancelled) }
+      client.subscriptions.update(subscription_id, status: :cancelled)
+      :cancelled
+    rescue Dodopayments::Errors::APIStatusError => e
+      raise Unavailable, "Dodo cancel failed (#{e.status})" unless e.status.to_i.between?(400, 499)
+
+      status = call_api("subscription") { client.subscriptions.retrieve(subscription_id) }.status.to_s
+      ENDED.include?(status) ? :already_ended : raise(Unavailable, "Dodo cancel refused (#{e.status}, still #{status})")
+    rescue Dodopayments::Errors::Error => e
+      raise Unavailable, "Dodo cancel failed (#{e.class.name.demodulize})"
     end
 
     def parse_webhook(request)
@@ -89,12 +112,17 @@ module Billing
       data = object(payload["data"])
       metadata = object(data["metadata"])
       name = text(payload["type"]).to_s
+      cart = object(Array(data["product_cart"]).first)
       Event.new(
-        id:, name:, type: type_for(name, data), user_id: text(metadata["user_id"]), plan: plan_for(data),
+        id:, name:, type: type_for(name, data), reference: text(metadata["ref"]), plan: plan_for(data, cart),
+        quantity: [ integer(data["quantity"] || cart["quantity"]) || 1, 1 ].max,
         customer_id: text(object(data["customer"])["customer_id"]), subscription_id: text(data["subscription_id"]),
-        payment_id: text(data["payment_id"]), period_end: time(data["next_billing_date"]),
-        amount_cents: integer(data["total_amount"] || data["amount"] || data["recurring_pre_tax_amount"]),
-        currency: text(data["currency"]), payload: stored(payload, data, metadata)
+        payment_id: text(data["payment_id"]), money_back_id: text(data["refund_id"]) || text(data["dispute_id"]),
+        subscription_status: (text(data["status"]) if data["payload_type"] == "Subscription"),
+        cancel_at_period_end: flag(data["cancel_at_next_billing_date"]), period_end: time(data["next_billing_date"]),
+        amount_cents: integer(data["total_amount"]) || integer(data["amount"]),
+        net_cents: net_cents(data), currency: text(data["currency"]), occurred_at: time(payload["timestamp"]),
+        payload: stored(payload, data, metadata)
       )
     rescue JSON::ParserError
       Event.new(id:, name: "")
@@ -150,10 +178,18 @@ module Billing
 
       # The plan comes from the product paid for, never from metadata: a product of the business that isn't ours
       # gives nil.
-      def plan_for(data)
-        product_id = text(data["product_id"]) || text(object(Array(data["product_cart"]).first)["product_id"])
+      def plan_for(data, cart)
+        product_id = text(data["product_id"]) || text(cart["product_id"])
         key = @product_ids.key(product_id) if product_id
         Plan.find(key) if key
+      end
+
+      # Before tax: a payment's total less its tax, or a subscription's recurring amount.
+      def net_cents(data)
+        total = integer(data["total_amount"])
+        return total - (integer(data["tax"]) || 0) if total
+
+        integer(data["recurring_pre_tax_amount"])
       end
 
       def stored(payload, data, metadata)
@@ -168,6 +204,7 @@ module Billing
       def object(value) = value.is_a?(Hash) ? value : {}
       def text(value) = (value.to_s.presence if value.is_a?(String) || value.is_a?(Integer))
       def integer(value) = (value if value.is_a?(Integer))
+      def flag(value) = (value if [ true, false ].include?(value))
 
       def time(value)
         Time.iso8601(value) if value.is_a?(String)

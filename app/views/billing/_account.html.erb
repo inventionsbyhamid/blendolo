@@ -1,7 +1,8 @@
 <%# The account page's billing sections: the Clinic plan with "Manage" (the payment provider's portal), and purchases. %>
 <% purchases = BillingEvent.purchases.where(user:).limit(24).to_a %>
-<% refunded = purchases.select(&:refund?).map(&:payment_id).compact %>
-<% customer = BillingEvent.customer_id_for(user, provider: Billing.provider.name) %>
+<% refunded = purchases.select { it.refund? || it.dispute? }.map(&:payment_id).compact %>
+<% customer = user.billing_customer_id.present? %>
+<% clinic = Billing::Plan.fetch(:clinic) %>
 
 <section class="card stack" aria-labelledby="clinic-plan-title">
   <h2 id="clinic-plan-title" class="m-0">Clinic plan</h2>
@@ -11,7 +12,7 @@
     <p class="m-0">Change your card, see receipts or cancel, at Dodo Payments.</p>
     <%= render "components/button", label: "Manage", url: billing_portal_path, variant: :secondary, form: { data: { turbo: false } } %>
   <% else %>
-    <p class="m-0">For occupational therapists and care teams: a kit for each client and 40 credits a month.</p>
+    <p class="m-0">For occupational therapists and care teams: a kit for each client and <%= clinic.credits %> credits a month.</p>
     <%= render "components/button", label: "See the Clinic plan", href: pricing_path(anchor: "clinic"), variant: :secondary %>
   <% end %>
 </section>
@@ -23,7 +24,7 @@
       <% purchases.each do |event| %>
         <li>
           <span class="purchases__what"><%= purchase_words(event) %></span>
-          <span class="purchases__when"><%= l event.created_at.to_date, format: :long %><% if event.pack_paid? && refunded.include?(event.payment_id) %>, refunded<% end %></span>
+          <span class="purchases__when"><%= l event.created_at.to_date, format: :long %><% if event.pack_paid? && refunded.include?(event.payment_id) %>, paid back<% end %></span>
         </li>
       <% end %>
     </ul>

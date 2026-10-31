@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_160300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,10 +60,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
     t.jsonb "payload", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "occurred_at"
+    t.string "reference"
     t.index ["provider", "event_id"], name: "index_billing_events_on_provider_and_event_id", unique: true
     t.index ["provider", "payment_id"], name: "index_billing_events_on_provider_and_payment_id"
     t.index ["provider", "subscription_id"], name: "index_billing_events_on_provider_and_subscription_id"
+    t.index ["status"], name: "index_billing_events_on_status"
     t.index ["user_id"], name: "index_billing_events_on_user_id"
+  end
+
+  create_table "billing_subscriptions", force: :cascade do |t|
+    t.string "provider", null: false
+    t.string "subscription_id", null: false
+    t.bigint "user_id"
+    t.string "plan", null: false
+    t.string "status", null: false
+    t.boolean "cancel_at_period_end", default: false, null: false
+    t.datetime "period_end"
+    t.datetime "event_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "subscription_id"], name: "index_billing_subscriptions_on_provider_and_subscription_id", unique: true
+    t.index ["user_id"], name: "index_billing_subscriptions_on_user_id"
+  end
+
+  create_table "checkouts", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "provider", null: false
+    t.string "plan", null: false
+    t.string "token", null: false
+    t.integer "status", default: 0, null: false
+    t.string "url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_checkouts_on_token", unique: true
+    t.index ["user_id", "plan", "status", "created_at"], name: "index_checkouts_on_user_id_and_plan_and_status_and_created_at"
+    t.index ["user_id"], name: "index_checkouts_on_user_id"
   end
 
   create_table "credit_entries", force: :cascade do |t|
@@ -184,12 +217,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
     t.datetime "clinic_until"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "billing_customer_id"
+    t.index ["billing_customer_id"], name: "index_users_on_billing_customer_id", unique: true, where: "(billing_customer_id IS NOT NULL)"
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "billing_events", "users", on_delete: :nullify
+  add_foreign_key "billing_subscriptions", "users", on_delete: :nullify
+  add_foreign_key "checkouts", "users", on_delete: :nullify
   add_foreign_key "credit_entries", "users"
   add_foreign_key "kits", "users"
   add_foreign_key "photos", "kits"
