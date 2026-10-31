@@ -8,8 +8,9 @@ class Appearance::Provider
   # Returns an Appearance::Outcome for a started job.
   def fetch(job) = raise(NotImplementedError)
 
-  # Downloads a done outcome's image. Returns an Appearance::Image.
-  def download(outcome) = raise(NotImplementedError)
+  # Downloads a done outcome's image. operation: the job's (:makeup or :transfer), for a provider whose results of
+  # one kind need cleaning up. Returns an Appearance::Image.
+  def download(outcome, operation: nil) = raise(NotImplementedError)
 
   # Units left to spend.
   def balance = raise(NotImplementedError)

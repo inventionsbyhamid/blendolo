@@ -61,8 +61,7 @@ class ProviderJobsTest < ActiveJob::TestCase
     render.reload
     assert render.done?
     assert_equal "image/png", render.result.content_type
-    stored = Vips::Image.new_from_buffer(render.result.download, "")
-    assert_equal [ 800, 998 ], [ stored.width, stored.height ], "the result less its top 2 rows (Appearance::EdgeTrim)"
+    assert_equal file_fixture("youcam/makeup/m02_easy_look.png").binread, render.result.download
     call = render.provider_call
     assert call.done?
     assert_equal({ "content_type" => "image/png" }, call.response)

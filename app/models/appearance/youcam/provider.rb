@@ -70,8 +70,10 @@ class Appearance::Youcam::Provider < Appearance::Provider
     end
   end
 
-  def download(outcome)
-    Appearance::Image.from_bytes(translate { @client.download(outcome.image_url) })
+  # Makeup results lose the dark row along their top edge (EdgeTrim).
+  def download(outcome, operation: nil)
+    image = Appearance::Image.from_bytes(translate { @client.download(outcome.image_url) })
+    operation == :makeup ? Appearance::Youcam::EdgeTrim.call(image) : image
   end
 
   # The balance of the key in use, or the best one when every key is below the floor.

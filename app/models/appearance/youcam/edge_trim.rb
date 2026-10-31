@@ -1,9 +1,9 @@
 require "vips"
 
-# Makeup results come back with a near-black first row of pixels (and a slightly lighter row under it), which shows
-# as a dark line along the top of the preview. Before a makeup result is stored, its top 2 rows go, and so do up to
-# 2 columns on the left if they're as dark. The picture is 2 or so pixels smaller; nothing else changes.
-module Appearance::EdgeTrim
+# YouCam's makeup results come back with a near-black first row of pixels (and a slightly lighter row under it), which
+# shows as a dark line along the top of the preview. Provider#download cuts their top 2 rows, and up to 2 columns on
+# the left if they're as dark. The picture is 2 or so pixels smaller; nothing else changes.
+module Appearance::Youcam::EdgeTrim
   TOP = 2
   MAX_LEFT = 2
   # A left column darker than this share of the columns just inside it is cut off too.

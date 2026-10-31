@@ -32,9 +32,10 @@ class Appearance::Youcam::ProviderTest < ActiveSupport::TestCase
     assert @provider.fetch(job).running?
     outcome = @provider.fetch(job)
     assert outcome.done?
-    result = @provider.download(outcome)
+    result = @provider.download(outcome, operation: :makeup)
     assert_equal "image/png", result.content_type
-    assert_equal file_fixture("youcam/makeup/m01_full_look.png").binread, result.bytes
+    stored = Vips::Image.new_from_buffer(result.bytes, "")
+    assert_equal [ 800, 998 ], [ stored.width, stored.height ], "the result less its top 2 rows (EdgeTrim)"
 
     uploaded = Vips::Image.new_from_buffer(@puts.sole, "")
     assert_equal [ 680, 1016 ], [ uploaded.width, uploaded.height ]
@@ -61,8 +62,9 @@ class Appearance::Youcam::ProviderTest < ActiveSupport::TestCase
     assert_equal 2, @puts.size
 
     assert @provider.fetch(job).running?
-    result = @provider.download(@provider.fetch(job))
+    result = @provider.download(@provider.fetch(job), operation: :transfer)
     assert_equal [ "image/jpeg", "result.jpg" ], [ result.content_type, result.filename ]
+    assert_equal file_fixture("youcam/makeup/m03_mu_transfer.jpg").binread, result.bytes, "transfers stay as they come"
   end
 
   test "maps provider errors to reasons" do
