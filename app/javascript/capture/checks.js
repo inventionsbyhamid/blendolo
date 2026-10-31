@@ -10,7 +10,8 @@ import { blankFrame, loadLandmarker, summarize, warm } from "capture/gate"
 //   kind          "worker" or "page"
 //   broken        set once the worker has failed for good
 //   video(video, timestamp)  the summary of the camera's current frame (blank: true when no face was found because
-//                            the frame was empty); null while another frame is being checked; fails once broken
+//                            the worker's copy of the frame was empty while the camera's own picture wasn't); null
+//                            while another frame is being checked; fails once broken
 //   still(source)            the face landmarks ([{x, y}] per face) of a photo, image or canvas
 //   close()                  stops the worker or frees the landmarker
 
@@ -80,6 +81,9 @@ export class WorkerChecks {
       const frame = await smallBitmap(video)
       const { summary } = await this.request({ type: "video", frame, timestamp }, [frame])
       this.slowest = Math.max(this.slowest, performance.now() - started)
+      // The worker's copy was empty, but so is the camera's own picture (the phone lies face down, a finger covers the
+      // lens): not the worker's doing.
+      if (summary.blank && blankFrame(video)) summary.blank = false
       return summary
     } finally {
       this.busy = false
@@ -185,9 +189,9 @@ class PageChecks {
     this.canvas.getContext("2d").drawImage(video, 0, 0, width, height)
     // In video mode each frame's timestamp must be later than the last one's.
     this.lastTimestamp = Math.max(timestamp, this.lastTimestamp + 1)
-    const summary = summarize(this.landmarker.detectForVideo(this.canvas, this.lastTimestamp))
-    if (summary.faces === 0) summary.blank = blankFrame(this.canvas)
-    return summary
+    // No blank check here: the page draws the camera's own picture, so an empty frame means the camera shows nothing
+    // (the phone lies face down), which is no fault of the checks.
+    return summarize(this.landmarker.detectForVideo(this.canvas, this.lastTimestamp))
   }
 
   async still(source) {

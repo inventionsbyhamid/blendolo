@@ -19,8 +19,8 @@ const CHECK_SHARE = { worker: 2, page: 3 }
 // Plus up to this much at random, so checks don't fall in step with a head tremor (4 to 6 a second) and catch it at
 // the same point of each shake, where it would look still.
 const CHECK_JITTER_MS = 80
-// After this many checks in a row that fail or get an empty frame, the checks give way: the worker to the page's own
-// checks, those to the shutter and timers alone (giveWay).
+// After this many checks in a row that fail (or, in the worker, get an empty copy of a frame the camera shows fine),
+// the checks give way: the worker to the page's own checks, those to the shutter and timers alone (giveWay).
 const MISSES_TO_GIVE_WAY = 10
 const NO_CHECKS = "Tap Take the photo when you're ready"
 const SAY_AGAIN_AFTER_MS = 4000
