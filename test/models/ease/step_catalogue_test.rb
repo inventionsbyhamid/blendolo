@@ -114,6 +114,9 @@ class Ease::StepCatalogueTest < ActiveSupport::TestCase
       (COPY.filter_map { step.public_send(it) } + step.tips).each do |text|
         assert_copy_follows_house_rules text, step.id
       end
+      step.swaps.each { |candidate| assert_copy_follows_house_rules candidate.why.to_s, "#{step.id} -> #{candidate.to}" }
+      assert_copy_follows_house_rules step.no_swap_why, step.id
     end
+    assert_copy_follows_house_rules Ease::Step::OPTIONAL_WHY, "the optional line"
   end
 end

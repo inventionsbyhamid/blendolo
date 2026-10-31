@@ -9,6 +9,18 @@ class Looks::CatalogueTest < ActiveSupport::TestCase
                    "Brows and mascara", "Wedding guest", "Barely there" ], Looks::Catalogue.all.map(&:name)
   end
 
+  def test_every_look_has_a_step_you_need
+    Looks::Catalogue.all.each do |look|
+      assert look.steps.any? { |step| !step.optional }, "#{look.key} has only optional steps, so it has no grade"
+    end
+  end
+
+  def test_wrapping_a_step_keeps_it_optional
+    step = Ease::StepCatalogue.fetch("mascara_upper").as_optional
+    assert Looks::LookStep.wrap(step).optional
+    assert Looks::LookStep.wrap(step).step.optional?
+  end
+
   def test_every_look_step_exists_in_catalogue
     Looks::Catalogue.all.each do |look|
       look.steps.each do |look_step|
