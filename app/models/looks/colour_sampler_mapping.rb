@@ -1,6 +1,7 @@
 module Looks
-  # Colours sampled from a photo come out muted by the light they were taken in. We snap each one to the nearest
-  # shade we render well, measured as colour distance in CIELAB (delta E 1976).
+  # Colours sampled from a photo come out muted by the light they were taken in (an old print fades a red lip towards
+  # brick). We snap each one to the nearest shade we render well, measured with CIE94 colour distance, which weighs a
+  # difference in vividness less the more vivid the shade is, so a faded red still finds the red, not the brown.
   module ColourSamplerMapping
     SHADES = {
       lips: {
@@ -40,8 +41,16 @@ module Looks
       SHADES.fetch(region).values.min_by { |shade| distance(sampled, lab(shade)) }
     end
 
-    def distance(one, other)
-      Math.sqrt(one.zip(other).sum { |a, b| (a - b)**2 })
+    # CIE94 (graphic arts weights) from a sampled colour to a shade, both [L, a, b]; the shade is the reference.
+    def distance(sample, shade)
+      chroma = ->(lab) { Math.hypot(lab[1], lab[2]) }
+      delta_l = shade[0] - sample[0]
+      delta_c = chroma.(shade) - chroma.(sample)
+      delta_h_squared = [ (shade[1] - sample[1])**2 + (shade[2] - sample[2])**2 - delta_c**2, 0 ].max
+      s_c = 1 + 0.045 * chroma.(shade)
+      s_h = 1 + 0.015 * chroma.(shade)
+
+      Math.sqrt(delta_l**2 + (delta_c / s_c)**2 + delta_h_squared / s_h**2)
     end
 
     def normalise(hex)

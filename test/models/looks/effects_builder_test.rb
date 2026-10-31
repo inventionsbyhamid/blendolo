@@ -137,7 +137,7 @@ class Looks::EffectsBuilderTest < ActiveSupport::TestCase
 
     steps = Looks::EffectsBuilder.signature(sampled:, liner: "winged", lips: "matte")
 
-    assert_equal [ [ "powder_blush_brush", "#E59A7A" ], [ "one_colour_lid_wash", "#6B4632" ],
+    assert_equal [ [ "powder_blush_brush", "#E07B62" ], [ "one_colour_lid_wash", "#6B4632" ],
                    [ "liquid_liner_wing", nil ], [ "liquid_matte_lipstick", "#8E1F2F" ] ],
                  steps.map { [ it.step_id, it.colour ] }
 
