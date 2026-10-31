@@ -1,4 +1,5 @@
-# One person's private workspace, reached by its token link. No account: the token is the key.
+# One person's private workspace, reached by its token link: the token is the key. A kit may be in an account (user),
+# which pays for its previews on the person's own face; a guest kit joins the account when its owner signs in.
 class Kit < ApplicationRecord
   # The "Your hands" questions, in the order they're asked. Each answer is 0..2:
   # tremor, pinch, fatigue: no / a little or sometimes / yes. one_hand: both / mostly left / mostly right.
@@ -18,6 +19,8 @@ class Kit < ApplicationRecord
 
   has_secure_token :token
 
+  belongs_to :user, optional: true
+
   # Renders before photos: renders point at photos.
   has_many :renders, dependent: :destroy
   has_many :photos, dependent: :destroy
@@ -26,6 +29,11 @@ class Kit < ApplicationRecord
   has_many :provider_calls, dependent: nil
 
   enum :path, { self_use: 0, helper: 1, example: 2 }, validate: true
+
+  # A short name, for accounts with several kits (a clinic's clients).
+  LABEL_MAX = 40
+  normalizes :label, with: ->(label) { label.squish.presence }
+  validates :label, length: { maximum: LABEL_MAX }
 
   validates(*HAND_QUESTIONS, inclusion: { in: ANSWERS }, allow_nil: true)
   # "My hands today": 0 steady, 1 a bit shaky, 2 very shaky or stiff. Sets target sizes and the repeat-tap guard.
@@ -48,6 +56,10 @@ class Kit < ApplicationRecord
 
   def read_only_example?
     (example? || path_in_database == "example") && !building_example
+  end
+
+  def owned_by?(user)
+    user.present? && user_id == user.id
   end
 
   # Links use the private token: /k/<token>.
