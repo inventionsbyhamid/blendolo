@@ -66,6 +66,16 @@ class HardeningTest < ActionDispatch::IntegrationTest
     assert_equal 1.hour, ActiveStorage.urls_expire_in
   end
 
+  test "the privacy page names the services the capture page loads from, and the backups" do
+    get "/privacy"
+
+    assert_includes response.body, "jsDelivr"
+    assert_includes response.body, "Google Cloud Storage"
+    assert_match(/backups keep your answers and links, not your photos, for up to about 12 hours/, response.body)
+    # The same two hosts the content security policy lets the capture page reach.
+    assert_equal %w[cdn.jsdelivr.net storage.googleapis.com], [ MEDIAPIPE, MODEL ].map { URI(it).host }
+  end
+
   test "direct uploads to storage are closed" do
     post "/rails/active_storage/direct_uploads", params: { blob: { filename: "x.jpg", byte_size: 3, checksum: "abc", content_type: "image/jpeg" } }, as: :json
     assert_response :not_found
