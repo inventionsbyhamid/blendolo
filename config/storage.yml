@@ -6,6 +6,18 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# Cloudflare R2, through its S3 API. Production uses it; the values come from the environment (.env.example).
+r2:
+  service: S3
+  access_key_id: <%= ENV["R2_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["R2_SECRET_ACCESS_KEY"] %>
+  bucket: <%= ENV["R2_BUCKET"] %>
+  region: auto
+  endpoint: https://<%= ENV["R2_ACCOUNT_ID"] %>.r2.cloudflarestorage.com
+  # R2 rejects the CRC checksums recent AWS SDKs add to every request by default.
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
+
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3

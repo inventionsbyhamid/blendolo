@@ -37,6 +37,9 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# Active Storage's S3 service, used for Cloudflare R2 in production
+gem "aws-sdk-s3", require: false
+
 # QR codes for share links, drawn as SVG on the server so they print and need no script.
 gem "rqrcode", "~> 3.1"
 
