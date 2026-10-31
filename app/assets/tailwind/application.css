@@ -568,7 +568,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
 }
 
 @layer components {
-  .code { overflow-x: auto; padding: 16px 20px; border-radius: 18px; background: var(--ink); color: var(--surface); font-size: 1rem; line-height: 1.45; }
+  .code { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px 20px; border-radius: 18px; background: var(--ink); color: var(--surface); font-size: 1rem; line-height: 1.45; }
   .qr { display: block; width: min(240px, 70vw); height: auto; padding: 16px; border-radius: 18px; background: var(--color-white); }
   .product { display: grid; gap: 6px; padding: 16px 20px; border-radius: 18px; background: var(--soft); }
   .product__name { margin: 0; font-weight: 800; }
