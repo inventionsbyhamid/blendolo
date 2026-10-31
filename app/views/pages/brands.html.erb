@@ -1,0 +1,32 @@
+<% seo title: "Ease tags for brands and shops", description: "Show shoppers which products open one-handed, need no pinch grip and forgive a wobble. A free JSON endpoint with ease for six kinds of hands." %>
+<div class="page prose">
+  <%= render "pages/page_header", chip: "For brands and shops", title: "Ease tags for your products",
+        lead: "Tell us how a product opens, how it's held and what it's for. We answer with its ease tags and how easy it is for six kinds of hands." %>
+
+  <h2>Why it helps</h2>
+  <ul>
+    <li>Shoppers with tremor, arthritis or one working hand can filter for "Opens with one hand" or "No pinch grip".</li>
+    <li>Every easy swap in Blendolo is a product type. Tagged products fit straight into a shopper's easy routine.</li>
+    <li>Ease is scored the same way as our looks: precision, near the eyes, grip, hands needed, time, forgiveness and opening.</li>
+  </ul>
+
+  <h2>The request</h2>
+  <pre class="code"><code>GET <%= SeoHelper::SITE_URL %>/api/ease_tags?<%= @example_query.to_query %></code></pre>
+  <ul>
+    <li><strong>format:</strong> <%= ProductEase::FORMATS.join(", ") %></li>
+    <li><strong>closure:</strong> <%= ProductEase::CLOSURES.keys.join(", ") %></li>
+    <li><strong>grip:</strong> <%= ProductEase::GRIPS.join(", ") %></li>
+    <li><strong>step</strong> (optional): the routine step the product is for, such as tinted_balm or smudged_pencil_liner.</li>
+  </ul>
+
+  <h2>The answer</h2>
+  <pre class="code"><code><%= JSON.pretty_generate(@example) %></code></pre>
+  <p>Profiles: steady hands, tremor, pinch or grip pain, one hand, arms that tire, and close-up reading that's hard. Ease runs from 0 (hard) to 100 (easy) and comes with words: Easy, Some care, Tricky or Hard.</p>
+
+  <h2>Good to know</h2>
+  <ul>
+    <li>It's free and needs no key. Please keep it under 60 requests a minute.</li>
+    <li>Ease scores are our own guide, not a clinical measure.</li>
+  </ul>
+  <%= render "pages/contact" %>
+</div>

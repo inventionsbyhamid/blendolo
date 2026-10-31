@@ -33,6 +33,12 @@ class PagesController < ApplicationController
   def guides
   end
 
+  # For brands and shops: the ease tags API, with a live example.
+  def brands
+    @example_query = { format: "stick", closure: "pull_cap", grip: "chunky", step: "tinted_balm" }
+    @example = ProductEase.new(**@example_query).as_api_json
+  end
+
   def guide
     slug, @guide = GUIDES.find { |key, _| key == params[:slug] }
     raise ActionController::RoutingError, "No such guide" unless slug
@@ -42,7 +48,7 @@ class PagesController < ApplicationController
   end
 
   def sitemap
-    @paths = [ root_path, guides_path, *GUIDES.keys.map { |slug| guide_path(slug) }, privacy_path, accessibility_path,
-      sources_path ]
+    @paths = [ root_path, guides_path, *GUIDES.keys.map { |slug| guide_path(slug) }, brands_path, privacy_path,
+      accessibility_path, sources_path ]
   end
 end

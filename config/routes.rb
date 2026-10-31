@@ -49,8 +49,9 @@ Rails.application.routes.draw do
   end
 
   namespace :api do
-    get "ease_tags" => "ease_tags#index"
+    get "ease_tags" => "ease_tags#index", defaults: { format: :json }
   end
+  get "brands" => "pages#brands"
 
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
