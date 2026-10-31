@@ -30,8 +30,14 @@ export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) 
 class WorkerChecks {
   kind = "worker"
 
+  // The worker starts from a blob: URL that imports workers/face_checks.js. A worker started from our assets' URL
+  // would get no content security policy (assets are sent without one); one started from a blob: URL keeps the
+  // page's, so it may fetch only what the page may: MediaPipe's package and model, not its usage logs.
   static start(urls, workerUrl) {
-    const checks = new WorkerChecks(new Worker(workerUrl, { type: "module" }))
+    const script = `import ${JSON.stringify(new URL(workerUrl, location.href).href)}`
+    const blobUrl = URL.createObjectURL(new Blob([script], { type: "text/javascript" }))
+    const checks = new WorkerChecks(new Worker(blobUrl, { type: "module" }))
+    checks.blobUrl = blobUrl
     return new Promise((resolve, reject) => {
       checks.loading = { resolve, reject }
       checks.worker.postMessage({ type: "load", ...urls })
@@ -69,6 +75,7 @@ class WorkerChecks {
   close() {
     this.stopped(new Error("The face checks were closed"))
     this.worker.terminate()
+    URL.revokeObjectURL(this.blobUrl)
   }
 
   request(message, transfer) {
