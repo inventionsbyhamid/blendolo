@@ -33,7 +33,7 @@ class CheckoutsController < ApplicationController
     @plan = Billing::Plan.find(params[:plan])
     @failed = params[:status].to_s.in?(%w[failed cancelled])
     since = session[:checkout_started_at] ? Time.zone.at(session[:checkout_started_at].to_i) : LOOK_BACK.ago
-    @arrived = BillingEvent.where(user: current_user, plan: @plan&.key).where.not(credits: nil)
+    @arrived = BillingEvent.applied.where(user: current_user, plan: @plan&.key).where("credits > 0")
       .where(created_at: since..).order(:id).last
     @credits = Credits.balance(current_user)
     kit = remembered_kit
