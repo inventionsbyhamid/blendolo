@@ -21,9 +21,9 @@ module Ease
     FIXUP = "fixup".freeze
     NO_EASIER_SWAP = "No easier swap for your hands.".freeze
 
-    LAYERS = %w[base cheeks brows lid liner lashes lips finish].freeze
+    LAYERS = %w[base cheeks powder brows lid liner lashes lips finish].freeze
     # Layers that share a part of the face. The eyes are done lid, then liner, then lashes.
-    AREAS = { "base" => "face", "cheeks" => "cheeks", "brows" => "brows", "lid" => "eyes", "liner" => "eyes",
+    AREAS = { "base" => "face", "cheeks" => "cheeks", "powder" => "powder", "brows" => "brows", "lid" => "eyes", "liner" => "eyes",
               "lashes" => "eyes", "lips" => "lips", "finish" => "finish" }.freeze
 
     def precision = dims.fetch(:P)

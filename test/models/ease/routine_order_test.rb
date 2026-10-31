@@ -47,6 +47,23 @@ class Ease::RoutineOrderTest < ActiveSupport::TestCase
     assert_equal %w[wash_and_smudged_lash_line mascara_upper], ordered.first(2), "the precise eye area first"
   end
 
+  def test_loose_powder_goes_over_the_cream_products
+    look = Looks::Catalogue.fetch(:wedding_guest)
+
+    ordered = Ease::RoutineOrder.order(look.plan(@default)[:steps]).map(&:id)
+
+    assert_equal %w[wash_and_smudged_lash_line mascara_upper tinted_moisturiser_fingers stick_concealer_finger
+                    bronzer_stick_sponge cream_highlighter_finger cream_blush_fingers kabuki_powder tinted_brow_gel
+                    tinted_balm fixup setting_spray], ordered
+  end
+
+  def test_areas_without_precision_follow_the_usual_layer_order
+    steps = steps(%w[tinted_balm tinted_brow_gel cream_blush_fingers tinted_moisturiser_fingers])
+
+    assert_equal %w[tinted_moisturiser_fingers cream_blush_fingers tinted_brow_gel tinted_balm fixup],
+                 Ease::RoutineOrder.order(steps).map(&:id)
+  end
+
   def test_fixup_moves_to_the_finish_and_appears_once
     assert_equal %w[tinted_balm fixup], Ease::RoutineOrder.order(steps(%w[fixup tinted_balm fixup])).map(&:id)
   end

@@ -15,6 +15,11 @@ class Looks::ColourSamplerMappingTest < ActiveSupport::TestCase
     assert_equal "#E59A7A", Looks::ColourSamplerMapping.nearest(:cheeks, "#E0A080"), "peach"
   end
 
+  def test_a_red_lip_faded_by_an_old_print_still_snaps_to_red
+    assert_equal "#B0182A", Looks::ColourSamplerMapping.nearest(:lips, "#9A4E43")
+    assert_equal "#7A3E33", Looks::ColourSamplerMapping.nearest(:lips, "#7A4036"), "a real brown stays brown"
+  end
+
   def test_unusable_colours_come_back_nil
     assert_nil Looks::ColourSamplerMapping.nearest(:lips, nil)
     assert_nil Looks::ColourSamplerMapping.nearest(:lips, "red")

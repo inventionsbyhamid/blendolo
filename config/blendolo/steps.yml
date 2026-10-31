@@ -12,8 +12,9 @@
 # packaging of each product type (see the comment on each line). Steps without a number are the easier
 # versions the table names as swaps.
 #
-# layer: where on the face the step goes, in the order layers go on: base, cheeks, brows, lid, liner, lashes,
-# lips, finish. Lid, liner and lashes are one area, the eyes.
+# layer: where on the face the step goes, in the order layers go on: base, cheeks, powder, brows, lid, liner,
+# lashes, lips, finish. Lid, liner and lashes are one area, the eyes. Loose powder sets the cream products, so it
+# goes on after the cheeks; pressed powder stays with the base, under powder blush and bronzer.
 #
 # swap: the id of the easier step, "skip" to leave the step out, or "none" when there is no easier version.
 # no_swap_why: what to say when a hard step has nothing easier (default: No easier swap for your hands.)
@@ -101,7 +102,7 @@ pressed_powder_compact:
 
 kabuki_powder:
   name: Loose powder with a big kabuki brush
-  layer: base
+  layer: powder
   instruction: Swirl the big brush in powder and buff over your face.
   dims: { P: 0, E: 0, G: 0, H: 1, T: 1, F: 0, O: 2 } # O: screw lid jar
   swap: none
