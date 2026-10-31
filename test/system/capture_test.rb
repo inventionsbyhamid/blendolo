@@ -89,8 +89,13 @@ class CaptureTest < ApplicationSystemTestCase
       find("label", text: "Choose a photo").click
       assert_equal [ true ], evaluate_script("window.pickerClicks"), "the label's click reaches the file input on #{path}"
 
-      execute_script "const label = [...document.querySelectorAll('label')].find((el) => el.textContent.includes('Choose a photo')); label.click(); label.click()"
-      assert_equal [ true, false, false ], evaluate_script("window.pickerClicks"), "repeat taps inside the window are swallowed"
+      click_label = "[...document.querySelectorAll('label')].find((el) => el.textContent.includes('Choose a photo')).click()"
+      execute_script "#{click_label}; #{click_label}"
+      assert_equal [ true ], evaluate_script("window.pickerClicks"), "repeat taps inside the window never reach the picker"
+
+      sleep 1 # past the 800 ms window
+      execute_script click_label
+      assert_equal [ true, true ], evaluate_script("window.pickerClicks"), "a later tap opens it again"
     end
   end
 
