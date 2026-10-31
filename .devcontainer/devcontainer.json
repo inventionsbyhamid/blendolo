@@ -1,0 +1,31 @@
+// Blendolo in a dev container: GitHub Codespaces, or "Reopen in Container" in VS Code.
+// Ruby, Postgres 18 and libvips. bin/setup --skip-server runs once the container is made; then run bin/dev and open
+// port 3107. No keys needed: development uses the fake YouCam provider, a local test sign in and a test checkout.
+// Format: https://containers.dev/implementors/json_reference/
+{
+  "name": "blendolo",
+  "dockerComposeFile": "compose.yaml",
+  "service": "rails-app",
+  "workspaceFolder": "/workspaces/blendolo",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/rails/devcontainer/features/activestorage": {},
+    "ghcr.io/rails/devcontainer/features/postgres-client": {}
+  },
+
+  // The Postgres service, for the pg gem and psql. Codespaces serves forwarded ports on *.app.github.dev.
+  "containerEnv": {
+    "PGHOST": "postgres",
+    "PGUSER": "postgres",
+    "PGPASSWORD": "postgres",
+    "RAILS_DEVELOPMENT_HOSTS": ".app.github.dev"
+  },
+
+  "forwardPorts": [3107],
+  "portsAttributes": {
+    "3107": { "label": "Blendolo", "onAutoForward": "openBrowser" }
+  },
+
+  "postCreateCommand": "bin/setup --skip-server"
+}
