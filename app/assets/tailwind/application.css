@@ -314,7 +314,8 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .foot__row nav { margin-top: 16px; }
   .foot__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--gap); margin: 0 0 16px; padding: 0; }
   .foot__links a {
-    display: inline-flex; align-items: center; min-height: var(--landing-tap); padding: 0 4px;
+    display: inline-flex; align-items: center; justify-content: center; min-height: var(--landing-tap);
+    min-width: var(--landing-tap); padding: 0 4px;
     color: var(--ink); font-weight: 700;
   }
 
