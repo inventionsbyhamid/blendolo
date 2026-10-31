@@ -18,7 +18,7 @@
     </section>
   <% end %>
   <% @look.unswappable.each do |step| %>
-    <p class="card m-0"><strong><%= step.name %>:</strong> no easier swap for <%= you_or_they(@kit, "your", "their") %> hands. The step card has tips.</p>
+    <p class="card m-0"><strong><%= step.name %>:</strong> <%= step.no_swap_why %></p>
   <% end %>
 
   <section class="stack" aria-labelledby="strength-title">
