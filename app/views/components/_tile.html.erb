@@ -1,0 +1,26 @@
+<%#
+  A choice tile: at least 160 px, the whole tile is the target, the label under the picture, and when it's the
+  current choice a thick border, a tick and the word "Chosen".
+
+  label:  the visible words      hint:  a second line (optional)
+  image:  an image path (optional), image_alt: its alt text ("" when the label says it all)
+  url:    a form button (method: :patch by default, params: hidden fields), or href: a link
+  chosen: true for the current choice
+%>
+<%
+  chosen = local_assigns[:chosen]
+  css = class_names("tile", "tile--chosen": chosen)
+  guard = { controller: "tap-guard", action: "click->tap-guard#guard" }
+  content = capture do
+%>
+  <% if local_assigns[:image] %><%= image_tag image, alt: local_assigns.fetch(:image_alt, ""), class: "tile__image" %><% end %>
+  <span class="tile__label"><%= label %></span>
+  <% if local_assigns[:hint] %><span class="tile__hint"><%= hint %></span><% end %>
+  <% if chosen %><span class="tile__chosen"><%= render "components/icon", name: :check %>Chosen</span><% end %>
+<% end %>
+<% if local_assigns[:url] %>
+  <%= button_to url, method: local_assigns.fetch(:method, :patch), params: local_assigns.fetch(:params, {}),
+        class: css, data: guard, "aria-current": (chosen ? "true" : nil) do %><%= content %><% end %>
+<% else %>
+  <%= link_to href, class: css, data: guard, "aria-current": (chosen ? "true" : nil) do %><%= content %><% end %>
+<% end %>

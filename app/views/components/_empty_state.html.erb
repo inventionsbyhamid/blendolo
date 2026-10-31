@@ -1,0 +1,8 @@
+<%# Nothing here yet. title:, body:, and an optional action: action_label:, action_href: %>
+<div class="empty">
+  <p class="empty__title"><%= title %></p>
+  <p class="empty__body"><%= body %></p>
+  <% if local_assigns[:action_label] %>
+    <%= render "components/button", label: action_label, href: action_href, variant: :primary, inline: true %>
+  <% end %>
+</div>

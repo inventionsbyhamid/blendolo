@@ -1,0 +1,27 @@
+<%#
+  A button made for hands that shake. It always has words (Voice Control says them), acts on click (release), and
+  ignores repeat taps; a commit button then waits with a quiet "Working on it" until the next page.
+
+  label:   the visible words
+  href:    a link, or
+  url:     a form button (method: :post by default, params: hidden fields)
+  variant: :primary (88 px and up), :secondary, :quiet or :danger (every target 64 px and up)
+  icon:    optional, shown next to the label, never alone
+  commit:  false for controls that don't move on (default true)
+  inline:  true to sit in a row instead of taking the full width
+%>
+<%
+  variant = local_assigns.fetch(:variant, :secondary)
+  css = class_names("btn", "btn--#{variant}", local_assigns[:css], "btn--inline": local_assigns[:inline])
+  guard = { controller: "tap-guard", action: "click->tap-guard#guard", tap_guard_commit_value: local_assigns.fetch(:commit, true) }
+  content = capture do
+%>
+  <% if local_assigns[:icon] %><%= render "components/icon", name: icon %><% end %>
+  <span class="btn__label"><%= label %></span><span class="btn__working">Working on it</span>
+<% end %>
+<% if local_assigns[:url] %>
+  <%= button_to url, method: local_assigns.fetch(:method, :post), params: local_assigns.fetch(:params, {}),
+        class: css, data: guard, form: local_assigns.fetch(:form, {}) do %><%= content %><% end %>
+<% else %>
+  <%= link_to href, class: css, data: guard.merge(local_assigns.fetch(:data, {})) do %><%= content %><% end %>
+<% end %>

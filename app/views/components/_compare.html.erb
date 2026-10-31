@@ -1,0 +1,24 @@
+<%#
+  Classic and easy side by side on a neutral canvas, with toggle buttons to see one at a time (no slider, no drag).
+  classic:, easy: the HTML for each side (an image or a render partial)
+  classic_label: (default "Classic"), easy_label: (default "Easy version")
+%>
+<% classic_label = local_assigns.fetch(:classic_label, "Classic"); easy_label = local_assigns.fetch(:easy_label, "Easy version") %>
+<div class="compare" data-controller="compare">
+  <div class="compare__stage" data-compare-target="stage" data-show="both">
+    <figure class="compare__side" data-side="classic">
+      <%= classic %>
+      <figcaption class="compare__caption"><%= classic_label %></figcaption>
+    </figure>
+    <figure class="compare__side" data-side="easy">
+      <%= easy %>
+      <figcaption class="compare__caption"><%= easy_label %></figcaption>
+    </figure>
+  </div>
+  <div class="compare__toggles" role="group" aria-label="Show" data-compare-target="toggles" hidden>
+    <button type="button" class="toggle" aria-pressed="false" data-action="compare#show" data-compare-show-param="classic"><%= classic_label %></button>
+    <button type="button" class="toggle" aria-pressed="false" data-action="compare#show" data-compare-show-param="easy"><%= easy_label %></button>
+    <button type="button" class="toggle" aria-pressed="true" data-action="compare#show" data-compare-show-param="both">Both</button>
+  </div>
+  <%= render "components/honest_label" %>
+</div>
