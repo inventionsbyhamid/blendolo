@@ -35,7 +35,7 @@ class AccessibilityTest < ApplicationSystemTestCase
   test "targets at least 64px" do
     kit = make_kit(hands_today: 0)
     on_a_phone do
-      [ *PUBLIC_PAGES, *kit_pages(kit) ].each do |path|
+      [ *PUBLIC_PAGES, *kit_pages(kit), new_kit_photo_path(kit), new_kit_photo_path(kit, kind: "reference") ].each do |path|
         visit path
         assert_selector "h1"
         assert_operator evaluate_script("window.innerWidth"), :<=, 400
