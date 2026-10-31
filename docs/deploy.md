@@ -22,6 +22,7 @@ Every variable in [`.env.example`](../.env.example) that production uses is set 
 - `APPEARANCE_PROVIDER`: `fake` replays recorded responses and costs nothing; `youcam` calls the live API and then also needs `YOUCAM_API_KEYS`, `YOUCAM_DAILY_UNIT_CAP` and `YOUCAM_UNIT_FLOOR`.
 - `BLENDOLO_PROCESS`: `web` on the web app, `jobs` on the worker.
 - `AUTH_PROVIDER`: `google` (the default). `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: a Google Cloud OAuth client of type Web application, with the redirect URI `https://<your host>/auth/google_oauth2/callback` and only the basic scopes (email, profile), which need no Google review. Publish the consent screen so anyone can sign in.
+- `DODO_ENVIRONMENT`, `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, `DODO_PRODUCT_LOOK_PACK`, `DODO_PRODUCT_CLINIC`: payments through [Dodo Payments](https://dodopayments.com), the merchant of record. Put a test mode API key from the app's own Dodo business in an env file and run `bundle exec ruby script/billing/dodo_setup.rb <env file> --webhook-url https://<your host>/webhooks/dodo`: it checks the business, creates the two products and the webhook endpoint, and writes the other values into that file. Prices and credits live in `config/blendolo/plans.yml`. Optional: without them, buying says payments aren't working.
 
 Production stops at boot and names the variable when a required one is blank (`lib/required_env.rb`). After changing a variable, redeploy or restart both apps.
 
