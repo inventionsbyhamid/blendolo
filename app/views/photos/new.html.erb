@@ -57,7 +57,7 @@
     <%= form.hidden_field :source, value: "upload", data: { capture_target: "source" } %>
     <%= form.file_field :image, class: "sr-only", tabindex: -1, "aria-hidden": "true", data: { capture_target: "file" } %>
     <div class="stack" data-capture-target="review" hidden>
-      <img class="capture__review" data-capture-target="reviewImage" alt="The photo you just took">
+      <%# The picture of the photo to review is added by capture_controller.js once there is one. %>
       <%= form.button class: "btn btn--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard click->capture#usePhoto" } do %>
         <span class="btn__label">Use this photo</span><span class="btn__working">Working on it</span>
       <% end %>

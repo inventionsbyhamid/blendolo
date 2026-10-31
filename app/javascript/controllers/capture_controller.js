@@ -243,13 +243,24 @@ export default class extends Controller {
     landmarks ||= (await this.detectStill(source))?.[0]
     const sampled = landmarks ? sampleRegions(pixels(source), landmarks, this.regionsValue) : {}
     const blob = await toJpeg(source)
-    this.reviewImageTarget.src = URL.createObjectURL(blob)
+    this.reviewImage.src = URL.createObjectURL(blob)
     this.pending = { blob, sampled, origin }
     this.liveControlsTarget.hidden = true
     this.reviewTarget.hidden = false
     this.state = "review"
     this.show("Is this photo all right?")
     this.messageTarget.scrollIntoView({ block: "start" })
+  }
+
+  // The picture on the review screen, made the first time there's a photo (an <img> without a src isn't valid).
+  get reviewImage() {
+    if (this.hasReviewImageTarget) return this.reviewImageTarget
+    const image = document.createElement("img")
+    image.className = "capture__review"
+    image.alt = "The photo you just took"
+    image.dataset.captureTarget = "reviewImage"
+    this.reviewTarget.prepend(image)
+    return image
   }
 
   // "Use this photo": the photo goes in the form's file field, so the normal form (and its repeat-tap guard) sends it.

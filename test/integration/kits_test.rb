@@ -161,4 +161,12 @@ class KitsTest < ActionDispatch::IntegrationTest
       assert_select "p", text: /Use an old photo of your favourite look\. We rebuild it from easy steps\./
     end
   end
+
+  test "the capture page has no picture without a source" do
+    get new_kit_photo_path(make_kit)
+
+    assert_response :success
+    assert_select "img:not([src])", count: 0
+    assert_select "img[src='']", count: 0
+  end
 end
