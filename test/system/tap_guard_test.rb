@@ -133,9 +133,15 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
 
   test "softer then bolder inside the window sends one change" do
     kit = make_kit(tremor: 2, hands_today: 2)
+    # Both previews asked for already, so the page doesn't send its own request while it loads.
+    photo = kit.photos.today.sole
+    look = LookForKit.find(kit, "red_lip")
+    { classic: look.classic_effects(photo), easy: look.easy_effects(photo) }.each do |kind, effects|
+      kit.renders.create!(Previews.attributes(photo, "red_lip", kind, effects, nil).merge(status: :running, started_at: Time.current))
+    end
     visit kit_look_path(kit, "red_lip")
-    # The page asks for its previews itself first.
-    assert_selector "[id^=render_]", count: 2, wait: 10
+    assert_selector "[id^=render_]", count: 2
+    assert_no_selector "form[data-controller=autostart]"
     assert_selector "h2", text: "Strength of the easy version: Medium"
 
     execute_script <<~JS
