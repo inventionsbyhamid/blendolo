@@ -222,6 +222,44 @@ class CaptureTest < ApplicationSystemTestCase
     assert_not outcome["darkBlank"], "a dark camera isn't the worker's doing"
   end
 
+  test "an empty frame is one with no picture in it" do
+    visit privacy_path
+    blank = evaluate_async_script(<<~JS)
+      const done = arguments[arguments.length - 1]
+      import("capture/gate").then((gate) => {
+        const frame = (paint) => {
+          const canvas = document.createElement("canvas")
+          canvas.width = 320
+          canvas.height = 240
+          paint(canvas.getContext("2d"))
+          return gate.blankFrame(canvas)
+        }
+        const fill = (context, colour, x = 0, y = 0, width = 320, height = 240) => {
+          context.fillStyle = colour
+          context.fillRect(x, y, width, height)
+        }
+        done({
+          black: frame((context) => fill(context, "#000000")),
+          grey: frame((context) => fill(context, "#7F7F7F")),
+          nearlyBlack: frame((context) => { fill(context, "#050505"); fill(context, "#070707", 0, 0, 160) }),
+          face: frame((context) => { fill(context, "#C99A7A"); fill(context, "#3F2A20", 100, 60, 120, 120) }),
+          softLight: frame((context) => {
+            const light = context.createLinearGradient(0, 0, 320, 0)
+            light.addColorStop(0, "#808080")
+            light.addColorStop(1, "#909090")
+            fill(context, light)
+          })
+        })
+      })
+    JS
+
+    assert blank["black"], "a phone lying face down"
+    assert blank["grey"]
+    assert blank["nearlyBlack"]
+    assert_not blank["face"]
+    assert_not blank["softLight"], "a plain wall still has a little light and shade"
+  end
+
   test "camera denied shows choose photo" do
     page.driver.browser # start the browser before talking to it
     script = page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source: <<~JS)
