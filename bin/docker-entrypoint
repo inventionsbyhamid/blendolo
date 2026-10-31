@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-# The worker runs this same image with TRESSOLO_PROCESS=jobs: Solid Queue instead of the web server.
-if [ "${TRESSOLO_PROCESS}" == "jobs" ]; then
+# The worker runs this same image with BLENDOLO_PROCESS=jobs: Solid Queue instead of the web server.
+if [ "${BLENDOLO_PROCESS}" == "jobs" ]; then
   set -- ./bin/jobs
 fi
 

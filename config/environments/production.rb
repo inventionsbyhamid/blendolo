@@ -79,5 +79,5 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection and other `Host` header attacks: answer only the site's own name. The health
   # check answers any host (config.host_authorization in config/application.rb).
-  config.hosts = [ "tressolo.dijmo.com" ]
+  config.hosts = [ "blendolo.dijmo.com" ]
 end

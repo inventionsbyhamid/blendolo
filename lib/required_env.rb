@@ -8,13 +8,13 @@ module RequiredEnv
   PRODUCTION = [
     %w[RAILS_MASTER_KEY SECRET_KEY_BASE],
     "DB_HOST",
-    "TRESSOLO_DATABASE_PASSWORD",
+    "BLENDOLO_DATABASE_PASSWORD",
     "R2_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY",
     "R2_BUCKET",
     "APPEARANCE_PROVIDER",
-    "TRESSOLO_PROCESS"
+    "BLENDOLO_PROCESS"
   ].freeze
 
   # Needed only with the live provider (APPEARANCE_PROVIDER=youcam). YOUCAM_WEBHOOK_SECRET stays optional.

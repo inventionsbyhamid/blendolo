@@ -2,9 +2,9 @@
 # check=error=true
 
 # This Dockerfile is designed for production, not development. One image runs both processes: the web server by
-# default, and the Solid Queue worker with TRESSOLO_PROCESS=jobs (bin/docker-entrypoint). Build and run by hand:
-# docker build -t tressolo .
-# docker run -d -p 80:80 --env-file .env --name tressolo tressolo
+# default, and the Solid Queue worker with BLENDOLO_PROCESS=jobs (bin/docker-entrypoint). Build and run by hand:
+# docker build -t blendolo .
+# docker run -d -p 80:80 --env-file .env --name blendolo blendolo
 # .env.example lists the environment production needs; it refuses to boot while one is missing.
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html

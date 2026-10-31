@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # The remote half of bin/ci-remote, run on the CI host from the copied tree: script/ci/run <lane>.
 #
-# Waits while the host is busy, builds the tressolo-ci image when its recipe changed, then runs bin/ci in it with a
-# throwaway Postgres 18 on a private network. Everything it starts is named tressolo-ci-*, capped, and removed at the
+# Waits while the host is busy, builds the blendolo-ci image when its recipe changed, then runs bin/ci in it with a
+# throwaway Postgres 18 on a private network. Everything it starts is named blendolo-ci-*, capped, and removed at the
 # end. Different lanes can run at once; one lane runs one at a time.
 set -euo pipefail
 
 lane="$1"
-root="$HOME/tressolo-ci"
+root="$HOME/blendolo-ci"
 dir="$root/$lane"
-image="tressolo-ci:latest"
-pin="keep-tressolo-ci"
-network="tressolo-ci-$lane"
-postgres="tressolo-ci-pg-$lane"
-installer="tressolo-ci-install-$lane"
-runner="tressolo-ci-run-$lane"
+image="blendolo-ci:latest"
+pin="keep-blendolo-ci"
+network="blendolo-ci-$lane"
+postgres="blendolo-ci-pg-$lane"
+installer="blendolo-ci-install-$lane"
+runner="blendolo-ci-run-$lane"
 ruby_version="$(tr -d '[:space:]' < "$dir/.ruby-version")"
-bundle_volume="tressolo-ci-bundle-$ruby_version"
+bundle_volume="blendolo-ci-bundle-$ruby_version"
 
 exec 9>"$root/.lane-$lane.lock"
 if ! flock -n 9; then
@@ -52,9 +52,9 @@ rm -f "$dir/log/test.log"
 recipe="$( (cat "$dir/script/ci/Dockerfile"; echo "$ruby_version") | sha256sum | cut -c 1-16)"
 (
   flock 8
-  if [ "$(docker image inspect -f '{{ index .Config.Labels "tressolo.ci.recipe" }}' "$image" 2>/dev/null)" != "$recipe" ]; then
+  if [ "$(docker image inspect -f '{{ index .Config.Labels "blendolo.ci.recipe" }}' "$image" 2>/dev/null)" != "$recipe" ]; then
     echo "Building $image"
-    docker build --pull --build-arg RUBY_VERSION="$ruby_version" --label tressolo.ci.recipe="$recipe" -t "$image" - \
+    docker build --pull --build-arg RUBY_VERSION="$ruby_version" --label blendolo.ci.recipe="$recipe" -t "$image" - \
       < "$dir/script/ci/Dockerfile"
   fi
   if [ "$(docker inspect -f '{{ .Image }}' "$pin" 2>/dev/null)" != "$(docker image inspect -f '{{ .Id }}' "$image")" ]; then
@@ -88,7 +88,7 @@ done
 status=0
 docker run --rm --name "$runner" --network "$network" --cpus 8 --memory 8g \
   -v "$dir:/app" -v "$bundle_volume:/usr/local/bundle" \
-  -e CI=1 -e PARALLEL_WORKERS=8 -e DATABASE_URL="postgres://postgres:$password@$postgres:5432/tressolo_test" \
+  -e CI=1 -e PARALLEL_WORKERS=8 -e DATABASE_URL="postgres://postgres:$password@$postgres:5432/blendolo_test" \
   "$image" timeout 30m bin/ci || status=$?
 if [ "$status" = 124 ]; then
   echo "bin/ci ran for 30 minutes and was stopped." >&2

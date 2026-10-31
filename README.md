@@ -1,6 +1,6 @@
-# Tressolo
+# Blendolo
 
-A Rails app for a hackathon. Product description coming soon.
+Blendolo: makeup made easier for hands that shake or are stiff.
 
 ## Run it locally
 
@@ -23,10 +23,10 @@ bin/ci                  # everything CI checks
 
 `bin/ci` runs RuboCop (Rails omakase style), Brakeman, the tests, the system tests and the seeds. The steps live in `config/ci.rb`.
 
-`bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine over ssh, so the full suite doesn't load your laptop. It copies the working tree, builds a CI image with Chromium (`script/ci/Dockerfile`), starts a throwaway Postgres 18 beside it and cleans up afterwards. Set `TRESSOLO_CI_HOST` to the ssh host, which needs Docker, rsync and flock. Lanes let several worktrees run at once:
+`bin/ci-remote <lane>` runs the same `bin/ci` in Docker on another machine over ssh, so the full suite doesn't load your laptop. It copies the working tree, builds a CI image with Chromium (`script/ci/Dockerfile`), starts a throwaway Postgres 18 beside it and cleans up afterwards. Set `BLENDOLO_CI_HOST` to the ssh host, which needs Docker, rsync and flock. Lanes let several worktrees run at once:
 
 ```sh
-TRESSOLO_CI_HOST=ci.example.com bin/ci-remote main
+BLENDOLO_CI_HOST=ci.example.com bin/ci-remote main
 ```
 
 ## Environment
@@ -35,7 +35,7 @@ Production reads its settings from environment variables and refuses to boot whi
 
 ## Production image
 
-The `Dockerfile` builds one image for both processes: the web server (Thruster in front of Puma, on port 80) and, with `TRESSOLO_PROCESS=jobs`, the Solid Queue worker. The web container prepares the databases when it starts. Health checks use `GET /up`, which answers on any host.
+The `Dockerfile` builds one image for both processes: the web server (Thruster in front of Puma, on port 80) and, with `BLENDOLO_PROCESS=jobs`, the Solid Queue worker. The web container prepares the databases when it starts. Health checks use `GET /up`, which answers on any host.
 
 ## License
 

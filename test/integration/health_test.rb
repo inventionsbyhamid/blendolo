@@ -4,7 +4,7 @@ require "test_helper"
 # ask for http://localhost/up. These tests put the app behind host authorization and SSL set up the way production
 # sets them up, so /up has to get through both while other paths don't.
 class HealthTest < ActionDispatch::IntegrationTest
-  PRODUCTION_HOSTS = [ "tressolo.dijmo.com" ].freeze
+  PRODUCTION_HOSTS = [ "blendolo.dijmo.com" ].freeze
 
   def app
     config = Rails.application.config
@@ -25,15 +25,15 @@ class HealthTest < ActionDispatch::IntegrationTest
   end
 
   test "up answers plain http without redirecting" do
-    get "http://tressolo.dijmo.com/up"
+    get "http://blendolo.dijmo.com/up"
 
     assert_response :success
   end
 
   test "other paths redirect plain http to https" do
-    get "http://tressolo.dijmo.com/"
+    get "http://blendolo.dijmo.com/"
 
     assert_response :moved_permanently
-    assert_equal "https://tressolo.dijmo.com/", response.location
+    assert_equal "https://blendolo.dijmo.com/", response.location
   end
 end
