@@ -26,7 +26,7 @@
       <h1 id="hero-title">The <mark>same red lip.</mark> Two mirrors. One of them takes eleven tries.</h1>
       <p class="lede">A tinted balm and a fingertip get you there in one. Blendolo keeps your look, swaps the hard steps for easy ones, and shows you the easy version on your own face first.</p>
       <div class="cta">
-        <%= link_to "Start", start_path, class: "button button--primary" %>
+        <%= link_to "Start", start_path, class: "button button--primary", data: { controller: "tap-guard", action: "click->tap-guard#guard" } %>
         <a class="button button--ghost" href="#how">See how it works</a>
         <p class="cta__note">Free. Private. No account.</p>
       </div>

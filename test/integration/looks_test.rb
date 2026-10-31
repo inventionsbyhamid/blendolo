@@ -109,6 +109,16 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_select ".step-header__count", "Step 1 of #{kit.routine.size}"
   end
 
+  test "the routine's step links and the landing's Start ignore repeat taps" do
+    kit = make_kit(tremor: 2)
+    post kit_routine_path(kit), params: { look_key: "red_lip" }
+
+    get kit_routine_path(kit)
+    assert_select ".linklist a[data-controller=tap-guard][data-action='click->tap-guard#guard']", kit.reload.routine.size
+    get root_path
+    assert_select "a[href=?][data-controller=tap-guard][data-action='click->tap-guard#guard']", start_path, text: "Start"
+  end
+
   test "try again asks the provider again for a preview that took too long" do
     kit = make_kit(tremor: 2)
     post previews_kit_look_path(kit, "red_lip")
