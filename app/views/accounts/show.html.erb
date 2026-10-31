@@ -12,6 +12,8 @@
     <%= render "components/button", label: "Get credits", href: Credits::PRICING_PATH, variant: :secondary %>
   </section>
 
+  <%= render "billing/account", user: current_user %>
+
   <section class="stack" aria-labelledby="kits-title">
     <h2 id="kits-title" class="m-0">Your kits</h2>
     <% if @kits.any? %>
