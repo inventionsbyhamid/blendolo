@@ -1,5 +1,6 @@
 # A read-only link to a kit's routine for someone who helps: scoped, expiring and revocable.
 class Share < ApplicationRecord
+  include ExampleReadOnly
   LIFETIME = 30.days
 
   belongs_to :kit

@@ -1,6 +1,7 @@
 # A makeup preview on today's photo. effects is the provider-neutral list from Looks::EffectsBuilder; a transfer
 # copies the look on reference_photo instead. external_id is the provider's task id while it runs.
 class Render < ApplicationRecord
+  include ExampleReadOnly
   include ProviderTracked
 
   belongs_to :kit

@@ -1,4 +1,5 @@
 require "test_helper"
+require "rake"
 
 class ExamplesTest < ActiveSupport::TestCase
   SEED = Rails.root.join("db/seeds/examples.rb")
@@ -59,5 +60,54 @@ class ExamplesTest < ActiveSupport::TestCase
     words = Examples.all.flat_map { [ it.name, it.blurb ] } << Examples.photo_label
     assert words.all?(&:present?)
     words.each { |text| assert_no_match(/[–—]/, text) }
+  end
+
+  test "a kit built from an older version of the example is not reused" do
+    kit = Examples.kit_for(:rosa)
+    assert_equal Examples.fetch(:rosa).digest, kit.example_digest
+
+    kit.update_column(:example_digest, "an older version")
+    fresh = Examples.kit_for(:rosa)
+    assert_not_equal kit, fresh
+    assert_equal Examples.fetch(:rosa).digest, fresh.example_digest
+  end
+
+  test "the digest follows the files" do
+    digests = Examples.all.map(&:digest)
+    assert digests.all? { it.match?(/\A\h{64}\z/) }
+    assert_equal Examples.send(:digest_for, Examples.send(:config).dig("people", "june")), Examples.fetch(:june).digest
+  end
+
+  test "examples rebuild builds a fresh kit for everyone" do
+    old = Examples.keys.map { Examples.kit_for(it) }
+    Rails.application.load_tasks unless Rake::Task.task_defined?("examples:rebuild")
+
+    assert_output(/rosa: built a new example kit with 2 photos and 4 previews/) { Rake::Task["examples:rebuild"].execute }
+    Examples.keys.each_with_index do |key, index|
+      assert_operator Examples.kit_for(key).id, :>, old[index].id
+    end
+  end
+
+  test "example kits refuse changes but take visits" do
+    kit = Examples.kit_for(:amara)
+
+    assert_not kit.update(hands_today: 0)
+    assert_includes kit.errors[:base], Kit::EXAMPLE_READ_ONLY
+    assert_not kit.reload.update(path: :self_use)
+    assert_nothing_raised { kit.reload.touch_activity! }
+
+    assert_not kit.photos.create(source: "camera", image: { io: StringIO.new("x"), filename: "x.jpg", content_type: "image/jpeg" }).persisted?
+    assert_not kit.renders.classic.sole.update(look_key: "bold_berry")
+    assert_not kit.shares.create(audience: :helper).persisted?
+    assert_raises(Kit::ReadOnlyExample) { kit.destroy_everything! }
+    assert Kit.exists?(kit.id)
+  end
+
+  test "an expired example kit is still purged" do
+    kit = Examples.kit_for(:june)
+    travel 31.days do
+      PurgeExpiredKitsJob.perform_now
+      assert_not Kit.exists?(kit.id)
+    end
   end
 end

@@ -1,5 +1,6 @@
 # A face photo: today's (what renders go on) or a reference (an old photo wearing a favourite look).
 class Photo < ApplicationRecord
+  include ExampleReadOnly
   SOURCES = %w[camera upload example].freeze
   # Colours sampled in the browser from face landmarks, as "#RRGGBB".
   SAMPLED_REGIONS = %w[lips lids cheeks skin].freeze
