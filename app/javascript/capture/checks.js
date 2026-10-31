@@ -23,8 +23,8 @@ const REPLY_WAIT_MS = 5000
 const REPLY_WAIT_CHECKS = 10
 
 export async function startChecks({ packageUrl, modelUrl, workerUrl, gateUrl }) {
-  if (workerUrl && gateUrl && typeof Worker === "function" && typeof OffscreenCanvas === "function" &&
-      typeof createImageBitmap === "function") {
+  if (workerUrl && gateUrl && typeof Worker === "function" && typeof createImageBitmap === "function" &&
+      offscreenWebgl2()) {
     try {
       return await WorkerChecks.start({ packageUrl, modelUrl, gateUrl }, workerUrl)
     } catch {
@@ -147,6 +147,19 @@ export class WorkerChecks {
     this.loading = null
     this.requests.forEach(({ reject }) => reject(error))
     this.requests.clear()
+  }
+}
+
+// MediaPipe in a worker draws on an OffscreenCanvas with WebGL2. Safari 16.4 to 16.7 have the canvas without WebGL2
+// in it, where MediaPipe would load its WebAssembly twice in the worker before failing; they go straight to the page.
+function offscreenWebgl2() {
+  if (typeof OffscreenCanvas !== "function") return false
+  try {
+    const context = new OffscreenCanvas(1, 1).getContext("webgl2")
+    context?.getExtension("WEBGL_lose_context")?.loseContext()
+    return !!context
+  } catch {
+    return false
   }
 }
 
