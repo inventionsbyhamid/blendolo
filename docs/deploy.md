@@ -30,7 +30,7 @@ TLS ends at the platform's proxy, which forwards plain HTTP to port 80. Rails ru
 
 ## Deploys
 
-A push to `main` builds and deploys both apps. The web app migrates on start; a worker that starts before a release's migrations have run restarts until they have.
+A push to `main` builds and deploys the web app. Whether the worker follows on its own depends on the host: where it doesn't (for example when only the web app watches the repository), deploy the worker yourself once the web build is done, so both run the same commit. The web app migrates on start; a worker that starts before a release's migrations have run restarts until they have.
 
 **Rolling back:** redeploy the previous commit (in Coolify: the app's Deployments tab, or set the commit to deploy and press Deploy) for both apps. Migrations are not reversed automatically, so a release that changes the schema needs a database backup restored too.
 
@@ -44,7 +44,7 @@ A push to `main` builds and deploys both apps. The web app migrates on start; a 
 
 ## Backups
 
-The database is dumped every hour (`blendolo_production` only) and the dumps are kept on the server and copied to S3-compatible storage. The cache, queue and cable databases are not backed up: `db:prepare` rebuilds them.
+The database is dumped every hour (`blendolo_production` only) and the last 12 dumps are kept on the server. They are copied to S3-compatible storage only when the backup schedule has a storage set up for it. The cache, queue and cable databases are not backed up: `db:prepare` rebuilds them.
 
 ## Taking it down
 
