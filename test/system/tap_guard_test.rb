@@ -75,22 +75,28 @@ class TapGuardAcrossControlsTest < ApplicationSystemTestCase
     kit = make_kit(photo: false)
     visit kit_hand_path(kit, 1)
     assert_selector ".step-header__count", text: "Step 2 of 7"
+    page.document.synchronize(5) do
+      ready = evaluate_script(<<~JS)
+        document.readyState === "complete" && !!window.Turbo &&
+          !!window.Stimulus.getControllerForElementAndIdentifier(document.querySelectorAll("ul.tiles button.tile")[2], "tap-guard")
+      JS
+      raise Capybara::ExpectationNotMet, "the page's scripts aren't ready" unless ready
+    end
     # "A lot" (very shaky: a 1500 ms window from here on), then the tile in the same place on the next question as
-    # soon as its guard is there.
+    # soon as it shows with its guard.
     execute_script <<~JS
       window.repeatAfter = null
       const third = () => document.querySelectorAll("ul.tiles button.tile")[2]
-      document.addEventListener("turbo:load", () => {
-        const tapAgain = () => {
-          const tile = third()
-          if (!tile || !window.Stimulus.getControllerForElementAndIdentifier(tile, "tap-guard")) return setTimeout(tapAgain, 10)
-          window.repeatAfter = performance.now() - window.firstAt
-          tile.click()
-        }
-        tapAgain()
-      }, { once: true })
+      const tapAgain = () => {
+        const tile = third()
+        const next = document.querySelector(".step-header__count")?.textContent.includes("Step 3 of 7")
+        if (!next || !tile || !window.Stimulus.getControllerForElementAndIdentifier(tile, "tap-guard")) return setTimeout(tapAgain, 10)
+        window.repeatAfter = performance.now() - window.firstAt
+        tile.click()
+      }
       window.firstAt = performance.now()
       third().click()
+      setTimeout(tapAgain, 10)
     JS
 
     assert_selector ".step-header__count", text: "Step 3 of 7"
