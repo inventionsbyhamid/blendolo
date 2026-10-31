@@ -33,7 +33,8 @@
       </figure>
     </div>
     <% if @waiting %>
-      <%= render "credits/spend", cost: @cost, url: kit_signature_path(@kit), params: { liner: @signature.liner, lips: @signature.lips } %>
+      <%= render "credits/spend", cost: @cost, url: kit_signature_path(@kit), params: { liner: @signature.liner, lips: @signature.lips },
+            sign_in_words: signature_sign_in_words %>
     <% end %>
     <%= render "components/honest_label" %>
     <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label.pluralize}" %><% end %>

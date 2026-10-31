@@ -1,6 +1,15 @@
 # Words about signing in and credits, shown where a preview on a person's own face is paid for.
 module CreditsHelper
   SIGN_IN = "Sign in to see this on your face. Free for your first look.".freeze
+  # The signature look costs more than the free credits: say so before anyone signs in for it.
+  def signature_sign_in_words
+    "Sign in to see your signature look on your face. It uses #{pluralize(signature_cost, "credit")}. " \
+      "Your #{Credits.signup_amount} free credits cover one look on your face."
+  end
+
+  def signature_cost
+    Credits.cost(:transfer) + Credits.cost(:makeup)
+  end
   OUT_OF_CREDITS = "You are out of credits. Get more to see this on your face.".freeze
   OTHER_ACCOUNT = "This kit is in another account. Sign in with that account to see it on your face.".freeze
 

@@ -2,11 +2,11 @@
   Where a preview on the person's own face is paid for, shown before anything is spent. Signed out: sign in (free
   for the first look). Signed in, with enough credits: the price and "Show it on my face". Short of credits: a way
   to get more. Someone else's kit: a word about it.
-  cost: the credits this takes; url, params: the POST that makes the previews
+  cost: the credits this takes; url, params: the POST that makes the previews; sign_in_words: what to say signed out
 %>
 <% if !signed_in? %>
   <div class="card stack spend">
-    <p class="m-0 spend__words"><%= CreditsHelper::SIGN_IN %></p>
+    <p class="m-0 spend__words"><%= local_assigns.fetch(:sign_in_words, CreditsHelper::SIGN_IN) %></p>
     <%= render "sessions/google_button", origin: request.fullpath %>
   </div>
 <% elsif @kit.user_id && !@kit.owned_by?(current_user) %>
