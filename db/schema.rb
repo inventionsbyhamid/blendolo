@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_075646) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_080000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_075646) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "kits", force: :cascade do |t|
+    t.string "token", null: false
+    t.integer "path", default: 0, null: false
+    t.integer "tremor"
+    t.integer "pinch"
+    t.integer "one_hand"
+    t.integer "fatigue"
+    t.integer "near_vision"
+    t.integer "hands_today", default: 1, null: false
+    t.integer "retention_days", default: 30, null: false
+    t.datetime "consented_at"
+    t.datetime "last_active_at", null: false
+    t.datetime "purge_after", null: false
+    t.string "chosen_look_key"
+    t.jsonb "routine", default: [], null: false
+    t.string "example_key"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purge_after"], name: "index_kits_on_purge_after"
+    t.index ["token"], name: "index_kits_on_token", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
