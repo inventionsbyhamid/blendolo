@@ -4,7 +4,7 @@
 
 Makeup try-on for people with Parkinson's, essential tremor, arthritis, MS or after a stroke. Blendolo scores every look for *your* hands, swaps the hard steps for easier ones, and shows the classic and the easy version on your own face with the YouCam API.
 
-**[Live site](https://blendolo.dijmo.com)** · **[Try an example person](https://blendolo.dijmo.com/examples)** (no photo, no sign in) · **Demo video (link coming)** · **[For shops](https://blendolo.dijmo.com/brands)**
+**[Live site](https://blendolo.dijmo.com)** · **[Try an example person](https://blendolo.dijmo.com/examples)** (no photo, no sign in) · **[Demo video](https://youtu.be/cd1cSQ5E0Ys)** · **[For shops](https://blendolo.dijmo.com/brands)**
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/inventionsbyhamid/blendolo)
 
