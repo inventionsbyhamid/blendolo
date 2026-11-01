@@ -149,7 +149,7 @@ bin/rails test:system   # browser tests, headless Chrome
 bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 ```
 
-- 496 unit and integration tests and 65 system tests, all green at the last CI run.
+- 498 unit and integration tests and 65 system tests, all green at the last CI run.
 - System tests measure every button and link on five key screens at phone width, and run axe accessibility checks.
 - `BLENDOLO_CI_HOST=<ssh host> bin/ci-remote <lane>` runs the same CI in Docker on another machine.
 
