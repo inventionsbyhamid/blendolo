@@ -8,7 +8,7 @@ Makeup try-on for people with Parkinson's, essential tremor, arthritis, MS or af
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/inventionsbyhamid/blendolo)
 
-![Blendolo's looks list with each look's ease before and after for Rosa's hands, its thumbnails showing an AI generated model, next to the red lip page: the classic look and the easy version side by side on Rosa, an AI generated example person, rated Hard before and Some care after](docs/images/classic-and-easy.png)
+![Blendolo on a phone: the looks list, each look graded for Rosa's hands, and the red lip page with the classic and the easy version side by side on Rosa, an AI generated example person, rated Hard before and Some care after](docs/images/classic-and-easy.png)
 
 ## Inspiration
 
