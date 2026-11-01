@@ -181,7 +181,7 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 
 ## What's next
 
-- **Test with people with tremor, arthritis, MS and stroke, and with occupational therapists.** This comes first.
+- **Test with more people with tremor, arthritis, MS and stroke, and with occupational therapists.** This comes first.
 - **Read the face once** with YouCam Face Attributes: no wing for hooded lids, powder instead of gel for sparse brows.
 - **A glow where each step goes** on the step cards.
 - **An ease tags feed** for a retailer or an adaptive brand, with Arthritis Foundation certified products as a filter.
@@ -189,7 +189,7 @@ bin/ci                  # everything: RuboCop, Brakeman, audits, tests, seeds
 
 ## Honest limits
 
-- Ease scores are our own rubric from published guidance and people's own words. Not a clinical measure, and not yet tested with people with tremor.
+- Ease scores are our own rubric from published guidance and people's own words. Not a clinical measure. One person with Parkinson's has tried it so far; no wider testing yet.
 - Previews are clean; real lines wobble. That's why the easy steps are forgiving ones.
 - Makeup Transfer moves a whole look at once. Colours read from old photos are approximate.
 - Example people are AI generated. The shop catalogue is made-up demo products.
