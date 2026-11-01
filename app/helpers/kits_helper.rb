@@ -36,7 +36,7 @@ module KitsHelper
 
   # Where to carry on: the first thing not done yet.
   def next_step_for(kit)
-    if kit.consented_at.nil? then [ "Carry on: before we start", kit_consent_path(kit) ]
+    if kit.consented_at.nil? then [ "Carry on", kit_consent_path(kit) ]
     elsif (number = Kit::HAND_QUESTIONS.index { |question| kit.public_send(question).nil? })
       [ "Carry on: your hands", kit_hand_path(kit, number + 1) ]
     elsif !kit.photos.today.exists? then [ "Carry on: your photo", new_kit_photo_path(kit) ]
