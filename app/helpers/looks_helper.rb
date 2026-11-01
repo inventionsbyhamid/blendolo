@@ -20,8 +20,13 @@ module LooksHelper
   end
 
   # "Hard -> Some care": the classic look's ease, then the easy version's, for these hands. Screen readers hear
-  # "Classic: Hard, easy version: Some care".
+  # "Classic: Hard, easy version: Some care". When both are the same, one word ("Some care"), so the badge stays on
+  # one line on a phone.
   def ease_change(look)
+    if look.classic_words == look.easy_words
+      return safe_join([ tag.span("Classic and easy version: ", class: "sr-only"), look.easy_words ])
+    end
+
     safe_join([
       tag.span("Classic: ", class: "sr-only"), look.classic_words, tag.span(" \u2192 ", "aria-hidden": "true"),
       tag.span(", easy version: ", class: "sr-only"), look.easy_words

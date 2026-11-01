@@ -170,7 +170,12 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_equal LookForKit.easiest_first(kit).map(&:name), names
     # Each tile shows the ease before and after for these hands: "Hard -> Some care".
     badges = css_select(".tiles--looks .tile__badge").map(&:text)
-    assert_equal LookForKit.easiest_first(kit).map { |look| "Classic: #{look.classic_words} \u2192 , easy version: #{look.easy_words}" }, badges
+    expected = LookForKit.easiest_first(kit).map do |look|
+      if look.classic_words == look.easy_words then "Classic and easy version: #{look.easy_words}"
+      else "Classic: #{look.classic_words} \u2192 , easy version: #{look.easy_words}"
+      end
+    end
+    assert_equal expected, badges
     assert_includes badges, "Classic: Hard \u2192 , easy version: Some care"
   end
 
