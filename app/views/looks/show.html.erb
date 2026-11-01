@@ -16,7 +16,7 @@
     <%= render "credits/spend", cost: @cost, url: previews_kit_look_path(@kit, @look.key),
           params: { level: (@level unless @level.zero?) }.compact %>
   <% end %>
-  <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
+  <% if @kit.example? %><%= render "components/honest_label", text: "AI generated example person" %><% end %>
 
   <section class="card stack" aria-labelledby="ease-title">
     <h2 id="ease-title" class="m-0">How easy for <%= you_or_they(@kit, "your", "their") %> hands</h2>

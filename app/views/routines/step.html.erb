@@ -10,7 +10,7 @@
       <%= proxied_image_tag(picture, 900, alt: "Where this step goes on #{you_or_they(@kit, "your", "their")} face", class: "step-zoom__image") %>
     </figure>
     <% if @with %><%= render "components/honest_label" %><% end %>
-    <% if @kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
+    <% if @kit.example? %><%= render "components/honest_label", text: "AI generated example person" %><% end %>
   <% end %>
 
   <% if @step.optional? %>

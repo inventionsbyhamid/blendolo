@@ -17,7 +17,7 @@ class ExampleFlowTest < ApplicationSystemTestCase
     click_on "Try with an example person"
     click_on "Rosa"
     assert_selector "h1", text: "Rosa's kit"
-    assert_text "AI generated photo"
+    assert_text "AI generated example person"
     kit = Examples.kit_for("rosa")
     # Opening the kit built it from the stored photos and previews; from here on nothing is added.
     renders = Render.count

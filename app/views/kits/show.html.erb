@@ -4,7 +4,7 @@
   <header class="stack">
     <% if @kit.example? %>
       <% person = Examples.fetch(@kit.example_key) %>
-      <%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %>
+      <%= render "components/honest_label", text: "AI generated example person" %>
       <h1 class="m-0"><%= person.name %>'s kit</h1>
       <p class="lead m-0"><%= person.blurb %></p>
     <% else %>

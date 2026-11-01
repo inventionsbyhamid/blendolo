@@ -59,7 +59,7 @@ class ExamplePeopleTest < ActionDispatch::IntegrationTest
     get public_share_path(share.token)
     assert_response :success
     assert_select "h1", "A makeup routine, shared with you"
-    assert_select ".honest", /Example person/
+    assert_select ".honest", /AI generated example person/
     assert_select "img.render__image", 2
     assert_select "ol li.card", RoutinePlan.steps(kit).size
 

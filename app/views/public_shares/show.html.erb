@@ -3,7 +3,7 @@
   <header class="stack">
     <h1 class="m-0">A makeup routine, shared with you</h1>
     <p class="lead m-0">The steps in the order they like to do them: detailed steps first, tidy up last. This link works until <%= l @share.expires_at.to_date, format: :long %>.</p>
-    <% if @shared_kit.example? %><%= render "components/honest_label", text: "Example person. #{Examples.photo_label}" %><% end %>
+    <% if @shared_kit.example? %><%= render "components/honest_label", text: "AI generated example person" %><% end %>
   </header>
   <% if @photos %>
     <% easy = StepPreview.with(@shared_kit) %>
