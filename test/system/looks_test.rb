@@ -55,7 +55,7 @@ class LooksSystemTest < ApplicationSystemTestCase
       assert_selector "##{dom_id(classic)} img.render__image"
       assert_selector "##{dom_id(easy)} img.render__image"
       assert_text "Preview, not a promise"
-      click_on "Easy version"
+      click_on "Easy", exact: true
       assert_selector ".compare__stage[data-show=easy]"
       assert_no_selector "##{dom_id(classic)} img", visible: true
     end
