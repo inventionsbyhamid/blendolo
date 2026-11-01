@@ -43,7 +43,7 @@ class ExampleFlowTest < ApplicationSystemTestCase
     shot "integration-step-card"
 
     visit kit_shopping_path(kit)
-    assert_selector ".honest", text: "Demo catalogue"
+    assert_selector ".honest", text: "Demo products, all made up"
     shot "integration-shopping"
 
     assert_equal calls, ProviderCall.count

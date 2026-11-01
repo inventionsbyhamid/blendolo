@@ -14,7 +14,7 @@ class ShoppingTest < ActionDispatch::IntegrationTest
     pinch_matches = good_for_your_hands
     assert_includes pinch_matches, "No pinch grip"
     assert_not_includes pinch_matches, "Blends away wobbles"
-    assert_select ".honest", /Demo catalogue/
+    assert_select ".honest", /Demo products, all made up/
 
     get kit_shopping_path(tremor)
     assert_select "#avoid-title + ul li", text: "Thin liquid liners and fine brushes"
