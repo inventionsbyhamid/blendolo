@@ -15,6 +15,16 @@ class SeoTest < ActionDispatch::IntegrationTest
     assert_equal %w[Organization WebApplication], json_ld["@graph"].map { |node| node["@type"] }
   end
 
+  test "pricing is in the top bar when signed out" do
+    %w[/ /examples /privacy].each do |path|
+      get path
+
+      assert_select "header nav li.nav__keep a[href='/pricing']", text: "Pricing"
+    end
+    get "/pricing"
+    assert_select "header nav a[href='/pricing']", count: 0
+  end
+
   test "every page footer links to the source code" do
     %w[/ /pricing /examples /privacy].each do |path|
       get path

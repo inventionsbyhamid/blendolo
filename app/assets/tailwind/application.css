@@ -147,7 +147,7 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
     color: var(--ink); text-decoration: none; font-weight: 700; font-size: 1.125rem;
   }
   .nav a:hover { background: var(--rose); color: var(--ink); }
-  @media (max-width: 1020px) { .nav { display: none; } }
+  @media (max-width: 1020px) { .nav li:not(.nav__keep) { display: none; } }
 
   /* Chips, pills, tags */
   .chip { display: inline-block; text-wrap: balance; font-weight: 800; font-size: 1.125rem; line-height: 1.3; padding: 8px 18px; border-radius: 999px; margin-bottom: 20px; }

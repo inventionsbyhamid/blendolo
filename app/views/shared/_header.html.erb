@@ -6,6 +6,9 @@
     <% end %>
     <% if content_for?(:header_nav) %>
       <%= yield :header_nav %>
+    <% elsif !@kit&.persisted? && !signed_in? && !current_page?(pricing_path) %>
+      <%# Signed out, away from a kit: Pricing in the bar. Signed in, it's in the account menu. %>
+      <nav aria-label="Main"><ul class="nav"><li class="nav__keep"><%= link_to "Pricing", pricing_path %></li></ul></nav>
     <% end %>
     <% if @kit&.persisted? %>
       <%= render "kits/menu", kit: @kit %>

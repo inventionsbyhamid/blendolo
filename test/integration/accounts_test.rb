@@ -6,6 +6,13 @@ class AccountsTest < ActionDispatch::IntegrationTest
   include AccountHelpers
   include KitHelpers
 
+  test "signed in, pricing is in the account menu" do
+    sign_in_as(make_user)
+    get "/privacy"
+
+    assert_select "header .menu a[href='/pricing']", /\APricing/
+  end
+
   test "the account page needs a sign in" do
     get account_path
     assert_redirected_to sign_in_path(origin: account_path)

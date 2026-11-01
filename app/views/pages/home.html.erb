@@ -15,6 +15,8 @@
       <li><a href="#signature">Signature look</a></li>
       <li><a href="#shops">For shops</a></li>
       <li><a href="#faq">Questions</a></li>
+      <%# Pricing stays in the bar on phones when there's no account menu (signed in, it's in the menu). %>
+      <%= tag.li link_to("Pricing", pricing_path), class: ("nav__keep" unless signed_in?) %>
     </ul>
   </nav>
 <% end %>
