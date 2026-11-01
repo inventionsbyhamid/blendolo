@@ -15,6 +15,14 @@ class SeoTest < ActionDispatch::IntegrationTest
     assert_equal %w[Organization WebApplication], json_ld["@graph"].map { |node| node["@type"] }
   end
 
+  test "every page footer links to the source code" do
+    %w[/ /pricing /examples /privacy].each do |path|
+      get path
+
+      assert_select "footer a[href=?]", "https://github.com/inventionsbyhamid/blendolo", text: "Code on GitHub"
+    end
+  end
+
   test "home has the landing page's own link preview lines" do
     get "/"
 
