@@ -538,6 +538,20 @@ body[data-hands="2"] { --tap: 104px; --tap-primary: 104px; }
   .swatch { width: 80%; height: auto; }
   .tile__badge { display: inline-block; padding: 2px 14px; border-radius: 999px; background: var(--ink); color: var(--surface); font-size: 1.05rem; font-weight: 800; }
   .ease-change { font-size: 1.75rem; font-weight: 900; }
+  /* On a phone each look is one wide row, picture on the left and the words on the right, so names and hints
+     don't break into narrow columns. Two columns from 700 px. */
+  .tiles--looks { grid-template-columns: 1fr; }
+  @media (min-width: 700px) { .tiles--looks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tiles--looks .tile {
+    display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "media badge" "media label" "media hint";
+    align-content: center; align-items: center; justify-items: start; column-gap: 18px; row-gap: 6px;
+    padding: 16px 20px 16px 16px; text-align: left;
+  }
+  .tiles--looks :is(.tile__media, .tile__art) { grid-area: media; align-self: center; }
+  .tiles--looks .tile__badge { grid-area: badge; }
+  .tiles--looks .tile__label { grid-area: label; }
+  .tiles--looks .tile__hint { grid-area: hint; }
+  .tiles--looks .tile__note { text-align: center; }
   .swaplist__why { display: block; margin-top: 6px; color: var(--ink); font-size: 1.125rem; }
 
   /* Signature look: the old photo, today with the look, today easy. */

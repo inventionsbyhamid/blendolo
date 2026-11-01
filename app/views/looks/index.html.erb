@@ -4,7 +4,7 @@
     <h1 class="m-0">Pick a look</h1>
     <p class="lead m-0">Easiest first for <%= you_or_they(@kit, "your", "their") %> hands. A look is as easy as its hardest step, and every look has an easier version.</p>
   </header>
-  <ul class="tiles tiles--2 tiles--looks">
+  <ul class="tiles tiles--looks">
     <% @looks.each do |look| %>
       <li>
         <%= render "components/tile", label: look.name, href: kit_look_path(@kit, look.key), image: look_thumbnail(look),
